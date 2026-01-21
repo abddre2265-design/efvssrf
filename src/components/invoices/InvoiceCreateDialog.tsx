@@ -120,6 +120,12 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
   );
   
   const isForeignClient = selectedClient?.client_type === 'foreign';
+  
+  // Check if any lines come from reservations - if so, lock client selection
+  const hasReservationLines = useMemo(() => 
+    lines.some(line => line.fromReservation),
+    [lines]
+  );
 
   const getDateLocale = () => {
     switch (language) {
@@ -579,8 +585,12 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
                     {t('add_client')}
                   </Button>
                 </div>
-                <Select value={selectedClientId} onValueChange={handleClientChange}>
-                  <SelectTrigger>
+                <Select 
+                  value={selectedClientId} 
+                  onValueChange={handleClientChange}
+                  disabled={hasReservationLines}
+                >
+                  <SelectTrigger className={cn(hasReservationLines && "opacity-70 cursor-not-allowed")}>
                     <SelectValue placeholder={t('select_client')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -597,6 +607,11 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
+                {hasReservationLines && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('client_locked_reservation')}
+                  </p>
+                )}
               </div>
 
               {/* Currency (for foreign clients) */}

@@ -1127,6 +1127,7 @@ export const translations: Translations = {
   from_reservation: { fr: 'Depuis réservation', en: 'From reservation', ar: 'من الحجز' },
   cannot_delete_reservation_line: { fr: 'Impossible de supprimer une ligne de réservation', en: 'Cannot delete reservation line', ar: 'لا يمكن حذف سطر الحجز' },
   expires: { fr: 'Expire le', en: 'Expires', ar: 'ينتهي في' },
+  client_locked_reservation: { fr: 'Client verrouillé car des produits réservés sont dans la facture', en: 'Client locked because reserved products are in the invoice', ar: 'العميل مقفل لأن المنتجات المحجوزة في الفاتورة' },
 };
 
 // Tunisian Governorates
