@@ -1302,6 +1302,30 @@ export const translations: Translations = {
   apply_changes: { fr: 'Appliquer les modifications', en: 'Apply changes', ar: 'تطبيق التغييرات' },
   rate_limit_exceeded: { fr: 'Limite de requêtes dépassée', en: 'Rate limit exceeded', ar: 'تم تجاوز حد الطلبات' },
   payment_required: { fr: 'Paiement requis', en: 'Payment required', ar: 'الدفع مطلوب' },
+  
+  // Delivery Notes (additional entries)
+  delivery_notes_description: { fr: 'Gérer les bons de livraison liés aux factures validées', en: 'Manage delivery notes linked to validated invoices', ar: 'إدارة سندات التسليم المرتبطة بالفواتير المصادق عليها' },
+  delivery_note_number: { fr: 'N° Bon de livraison', en: 'Delivery Note No.', ar: 'رقم سند التسليم' },
+  no_delivery_notes: { fr: 'Aucun bon de livraison', en: 'No delivery notes', ar: 'لا توجد سندات تسليم' },
+  invoice_number_linked: { fr: 'N° Facture liée', en: 'Linked Invoice No.', ar: 'رقم الفاتورة المرتبطة' },
+  linked_invoice: { fr: 'Facture liée', en: 'Linked Invoice', ar: 'الفاتورة المرتبطة' },
+  delivery_note_details: { fr: 'Détails du bon de livraison', en: 'Delivery Note Details', ar: 'تفاصيل سند التسليم' },
+  delivery_note_not_found: { fr: 'Bon de livraison non trouvé', en: 'Delivery note not found', ar: 'سند التسليم غير موجود' },
+  print_delivery_note: { fr: 'Imprimer le bon de livraison', en: 'Print Delivery Note', ar: 'طباعة سند التسليم' },
+  delivery_note_title: { fr: 'BON DE LIVRAISON', en: 'DELIVERY NOTE', ar: 'سند التسليم' },
+  company_signature: { fr: 'Signature entreprise', en: 'Company Signature', ar: 'توقيع الشركة' },
+  client_signature: { fr: 'Signature client', en: 'Client Signature', ar: 'توقيع العميل' },
+  deliver_invoice: { fr: 'Livrer', en: 'Deliver', ar: 'تسليم' },
+  invoice_delivered: { fr: 'Facture livrée avec succès', en: 'Invoice delivered successfully', ar: 'تم تسليم الفاتورة بنجاح' },
+  error_delivering_invoice: { fr: 'Erreur lors de la livraison', en: 'Error delivering invoice', ar: 'خطأ في التسليم' },
+  delivery_status_pending: { fr: 'En attente', en: 'Pending', ar: 'في الانتظار' },
+  delivery_status_delivered: { fr: 'Livré', en: 'Delivered', ar: 'تم التسليم' },
+  
+  // PDF Components - Delivery Note
+  pdf_component_delivery_note_title: { fr: 'Titre "BON DE LIVRAISON"', en: '"DELIVERY NOTE" Title', ar: 'عنوان "سند التسليم"' },
+  pdf_component_delivery_note_number: { fr: 'Numéro de bon', en: 'Delivery Note Number', ar: 'رقم السند' },
+  pdf_component_delivery_note_date: { fr: 'Date de livraison', en: 'Delivery Date', ar: 'تاريخ التسليم' },
+  delivery_note_template: { fr: 'Bon de livraison', en: 'Delivery Note', ar: 'سند التسليم' },
 };
 
 // Tunisian Governorates

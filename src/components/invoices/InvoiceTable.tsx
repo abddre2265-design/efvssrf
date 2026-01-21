@@ -27,7 +27,8 @@ import {
   Trash2,
   RefreshCw,
   CreditCard,
-  ReceiptText
+  ReceiptText,
+  Truck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
@@ -44,6 +45,7 @@ interface InvoiceTableProps {
   onUse: (invoice: Invoice) => void;
   onPay: (invoice: Invoice) => void;
   onCreateCreditNote: (invoice: Invoice) => void;
+  onDeliver?: (invoice: Invoice) => void;
 }
 
 export const InvoiceTable: React.FC<InvoiceTableProps> = ({
@@ -57,6 +59,7 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
   onUse,
   onPay,
   onCreateCreditNote,
+  onDeliver,
 }) => {
   const { t, language, isRTL } = useLanguage();
 
@@ -224,10 +227,18 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
                       </DropdownMenuItem>
                     )}
                     {invoice.status === 'validated' && (
-                      <DropdownMenuItem onClick={() => onCreateCreditNote(invoice)}>
-                        <ReceiptText className="mr-2 h-4 w-4" />
-                        {t('create_credit_note')}
-                      </DropdownMenuItem>
+                      <>
+                        {onDeliver && (invoice as any).delivery_status !== 'delivered' && (
+                          <DropdownMenuItem onClick={() => onDeliver(invoice)}>
+                            <Truck className="mr-2 h-4 w-4" />
+                            {t('deliver_invoice')}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => onCreateCreditNote(invoice)}>
+                          <ReceiptText className="mr-2 h-4 w-4" />
+                          {t('create_credit_note')}
+                        </DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
