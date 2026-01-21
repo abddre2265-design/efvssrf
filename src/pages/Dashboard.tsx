@@ -22,6 +22,7 @@ import DocumentFamilies from '@/pages/DocumentFamilies';
 import Supply from '@/pages/Supply';
 import ClassificationRequests from '@/pages/ClassificationRequests';
 import PointsOfSale from '@/pages/PointsOfSale';
+import InvoiceRequests from '@/pages/InvoiceRequests';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -108,6 +109,8 @@ const Dashboard: React.FC = () => {
         return <ClassificationRequests />;
       case 'points-of-sale':
         return <PointsOfSale />;
+      case 'sales-invoice-requests':
+        return <InvoiceRequests />;
       default:
         return (
           <motion.div
