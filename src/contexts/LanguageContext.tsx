@@ -1262,6 +1262,7 @@ export const translations: Translations = {
   pdf_component_discount_column: { fr: 'Colonne remise', en: 'Discount Column', ar: 'عمود الخصم' },
   pdf_component_totals_box: { fr: 'Encadré des totaux', en: 'Totals Box', ar: 'مربع الإجماليات' },
   pdf_component_stamp_duty: { fr: 'Droit de timbre', en: 'Stamp Duty', ar: 'رسوم الطوابع' },
+  pdf_component_withholding_tax: { fr: 'Retenue à la source', en: 'Withholding Tax', ar: 'الاقتطاع من المصدر' },
   pdf_component_decorative_corners: { fr: 'Coins décoratifs', en: 'Decorative Corners', ar: 'الزوايا الزخرفية' },
   pdf_component_bank_info: { fr: 'Informations bancaires', en: 'Bank Information', ar: 'المعلومات البنكية' },
   pdf_component_signature_area: { fr: 'Zone de signature', en: 'Signature Area', ar: 'منطقة التوقيع' },

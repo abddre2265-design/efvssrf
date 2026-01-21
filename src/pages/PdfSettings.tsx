@@ -53,6 +53,7 @@ const defaultInvoiceComponents: PdfComponent[] = [
   { id: 'discount_column', labelKey: 'pdf_component_discount_column', enabled: true, category: 'content' },
   { id: 'totals_box', labelKey: 'pdf_component_totals_box', enabled: true, category: 'content' },
   { id: 'stamp_duty', labelKey: 'pdf_component_stamp_duty', enabled: true, category: 'content' },
+  { id: 'withholding_tax', labelKey: 'pdf_component_withholding_tax', enabled: true, category: 'content' },
   // Footer
   { id: 'decorative_corners', labelKey: 'pdf_component_decorative_corners', enabled: true, category: 'footer' },
   { id: 'bank_info', labelKey: 'pdf_component_bank_info', enabled: true, category: 'footer' },
