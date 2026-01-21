@@ -1,6 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { FileText, FileX2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DocumentType, PdfComponent } from '@/pages/PdfSettings';
@@ -21,6 +19,15 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
   const accentColor = documentType === 'invoice' ? '#0a84ff' : '#e53935';
   const gradientEnd = documentType === 'invoice' ? '#00c6ff' : '#ff6f60';
   const title = documentType === 'invoice' ? 'FACTURE' : 'AVOIR';
+
+  // Check if parent is enabled for child visibility
+  const isCompanyFieldVisible = (fieldId: string) => {
+    return isEnabled('company_info') && isEnabled(fieldId);
+  };
+
+  const isClientFieldVisible = (fieldId: string) => {
+    return isEnabled('client_info') && isEnabled(fieldId);
+  };
 
   return (
     <ScrollArea className="h-[600px] rounded-lg border bg-white">
@@ -57,11 +64,24 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
               )}
               {isEnabled('company_info') && (
                 <>
-                  <div style={{ fontWeight: 700, fontSize: 10, color: accentColor, marginBottom: 3 }}>Nom Société</div>
-                  <div>123 Rue Example</div>
-                  <div>1000, Tunis</div>
-                  <div>Tel : +216 XX XXX XXX</div>
-                  <div>MF : 1234567/A/M/000</div>
+                  {isCompanyFieldVisible('company_name') && (
+                    <div style={{ fontWeight: 700, fontSize: 10, color: accentColor, marginBottom: 3 }}>Nom Société</div>
+                  )}
+                  {isCompanyFieldVisible('company_address') && (
+                    <>
+                      <div>123 Rue Example</div>
+                      <div>1000, Tunis</div>
+                    </>
+                  )}
+                  {isCompanyFieldVisible('company_phone') && (
+                    <div>Tel : +216 XX XXX XXX</div>
+                  )}
+                  {isCompanyFieldVisible('company_email') && (
+                    <div>Email : contact@exemple.tn</div>
+                  )}
+                  {isCompanyFieldVisible('company_identifier') && (
+                    <div>MF : 1234567/A/M/000</div>
+                  )}
                 </>
               )}
             </div>
@@ -131,9 +151,21 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                 }}>
                   {documentType === 'invoice' ? 'FACTURÉ À' : 'CLIENT'}
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 9, marginBottom: 3 }}>Client Example</div>
-                <div>Adresse client</div>
-                <div>MF : 9876543/B/M/000</div>
+                {isClientFieldVisible('client_name') && (
+                  <div style={{ fontWeight: 700, fontSize: 9, marginBottom: 3 }}>Client Example</div>
+                )}
+                {isClientFieldVisible('client_address') && (
+                  <div>Adresse client, Tunis 1000</div>
+                )}
+                {isClientFieldVisible('client_identifier') && (
+                  <div>MF : 9876543/B/M/000</div>
+                )}
+                {isClientFieldVisible('client_phone') && (
+                  <div>Tél : +216 XX XXX XXX</div>
+                )}
+                {isClientFieldVisible('client_email') && (
+                  <div>Email : client@exemple.tn</div>
+                )}
               </div>
             )}
 
