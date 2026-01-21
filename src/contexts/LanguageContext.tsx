@@ -1117,6 +1117,16 @@ export const translations: Translations = {
   go_suppliers: { fr: 'Aller aux fournisseurs', en: 'Go to Suppliers', ar: 'الذهاب للموردين' },
   exit_keyboard_nav: { fr: 'Quitter la navigation clavier', en: 'Exit Keyboard Navigation', ar: 'الخروج من التنقل بلوحة المفاتيح' },
   show_shortcuts: { fr: 'Afficher les raccourcis', en: 'Show Shortcuts', ar: 'عرض الاختصارات' },
+  
+  // Reservations
+  client_reservations: { fr: 'Réservations du client', en: 'Client Reservations', ar: 'حجوزات العميل' },
+  no_reservations_for_client: { fr: 'Aucune réservation pour ce client', en: 'No reservations for this client', ar: 'لا توجد حجوزات لهذا العميل' },
+  quantity_to_invoice: { fr: 'Quantité à facturer', en: 'Quantity to invoice', ar: 'الكمية للفوترة' },
+  add_to_invoice: { fr: 'Ajouter à la facture', en: 'Add to invoice', ar: 'إضافة للفاتورة' },
+  skip: { fr: 'Ignorer', en: 'Skip', ar: 'تخطي' },
+  from_reservation: { fr: 'Depuis réservation', en: 'From reservation', ar: 'من الحجز' },
+  cannot_delete_reservation_line: { fr: 'Impossible de supprimer une ligne de réservation', en: 'Cannot delete reservation line', ar: 'لا يمكن حذف سطر الحجز' },
+  expires: { fr: 'Expire le', en: 'Expires', ar: 'ينتهي في' },
 };
 
 // Tunisian Governorates

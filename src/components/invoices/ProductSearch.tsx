@@ -31,6 +31,7 @@ interface Product {
   current_stock: number | null;
   unlimited_stock: boolean;
   allow_out_of_stock_sale: boolean | null;
+  reserved_stock: number;
 }
 
 interface ProductSearchProps {
@@ -62,7 +63,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     try {
       let query = supabase
         .from('products')
-        .select('id, name, reference, ean, price_ht, vat_rate, max_discount, current_stock, unlimited_stock, allow_out_of_stock_sale')
+        .select('id, name, reference, ean, price_ht, vat_rate, max_discount, current_stock, unlimited_stock, allow_out_of_stock_sale, reserved_stock')
         .eq('organization_id', organizationId)
         .eq('status', 'active');
 
@@ -223,8 +224,10 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             </div>
           ) : (
             products.map((product) => {
+              // Available stock = current_stock - reserved_stock
+              const availableStock = (product.current_stock || 0) - (product.reserved_stock || 0);
               const isOutOfStock = !product.unlimited_stock && 
-                (product.current_stock || 0) <= 0 && 
+                availableStock <= 0 && 
                 !product.allow_out_of_stock_sale;
               
               return (
@@ -264,14 +267,15 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                       ) : (
                         <Badge
                           variant={
-                            (product.current_stock || 0) > 0
+                            availableStock > 0
                               ? 'outline'
                               : product.allow_out_of_stock_sale
                               ? 'secondary'
                               : 'destructive'
                           }
+                          title={`${t('available')}: ${availableStock} / ${t('total')}: ${product.current_stock || 0}`}
                         >
-                          {product.current_stock || 0}
+                          {availableStock}
                         </Badge>
                       )}
                     </div>

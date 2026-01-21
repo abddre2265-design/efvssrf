@@ -86,6 +86,11 @@ export interface InvoiceLineFormData {
   current_stock: number | null;
   unlimited_stock: boolean;
   allow_out_of_stock_sale: boolean;
+  // Reservation tracking - when line comes from a reservation
+  fromReservation?: boolean;
+  reservationId?: string;
+  reservationQuantity?: number; // Original reserved quantity - locked
+  reserved_stock?: number; // Product's total reserved stock
 }
 
 export interface StockBubble {
