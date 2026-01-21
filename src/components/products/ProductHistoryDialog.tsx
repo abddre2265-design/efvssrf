@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from './types';
-import { Loader2, Package, FileText, ShoppingCart, RotateCcw, TrendingUp, TrendingDown, Calendar, Clock } from 'lucide-react';
+import { Loader2, Package, FileText, ShoppingCart, RotateCcw, TrendingUp, TrendingDown, Calendar, Clock, CalendarCheck, Bookmark } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, ar } from 'date-fns/locale';
 
@@ -18,14 +18,15 @@ interface ProductHistoryDialogProps {
 
 interface HistoryEntry {
   id: string;
-  type: 'stock_movement' | 'invoice' | 'credit_note' | 'purchase';
+  type: 'stock_movement' | 'invoice' | 'credit_note' | 'purchase' | 'reservation';
   date: string;
   description: string;
   details: string;
   quantity?: number;
-  movement_type?: 'add' | 'remove';
+  movement_type?: 'add' | 'remove' | 'reserve' | 'release';
   document_number?: string;
   amount?: number;
+  reservation_status?: string;
 }
 
 export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
@@ -192,6 +193,79 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
         });
       });
 
+      // Fetch reservations
+      const { data: reservations } = await supabase
+        .from('product_reservations')
+        .select(`
+          id,
+          quantity,
+          status,
+          notes,
+          expiration_date,
+          created_at,
+          updated_at,
+          client:clients (
+            first_name,
+            last_name,
+            company_name
+          )
+        `)
+        .eq('product_id', product.id)
+        .order('created_at', { ascending: false });
+
+      reservations?.forEach(res => {
+        const client = res.client as any;
+        const clientName = client?.company_name || `${client?.first_name || ''} ${client?.last_name || ''}`.trim() || t('unknownClient');
+        
+        // Add reservation creation entry
+        entries.push({
+          id: `res-created-${res.id}`,
+          type: 'reservation',
+          date: res.created_at,
+          description: t('reservationCreated'),
+          details: `${clientName}${res.notes ? ` - ${res.notes}` : ''}`,
+          quantity: res.quantity,
+          movement_type: 'reserve',
+          reservation_status: 'active',
+        });
+
+        // If reservation was used, cancelled or expired, add that entry too
+        if (res.status === 'used' && res.updated_at !== res.created_at) {
+          entries.push({
+            id: `res-used-${res.id}`,
+            type: 'reservation',
+            date: res.updated_at,
+            description: t('reservationUsed'),
+            details: clientName,
+            quantity: res.quantity,
+            movement_type: 'release',
+            reservation_status: 'used',
+          });
+        } else if (res.status === 'cancelled' && res.updated_at !== res.created_at) {
+          entries.push({
+            id: `res-cancelled-${res.id}`,
+            type: 'reservation',
+            date: res.updated_at,
+            description: t('reservationCancelled'),
+            details: clientName,
+            quantity: res.quantity,
+            movement_type: 'release',
+            reservation_status: 'cancelled',
+          });
+        } else if (res.status === 'expired' && res.updated_at !== res.created_at) {
+          entries.push({
+            id: `res-expired-${res.id}`,
+            type: 'reservation',
+            date: res.updated_at,
+            description: t('reservationExpired'),
+            details: clientName,
+            quantity: res.quantity,
+            movement_type: 'release',
+            reservation_status: 'expired',
+          });
+        }
+      });
+
       // Sort all entries by date descending
       entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
@@ -209,6 +283,7 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
       case 'invoice': return <FileText className="h-4 w-4" />;
       case 'credit_note': return <RotateCcw className="h-4 w-4" />;
       case 'purchase': return <ShoppingCart className="h-4 w-4" />;
+      case 'reservation': return <Bookmark className="h-4 w-4" />;
     }
   };
 
@@ -222,6 +297,8 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
         return <Badge variant="outline" className="text-destructive border-destructive">{t('creditNote')}</Badge>;
       case 'purchase':
         return <Badge variant="secondary">{t('purchase')}</Badge>;
+      case 'reservation':
+        return <Badge variant="outline" className="text-amber-600 border-amber-500">{t('reservation')}</Badge>;
     }
   };
 
@@ -277,17 +354,32 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
                           {getTypeBadge(entry.type)}
                           {entry.movement_type && (
                             <Badge 
-                              className={entry.movement_type === 'add' 
-                                ? 'bg-green-500/20 text-green-600 border-green-500/50' 
-                                : 'bg-red-500/20 text-red-600 border-red-500/50'
+                              className={
+                                entry.movement_type === 'add' 
+                                  ? 'bg-green-500/20 text-green-600 border-green-500/50' 
+                                  : entry.movement_type === 'reserve'
+                                    ? 'bg-amber-500/20 text-amber-600 border-amber-500/50'
+                                    : entry.movement_type === 'release'
+                                      ? 'bg-blue-500/20 text-blue-600 border-blue-500/50'
+                                      : 'bg-red-500/20 text-red-600 border-red-500/50'
                               }
                             >
                               {entry.movement_type === 'add' ? (
                                 <TrendingUp className="h-3 w-3 mr-1" />
+                              ) : entry.movement_type === 'reserve' ? (
+                                <Bookmark className="h-3 w-3 mr-1" />
+                              ) : entry.movement_type === 'release' ? (
+                                <CalendarCheck className="h-3 w-3 mr-1" />
                               ) : (
                                 <TrendingDown className="h-3 w-3 mr-1" />
                               )}
-                              {entry.quantity && `${entry.movement_type === 'add' ? '+' : '-'}${entry.quantity}`}
+                              {entry.quantity && (
+                                entry.movement_type === 'reserve' 
+                                  ? `⏸ ${entry.quantity}` 
+                                  : entry.movement_type === 'release'
+                                    ? `▶ ${entry.quantity}`
+                                    : `${entry.movement_type === 'add' ? '+' : '-'}${entry.quantity}`
+                              )}
                             </Badge>
                           )}
                         </div>
