@@ -194,12 +194,14 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
         .invoice-pdf-page {
           width: 210mm;
-          min-height: 297mm;
+          height: 297mm;
+          max-height: 297mm;
           margin: auto;
           padding: 30px;
           border: 1px solid #cfd8dc;
           position: relative;
           background: #fff;
+          overflow: hidden;
         }
 
         .invoice-corner {
