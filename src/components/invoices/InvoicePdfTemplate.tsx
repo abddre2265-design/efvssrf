@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice, formatCurrency } from './types';
+import { usePdfSettings } from '@/contexts/PdfSettingsContext';
 
 interface Organization {
   id: string;
@@ -71,12 +72,20 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   invoiceId,
   onReady 
 }) => {
+  const { isComponentEnabled } = usePdfSettings();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [lines, setLines] = useState<InvoiceLineWithProduct[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [banks, setBanks] = useState<OrganizationBank[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Helper to check if a component is enabled
+  const isEnabled = (componentId: string) => isComponentEnabled('invoice', componentId);
+  
+  // Check if parent is enabled for child visibility
+  const isCompanyFieldVisible = (fieldId: string) => isEnabled('company_info') && isEnabled(fieldId);
+  const isClientFieldVisible = (fieldId: string) => isEnabled('client_info') && isEnabled(fieldId);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -543,7 +552,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const renderTotals = () => (
     <div className="invoice-totals">
       {/* VAT Breakdown by Rate - Left side */}
-      {!isForeign && vatBreakdown.length > 0 && (
+      {isEnabled('vat_breakdown') && !isForeign && vatBreakdown.length > 0 && (
         <div className="invoice-vat-breakdown">
           <div className="invoice-vat-breakdown-title">RÉCAPITULATIF TVA</div>
           <table>
@@ -575,81 +584,89 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
       )}
 
       {/* Totals Box - Right side */}
-      <div className="invoice-total-box">
-        {!isForeign && (
-          <>
+      {isEnabled('totals_box') && (
+        <div className="invoice-total-box">
+          {!isForeign && (
+            <>
+              <p>
+                <span>Total HT</span>
+                <span>{formatCurrency(invoice.subtotal_ht, invoice.currency)}</span>
+              </p>
+              <p>
+                <span>TVA</span>
+                <span>{formatCurrency(invoice.total_vat, invoice.currency)}</span>
+              </p>
+            </>
+          )}
+          
+          {invoice.total_discount > 0 && (
             <p>
-              <span>Total HT</span>
-              <span>{formatCurrency(invoice.subtotal_ht, invoice.currency)}</span>
+              <span>Remise</span>
+              <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.total_discount, invoice.currency)}</span>
             </p>
+          )}
+          
+          {/* Withholding Tax / Retenue à la source - ABOVE Total TTC */}
+          {isEnabled('withholding_tax') && invoice.withholding_applied && invoice.withholding_amount > 0 && (
             <p>
-              <span>TVA</span>
-              <span>{formatCurrency(invoice.total_vat, invoice.currency)}</span>
+              <span>RETENUE À LA SOURCE ({invoice.withholding_rate}%)</span>
+              <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.withholding_amount, invoice.currency)}</span>
             </p>
-          </>
-        )}
-        
-        {invoice.total_discount > 0 && (
-          <p>
-            <span>Remise</span>
-            <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.total_discount, invoice.currency)}</span>
+          )}
+          
+          {!isForeign && (
+            <p>
+              <span>Total TTC</span>
+              <span>{formatCurrency(invoice.total_ttc, invoice.currency)}</span>
+            </p>
+          )}
+          
+          {isEnabled('stamp_duty') && !isForeign && invoice.stamp_duty_enabled && (
+            <p>
+              <span>TIMBRE FISCAL</span>
+              <span>{formatCurrency(invoice.stamp_duty_amount, 'TND')}</span>
+            </p>
+          )}
+          
+          <p className="invoice-grand">
+            <span>NET À PAYER</span>
+            <span>{formatCurrency(invoice.net_payable, invoice.currency)}</span>
           </p>
-        )}
-        
-        {/* Withholding Tax / Retenue à la source - ABOVE Total TTC */}
-        {invoice.withholding_applied && invoice.withholding_amount > 0 && (
-          <p>
-            <span>RETENUE À LA SOURCE ({invoice.withholding_rate}%)</span>
-            <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.withholding_amount, invoice.currency)}</span>
-          </p>
-        )}
-        
-        {!isForeign && (
-          <p>
-            <span>Total TTC</span>
-            <span>{formatCurrency(invoice.total_ttc, invoice.currency)}</span>
-          </p>
-        )}
-        
-        {!isForeign && invoice.stamp_duty_enabled && (
-          <p>
-            <span>TIMBRE FISCAL</span>
-            <span>{formatCurrency(invoice.stamp_duty_amount, 'TND')}</span>
-          </p>
-        )}
-        
-        <p className="invoice-grand">
-          <span>NET À PAYER</span>
-          <span>{formatCurrency(invoice.net_payable, invoice.currency)}</span>
-        </p>
-      </div>
+        </div>
+      )}
     </div>
   );
 
   const renderFooter = () => (
     <div className="invoice-footer">
-      <div className="invoice-footer-bank">
-        {banks.length > 0 && (
-          <>
-            <div><strong>IBAN :</strong> {banks[0].iban}</div>
-            {banks[0].bank_name && <div><strong>Banque :</strong> {banks[0].bank_name}</div>}
-          </>
-        )}
-      </div>
-      <div className="invoice-footer-signature">
-        <div className="invoice-footer-signature-line"></div>
-        <div>Signature autorisée</div>
-      </div>
+      {isEnabled('bank_info') && (
+        <div className="invoice-footer-bank">
+          {banks.length > 0 && (
+            <>
+              <div><strong>IBAN :</strong> {banks[0].iban}</div>
+              {banks[0].bank_name && <div><strong>Banque :</strong> {banks[0].bank_name}</div>}
+            </>
+          )}
+        </div>
+      )}
+      {isEnabled('signature_area') && (
+        <div className="invoice-footer-signature">
+          <div className="invoice-footer-signature-line"></div>
+          <div>Signature autorisée</div>
+        </div>
+      )}
     </div>
   );
 
   const renderCorners = () => (
-    <>
-      <div className="invoice-corner invoice-tl"></div>
-      <div className="invoice-corner invoice-tr"></div>
-      <div className="invoice-corner invoice-bl"></div>
-      <div className="invoice-corner invoice-br"></div>
-    </>
+    isEnabled('decorative_corners') ? (
+      <>
+        <div className="invoice-corner invoice-tl"></div>
+        <div className="invoice-corner invoice-tr"></div>
+        <div className="invoice-corner invoice-bl"></div>
+        <div className="invoice-corner invoice-br"></div>
+      </>
+    ) : null
   );
 
   return (
@@ -664,65 +681,81 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
             <>
               {/* First page: Full header */}
               <div className="invoice-header">
-                <div className="invoice-company">
-                  {organization.logo_url && (
-                    <img 
-                      src={organization.logo_url} 
-                      alt="Logo" 
-                      className="invoice-company-logo"
-                    />
-                  )}
-                  <span>{organization.name}</span>
-                  {organization.address && <div>{organization.address}</div>}
-                  <div>{organization.postal_code}, {organization.governorate}</div>
-                  <div>Tel : {organization.phone}</div>
-                  {organization.email && <div>Email : {organization.email}</div>}
-                  {organization.identifier && (
-                    <div>{organization.identifier_type} : {organization.identifier}</div>
-                  )}
-                </div>
+                {isEnabled('company_info') && (
+                  <div className="invoice-company">
+                    {isEnabled('logo') && organization.logo_url && (
+                      <img 
+                        src={organization.logo_url} 
+                        alt="Logo" 
+                        className="invoice-company-logo"
+                      />
+                    )}
+                    {isCompanyFieldVisible('company_name') && <span>{organization.name}</span>}
+                    {isCompanyFieldVisible('company_address') && (
+                      <>
+                        {organization.address && <div>{organization.address}</div>}
+                        <div>{organization.postal_code}, {organization.governorate}</div>
+                      </>
+                    )}
+                    {isCompanyFieldVisible('company_phone') && <div>Tel : {organization.phone}</div>}
+                    {isCompanyFieldVisible('company_email') && organization.email && <div>Email : {organization.email}</div>}
+                    {isCompanyFieldVisible('company_identifier') && organization.identifier && (
+                      <div>{organization.identifier_type} : {organization.identifier}</div>
+                    )}
+                  </div>
+                )}
 
                 <div className="invoice-box">
-                  <h1>FACTURE</h1>
-                  <div style={{ fontSize: '13px', fontWeight: 700, margin: '4px 0' }}>
-                    {invoice.invoice_number}
-                  </div>
-                  <div style={{ fontSize: '11px', margin: '3px 0' }}>
-                    Date : {format(new Date(invoice.invoice_date), 'dd/MM/yyyy', { locale: fr })}
-                  </div>
-                  {invoice.due_date && (
+                  {isEnabled('invoice_title') && <h1>FACTURE</h1>}
+                  {isEnabled('invoice_number') && (
+                    <div style={{ fontSize: '13px', fontWeight: 700, margin: '4px 0' }}>
+                      {invoice.invoice_number}
+                    </div>
+                  )}
+                  {isEnabled('invoice_date') && (
+                    <div style={{ fontSize: '11px', margin: '3px 0' }}>
+                      Date : {format(new Date(invoice.invoice_date), 'dd/MM/yyyy', { locale: fr })}
+                    </div>
+                  )}
+                  {isEnabled('due_date') && invoice.due_date && (
                     <div style={{ fontSize: '11px', margin: '3px 0' }}>
                       Échéance : {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: fr })}
                     </div>
                   )}
-                  <span className="invoice-badge">{getStatusLabel()}</span>
+                  {isEnabled('status_badge') && <span className="invoice-badge">{getStatusLabel()}</span>}
                 </div>
               </div>
 
               {/* Client & Payment Info */}
               <div className="invoice-info">
-                <div className="invoice-card" data-label="FACTURÉ À">
-                  <p style={{ fontWeight: 700, fontSize: '12px' }}>{getClientName()}</p>
-                  {getClientAddress() && <p>{getClientAddress()}</p>}
-                  {client && (
-                    <p>{client.identifier_type} : {client.identifier_value}</p>
-                  )}
-                </div>
+                {isEnabled('client_info') && (
+                  <div className="invoice-card" data-label="FACTURÉ À">
+                    {isClientFieldVisible('client_name') && (
+                      <p style={{ fontWeight: 700, fontSize: '12px' }}>{getClientName()}</p>
+                    )}
+                    {isClientFieldVisible('client_address') && getClientAddress() && <p>{getClientAddress()}</p>}
+                    {isClientFieldVisible('client_identifier') && client && (
+                      <p>{client.identifier_type} : {client.identifier_value}</p>
+                    )}
+                  </div>
+                )}
 
-                <div className="invoice-card" data-label="RÈGLEMENT & STATUT">
-                  <p>Paiement : <strong>{getPaymentStatusLabel()}</strong></p>
-                  {invoice.paid_amount > 0 && (
-                    <p>Montant payé : {formatCurrency(invoice.paid_amount, invoice.currency)}</p>
-                  )}
-                  {isForeign && (
-                    <>
-                      <p>Devise : {invoice.currency}</p>
-                      {invoice.exchange_rate !== 1 && (
-                        <p>Taux de change : {invoice.exchange_rate}</p>
-                      )}
-                    </>
-                  )}
-                </div>
+                {isEnabled('payment_status') && (
+                  <div className="invoice-card" data-label="RÈGLEMENT & STATUT">
+                    <p>Paiement : <strong>{getPaymentStatusLabel()}</strong></p>
+                    {invoice.paid_amount > 0 && (
+                      <p>Montant payé : {formatCurrency(invoice.paid_amount, invoice.currency)}</p>
+                    )}
+                    {isForeign && (
+                      <>
+                        <p>Devise : {invoice.currency}</p>
+                        {invoice.exchange_rate !== 1 && (
+                          <p>Taux de change : {invoice.exchange_rate}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           ) : (

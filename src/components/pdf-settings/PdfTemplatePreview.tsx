@@ -252,42 +252,83 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             </table>
           )}
 
-          {/* Totals */}
-          {isEnabled('totals_box') && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 15 }}>
-              <div style={{ width: 150, border: `2px solid ${accentColor}`, padding: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
-                  <span>Total HT</span>
-                  <span>200.000 DT</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
-                  <span>TVA</span>
-                  <span>38.000 DT</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
-                  <span>Total TTC</span>
-                  <span>238.000 DT</span>
-                </div>
-                {isEnabled('stamp_duty') && documentType === 'invoice' && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
-                    <span>Timbre</span>
-                    <span>1.000 DT</span>
+          {/* Totals Section */}
+          {(isEnabled('totals_box') || isEnabled('vat_breakdown')) && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 15, gap: 10 }}>
+              {/* VAT Breakdown - Left side */}
+              {isEnabled('vat_breakdown') && (
+                <div style={{ width: 120, border: `2px solid ${accentColor}`, padding: 6 }}>
+                  <div style={{ fontSize: 7, fontWeight: 700, color: accentColor, textAlign: 'center', borderBottom: `1px solid ${accentColor}`, paddingBottom: 3, marginBottom: 5 }}>
+                    RÉCAP. TVA
                   </div>
-                )}
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  fontSize: 9, 
-                  fontWeight: 700,
-                  color: accentColor,
-                  borderTop: `2px solid ${accentColor}`,
-                  paddingTop: 3,
-                  marginTop: 3
-                }}>
-                  <span>Net à payer</span>
-                  <span>239.000 DT</span>
+                  <table style={{ width: '100%', fontSize: 6, borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left', fontWeight: 600 }}>Taux</th>
+                        <th style={{ textAlign: 'right', fontWeight: 600 }}>Base</th>
+                        <th style={{ textAlign: 'right', fontWeight: 600 }}>TVA</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>19%</td>
+                        <td style={{ textAlign: 'right' }}>200.00</td>
+                        <td style={{ textAlign: 'right' }}>38.00</td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ fontWeight: 700, borderTop: `1px solid ${accentColor}` }}>
+                        <td>Total</td>
+                        <td style={{ textAlign: 'right' }}>200.00</td>
+                        <td style={{ textAlign: 'right' }}>38.00</td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
-              </div>
+              )}
+
+              {/* Totals Box - Right side */}
+              {isEnabled('totals_box') && (
+                <div style={{ width: 150, border: `2px solid ${accentColor}`, padding: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
+                    <span>Total HT</span>
+                    <span>200.000 DT</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
+                    <span>TVA</span>
+                    <span>38.000 DT</span>
+                  </div>
+                  {isEnabled('withholding_tax') && documentType === 'invoice' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3, color: '#e53935' }}>
+                      <span>Retenue 1.5%</span>
+                      <span>-3.570 DT</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
+                    <span>Total TTC</span>
+                    <span>238.000 DT</span>
+                  </div>
+                  {isEnabled('stamp_duty') && documentType === 'invoice' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
+                      <span>Timbre</span>
+                      <span>1.000 DT</span>
+                    </div>
+                  )}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    fontSize: 9, 
+                    fontWeight: 700,
+                    color: accentColor,
+                    borderTop: `2px solid ${accentColor}`,
+                    paddingTop: 3,
+                    marginTop: 3
+                  }}>
+                    <span>Net à payer</span>
+                    <span>235.430 DT</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
