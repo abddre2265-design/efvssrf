@@ -879,6 +879,67 @@ export type Database = {
           },
         ]
       }
+      product_reservations: {
+        Row: {
+          client_id: string
+          created_at: string
+          expiration_date: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          product_id: string
+          quantity: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          product_id: string
+          quantity: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          product_id?: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reservations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reservations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reservations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           allow_out_of_stock_sale: boolean | null
@@ -894,6 +955,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           purchase_year: number
           reference: string | null
+          reserved_stock: number
           status: Database["public"]["Enums"]["product_status"]
           unit: string | null
           unlimited_stock: boolean
@@ -914,6 +976,7 @@ export type Database = {
           product_type: Database["public"]["Enums"]["product_type"]
           purchase_year?: number
           reference?: string | null
+          reserved_stock?: number
           status?: Database["public"]["Enums"]["product_status"]
           unit?: string | null
           unlimited_stock?: boolean
@@ -934,6 +997,7 @@ export type Database = {
           product_type?: Database["public"]["Enums"]["product_type"]
           purchase_year?: number
           reference?: string | null
+          reserved_stock?: number
           status?: Database["public"]["Enums"]["product_status"]
           unit?: string | null
           unlimited_stock?: boolean
@@ -1777,6 +1841,10 @@ export type Database = {
       }
       is_purchase_payment_owner: {
         Args: { payment_id: string }
+        Returns: boolean
+      }
+      is_reservation_owner: {
+        Args: { reservation_id: string }
         Returns: boolean
       }
       is_supplier_credit_note_owner: {

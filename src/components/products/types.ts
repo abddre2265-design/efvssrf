@@ -14,6 +14,7 @@ export interface Product {
   unlimited_stock: boolean;
   allow_out_of_stock_sale: boolean | null;
   current_stock: number | null;
+  reserved_stock: number;
   status: 'active' | 'archived';
   created_at: string;
   updated_at: string;

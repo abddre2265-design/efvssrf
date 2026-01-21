@@ -12,6 +12,7 @@ import { StockManagementDialog } from '@/components/products/StockManagementDial
 import { ExcelImportDialog } from '@/components/products/ExcelImportDialog';
 import { ProductHistoryDialog } from '@/components/products/ProductHistoryDialog';
 import { ProductAISearch } from '@/components/products/ProductAISearch';
+import { ProductReservationDialog, ViewReservationsDialog } from '@/components/products/reservations';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Product } from '@/components/products/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +34,8 @@ const Products: React.FC = () => {
   const [stockProduct, setStockProduct] = useState<Product | null>(null);
   const [duplicateProduct, setDuplicateProduct] = useState<Product | null>(null);
   const [historyProduct, setHistoryProduct] = useState<Product | null>(null);
+  const [reserveProduct, setReserveProduct] = useState<Product | null>(null);
+  const [viewReservationsProduct, setViewReservationsProduct] = useState<Product | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [excelImportOpen, setExcelImportOpen] = useState(false);
   const [archiveProduct, setArchiveProduct] = useState<Product | null>(null);
@@ -285,6 +288,8 @@ const Products: React.FC = () => {
           onRestore={setRestoreProduct}
           onHistory={setHistoryProduct}
           onDelete={setDeleteProduct}
+          onReserve={setReserveProduct}
+          onViewReservations={setViewReservationsProduct}
           canDeleteProduct={canDeleteProduct}
         />
       )}
@@ -332,6 +337,20 @@ const Products: React.FC = () => {
         product={historyProduct}
         open={!!historyProduct}
         onOpenChange={(open) => !open && setHistoryProduct(null)}
+      />
+
+      <ProductReservationDialog
+        product={reserveProduct}
+        open={!!reserveProduct}
+        onOpenChange={(open) => !open && setReserveProduct(null)}
+        onReserved={fetchProducts}
+      />
+
+      <ViewReservationsDialog
+        product={viewReservationsProduct}
+        open={!!viewReservationsProduct}
+        onOpenChange={(open) => !open && setViewReservationsProduct(null)}
+        onUpdated={fetchProducts}
       />
 
       {/* Archive Confirmation */}
