@@ -236,6 +236,84 @@ const Invoices: React.FC = () => {
     setCreditNoteDialogOpen(true);
   };
 
+  const handleDeliver = async (invoice: Invoice) => {
+    try {
+      // 1. Get current year and next counter for delivery note
+      const currentYear = new Date().getFullYear();
+      
+      const { data: lastNote } = await supabase
+        .from('delivery_notes')
+        .select('delivery_note_counter')
+        .eq('delivery_note_year', currentYear)
+        .order('delivery_note_counter', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const nextCounter = (lastNote?.delivery_note_counter || 0) + 1;
+      const deliveryNoteNumber = `BL-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
+
+      // 2. Create delivery note
+      const { data: deliveryNote, error: dnError } = await supabase
+        .from('delivery_notes')
+        .insert({
+          organization_id: organizationId,
+          invoice_id: invoice.id,
+          client_id: invoice.client_id,
+          delivery_note_number: deliveryNoteNumber,
+          delivery_note_prefix: 'BL',
+          delivery_note_year: currentYear,
+          delivery_note_counter: nextCounter,
+          currency: invoice.currency,
+          exchange_rate: invoice.exchange_rate,
+          subtotal_ht: invoice.subtotal_ht,
+          total_vat: invoice.total_vat,
+          total_discount: invoice.total_discount,
+          total_ttc: invoice.total_ttc,
+          notes: invoice.notes,
+        })
+        .select()
+        .single();
+
+      if (dnError) throw dnError;
+
+      // 3. Copy invoice lines to delivery note lines
+      const { data: invoiceLines } = await supabase
+        .from('invoice_lines')
+        .select('*')
+        .eq('invoice_id', invoice.id);
+
+      if (invoiceLines && invoiceLines.length > 0) {
+        const deliveryNoteLines = invoiceLines.map(line => ({
+          delivery_note_id: deliveryNote.id,
+          product_id: line.product_id,
+          description: line.description,
+          quantity: line.quantity,
+          unit_price_ht: line.unit_price_ht,
+          vat_rate: line.vat_rate,
+          discount_percent: line.discount_percent,
+          line_total_ht: line.line_total_ht,
+          line_vat: line.line_vat,
+          line_total_ttc: line.line_total_ttc,
+          line_order: line.line_order,
+        }));
+
+        await supabase.from('delivery_note_lines').insert(deliveryNoteLines);
+      }
+
+      // 4. Update invoice delivery status
+      await supabase
+        .from('invoices')
+        .update({ delivery_status: 'delivered' })
+        .eq('id', invoice.id);
+
+      toast.success(t('invoice_delivered'));
+      fetchInvoices();
+    } catch (error) {
+      console.error('Error delivering invoice:', error);
+      toast.error(t('error_delivering_invoice'));
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -282,6 +360,7 @@ const Invoices: React.FC = () => {
         onUse={handleUse}
         onPay={handlePay}
         onCreateCreditNote={handleCreateCreditNote}
+        onDeliver={handleDeliver}
       />
 
       {/* Create Dialog */}

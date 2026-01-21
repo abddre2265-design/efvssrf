@@ -342,6 +342,154 @@ export type Database = {
           },
         ]
       }
+      delivery_note_lines: {
+        Row: {
+          created_at: string
+          delivery_note_id: string
+          description: string | null
+          discount_percent: number
+          id: string
+          line_order: number
+          line_total_ht: number
+          line_total_ttc: number
+          line_vat: number
+          product_id: string
+          quantity: number
+          unit_price_ht: number
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          delivery_note_id: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          line_order?: number
+          line_total_ht?: number
+          line_total_ttc?: number
+          line_vat?: number
+          product_id: string
+          quantity?: number
+          unit_price_ht?: number
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          delivery_note_id?: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          line_order?: number
+          line_total_ht?: number
+          line_total_ttc?: number
+          line_vat?: number
+          product_id?: string
+          quantity?: number
+          unit_price_ht?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_note_lines_delivery_note_id_fkey"
+            columns: ["delivery_note_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_note_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_notes: {
+        Row: {
+          client_id: string
+          created_at: string
+          currency: string
+          delivery_date: string
+          delivery_note_counter: number
+          delivery_note_number: string
+          delivery_note_prefix: string
+          delivery_note_year: number
+          exchange_rate: number
+          id: string
+          invoice_id: string
+          notes: string | null
+          organization_id: string
+          subtotal_ht: number
+          total_discount: number
+          total_ttc: number
+          total_vat: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          currency?: string
+          delivery_date?: string
+          delivery_note_counter: number
+          delivery_note_number: string
+          delivery_note_prefix?: string
+          delivery_note_year: number
+          exchange_rate?: number
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          organization_id: string
+          subtotal_ht?: number
+          total_discount?: number
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          currency?: string
+          delivery_date?: string
+          delivery_note_counter?: number
+          delivery_note_number?: string
+          delivery_note_prefix?: string
+          delivery_note_year?: number
+          exchange_rate?: number
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          organization_id?: string
+          subtotal_ht?: number
+          total_discount?: number
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_families: {
         Row: {
           created_at: string
@@ -708,6 +856,7 @@ export type Database = {
           created_at: string
           credit_note_count: number
           currency: string
+          delivery_status: string | null
           due_date: string | null
           exchange_rate: number | null
           id: string
@@ -740,6 +889,7 @@ export type Database = {
           created_at?: string
           credit_note_count?: number
           currency?: string
+          delivery_status?: string | null
           due_date?: string | null
           exchange_rate?: number | null
           id?: string
@@ -772,6 +922,7 @@ export type Database = {
           created_at?: string
           credit_note_count?: number
           currency?: string
+          delivery_status?: string | null
           due_date?: string | null
           exchange_rate?: number | null
           id?: string
@@ -2058,6 +2209,7 @@ export type Database = {
         Args: { credit_note_id: string }
         Returns: boolean
       }
+      is_delivery_note_owner: { Args: { dn_id: string }; Returns: boolean }
       is_import_folder_owner: { Args: { folder_id: string }; Returns: boolean }
       is_invoice_owner: { Args: { invoice_id: string }; Returns: boolean }
       is_organization_owner: { Args: { org_id: string }; Returns: boolean }
