@@ -53,6 +53,11 @@ export const AIFloatingAgent: React.FC = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [speechSupported, setSpeechSupported] = useState(false);
   
+  // Drag position state
+  const [bubblePosition, setBubblePosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -394,6 +399,57 @@ export const AIFloatingAgent: React.FC = () => {
     localStorage.removeItem('ai-agent-history');
   };
 
+  // Drag handlers for the bubble
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    dragStartRef.current = {
+      x: clientX,
+      y: clientY,
+      posX: bubblePosition.x,
+      posY: bubblePosition.y
+    };
+  };
+
+  useEffect(() => {
+    const handleDragMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDragging) return;
+      
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      
+      const deltaX = clientX - dragStartRef.current.x;
+      const deltaY = clientY - dragStartRef.current.y;
+      
+      setBubblePosition({
+        x: dragStartRef.current.posX + deltaX,
+        y: dragStartRef.current.posY + deltaY
+      });
+    };
+
+    const handleDragEnd = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      window.addEventListener('mousemove', handleDragMove);
+      window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchmove', handleDragMove);
+      window.addEventListener('touchend', handleDragEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchmove', handleDragMove);
+      window.removeEventListener('touchend', handleDragEnd);
+    };
+  }, [isDragging]);
+
   const placeholders = {
     fr: "Posez votre question...",
     en: "Ask your question...",
@@ -405,37 +461,61 @@ export const AIFloatingAgent: React.FC = () => {
       {/* Hidden audio element */}
       <audio ref={audioRef} className="hidden" />
       
-      {/* Floating Bubble Button */}
+      {/* Floating Bubble Button - Draggable */}
       <AnimatePresence>
         {!isOpen && (
-          <motion.button
+          <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleOpen}
-            className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center ai-agent-bubble cursor-pointer"
+            style={{
+              position: 'fixed',
+              bottom: `calc(1.5rem - ${bubblePosition.y}px)`,
+              right: `calc(1.5rem - ${bubblePosition.x}px)`,
+              zIndex: 50,
+              cursor: isDragging ? 'grabbing' : 'grab',
+              touchAction: 'none'
+            }}
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
           >
-            {/* Halo effect */}
-            <div className="absolute inset-0 rounded-full bg-primary/20 ai-agent-halo" />
-            
-            {/* Particles */}
-            <div className="absolute inset-0">
-              {[...Array(3)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute w-2 h-2 bg-primary/60 rounded-full ai-particle"
-                  style={{
-                    left: `${30 + i * 20}%`,
-                    animationDelay: `${i * 0.5}s`
-                  }}
-                />
-              ))}
-            </div>
-            
-            <Bot className="w-8 h-8 text-primary-foreground relative z-10" />
-          </motion.button>
+            <motion.button
+              whileHover={!isDragging ? { scale: 1.1 } : {}}
+              whileTap={!isDragging ? { scale: 0.95 } : {}}
+              onClick={(e) => {
+                // Only open if not dragged significantly
+                const totalDrag = Math.abs(bubblePosition.x) + Math.abs(bubblePosition.y);
+                if (totalDrag < 10 && !isDragging) {
+                  handleOpen();
+                }
+              }}
+              className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center ai-agent-bubble relative"
+            >
+              {/* Halo effect */}
+              <div className="absolute inset-0 rounded-full bg-primary/20 ai-agent-halo" />
+              
+              {/* Particles */}
+              <div className="absolute inset-0">
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-2 h-2 bg-primary/60 rounded-full ai-particle"
+                    style={{
+                      left: `${30 + i * 20}%`,
+                      animationDelay: `${i * 0.5}s`
+                    }}
+                  />
+                ))}
+              </div>
+              
+              <Bot className="w-8 h-8 text-primary-foreground relative z-10" />
+              
+              {/* Drag indicator */}
+              {isDragging && (
+                <div className="absolute inset-0 rounded-full border-2 border-primary/50 animate-pulse" />
+              )}
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
 
