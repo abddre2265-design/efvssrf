@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, Edit, Package, Copy, Archive, RotateCcw, History, Trash2 } from 'lucide-react';
+import { Eye, Edit, Package, Copy, Archive, RotateCcw, History, Trash2, ShoppingBag, List } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -18,6 +18,8 @@ interface ProductTableProps {
   onRestore: (product: Product) => void;
   onHistory: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onReserve: (product: Product) => void;
+  onViewReservations: (product: Product) => void;
   canDeleteProduct: (productId: string) => boolean;
 }
 
@@ -31,6 +33,8 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onRestore,
   onHistory,
   onDelete,
+  onReserve,
+  onViewReservations,
   canDeleteProduct,
 }) => {
   const { t } = useLanguage();
@@ -46,14 +50,25 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     if (product.unlimited_stock) {
       return <Badge variant="secondary">{t('unlimited')}</Badge>;
     }
-    const stock = product.current_stock ?? 0;
-    if (stock === 0) {
-      return <Badge variant="destructive">{stock}</Badge>;
+    const available = (product.current_stock ?? 0) - (product.reserved_stock ?? 0);
+    const reserved = product.reserved_stock ?? 0;
+    
+    if (available <= 0 && reserved === 0) {
+      return <Badge variant="destructive">0</Badge>;
     }
-    if (stock < 10) {
-      return <Badge variant="outline" className="text-amber-500 border-amber-500">{stock}</Badge>;
-    }
-    return <Badge variant="outline">{stock}</Badge>;
+    
+    return (
+      <div className="flex flex-col items-center gap-0.5">
+        <Badge variant={available < 10 ? 'outline' : 'outline'} className={available < 10 && available > 0 ? 'text-amber-500 border-amber-500' : available <= 0 ? 'text-destructive border-destructive' : ''}>
+          {available}
+        </Badge>
+        {reserved > 0 && (
+          <span className="text-xs text-muted-foreground">
+            ({reserved} {t('reserved_short')})
+          </span>
+        )}
+      </div>
+    );
   };
 
   if (products.length === 0) {
@@ -82,7 +97,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <TableHead className="text-center">{t('vatRate')}</TableHead>
             <TableHead className="text-right">{t('priceTTC')}</TableHead>
             <TableHead className="text-center">{t('maxDiscount')}</TableHead>
-            <TableHead className="text-center">{t('stock')}</TableHead>
+            <TableHead className="text-center">{t('stock')} / {t('reserved_short')}</TableHead>
             <TableHead className="text-center">{t('year')}</TableHead>
             <TableHead className="text-right">{t('actions')}</TableHead>
           </TableRow>
@@ -205,6 +220,36 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                           </TooltipTrigger>
                           <TooltipContent>{t('duplicate')}</TooltipContent>
                         </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-blue-500 hover:text-blue-600"
+                              onClick={() => onReserve(product)}
+                            >
+                              <ShoppingBag className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('reserve')}</TooltipContent>
+                        </Tooltip>
+
+                        {(product.reserved_stock ?? 0) > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-purple-500 hover:text-purple-600"
+                                onClick={() => onViewReservations(product)}
+                              >
+                                <List className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{t('view_reservations')}</TooltipContent>
+                          </Tooltip>
+                        )}
 
                         {(product.current_stock === 0 || product.unlimited_stock) && (
                           <Tooltip>

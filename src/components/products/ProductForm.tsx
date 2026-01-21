@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Wrench, Search, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Package, Wrench, Search, Loader2, CheckCircle2, XCircle, Barcode } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ProductFormData, UNITS, VAT_RATES } from './types';
 import { useProductValidation } from './useProductValidation';
+import { generateEAN13 } from '@/utils/ean13Generator';
 
 interface ProductFormProps {
   initialData?: Partial<ProductFormData>;
@@ -56,6 +57,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   const [unitSearch, setUnitSearch] = useState('');
   const [unitOpen, setUnitOpen] = useState(false);
+  const [autoGenerateEan, setAutoGenerateEan] = useState(false);
 
   // Auto-set unlimited stock based on product type
   useEffect(() => {
@@ -128,7 +130,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       return;
     }
     
-    onSubmit(data);
+    // Generate EAN if auto-generate is enabled
+    const finalData = { ...data };
+    if (autoGenerateEan) {
+      finalData.ean = generateEAN13();
+    }
+    
+    onSubmit(finalData);
   };
 
   const isPriceDisabled = data.vatRate === null;
@@ -176,7 +184,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 {t('eanBarcode')}
-                {!isEdit && data.ean && (
+                {!isEdit && data.ean && !autoGenerateEan && (
                   <span className="inline-flex items-center">
                     {validation.ean.isChecking ? (
                       <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
@@ -190,21 +198,44 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </Label>
               <div className="relative">
                 <Input
-                  value={data.ean}
+                  value={autoGenerateEan ? t('auto_generated') : data.ean}
                   onChange={(e) => {
-                    setData(prev => ({ ...prev, ean: e.target.value }));
-                    validateField('ean', e.target.value);
+                    if (!autoGenerateEan) {
+                      setData(prev => ({ ...prev, ean: e.target.value }));
+                      validateField('ean', e.target.value);
+                    }
                   }}
                   placeholder={t('optional')}
-                  className={`futuristic-input ${validation.ean.exists ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                  disabled={isEdit}
+                  className={`futuristic-input ${validation.ean.exists && !autoGenerateEan ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  disabled={isEdit || autoGenerateEan}
                 />
               </div>
-              {validation.ean.exists && (
+              {validation.ean.exists && !autoGenerateEan && (
                 <p className="text-xs text-destructive flex items-center gap-1">
                   <XCircle className="w-3 h-3" />
                   {t('productEanExists')}
                 </p>
+              )}
+              
+              {/* Auto-generate EAN switch */}
+              {!isEdit && (
+                <div className="flex items-center justify-between pt-2">
+                  <Label htmlFor="autoEan" className="text-sm flex items-center gap-2">
+                    <Barcode className="h-4 w-4" />
+                    {t('auto_generate_ean')}
+                  </Label>
+                  <Switch
+                    id="autoEan"
+                    checked={autoGenerateEan}
+                    onCheckedChange={(checked) => {
+                      setAutoGenerateEan(checked);
+                      if (checked) {
+                        // Clear manual value when enabling auto-generate
+                        setData(prev => ({ ...prev, ean: '' }));
+                      }
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>
