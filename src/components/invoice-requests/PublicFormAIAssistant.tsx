@@ -115,6 +115,18 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     return null;
   };
 
+  const getFormatHelpMessage = (attempts: number): string => {
+    if (attempts >= 3) {
+      return `📝 Veuillez remplir le formulaire manuellement.\n\nLa prochaine fois, ce sera plus rapide car vos informations seront enregistrées ! 🚀`;
+    }
+
+    if (attempts === 2) {
+      return `🤔 Êtes-vous un client étranger ?\n\nSi oui, essayez avec votre numéro de passeport.\n\nSinon, voici les formats acceptés :\n\n📋 **Formats acceptés :**\n\n🆔 **CIN** (8 chiffres)\n   Exemple : 12345678\n\n🏢 **Matricule fiscal**\n   • Format 1 : 1234567/A\n   • Format 2 : 123456/A\n   • Format 3 : 1234567/A/B/C/000\n   • Format 4 : 123456A/B/C/000\n\n🛂 **Passeport** (format libre)\n   Exemple : Y787678\n\n💡 Ou vous pouvez remplir le formulaire manuellement.`;
+    }
+
+    return `📋 **Formats acceptés :**\n\n🆔 **CIN** (8 chiffres)\n   Exemple : 12345678\n\n🏢 **Matricule fiscal**\n   • Format 1 : 1234567/A\n   • Format 2 : 123456/A  \n   • Format 3 : 1234567/A/B/C/000\n   • Format 4 : 123456A/B/C/000\n\n🛂 **Passeport** (format libre)\n   Exemple : Y787678\n\nVeuillez réessayer avec l'un de ces formats.`;
+  };
+
   const searchClient = async (identifier: string) => {
     setIsLoading(true);
     setState('searching');
@@ -140,8 +152,18 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
         setFoundClient(data.clientData);
         setState('client_found');
       } else {
-        setSearchAttempts(prev => prev + 1);
+        const attempts = searchAttempts + 1;
+        setSearchAttempts(attempts);
         setState('not_found');
+        
+        // Show format help with examples
+        if (data.showFormatHelp) {
+          const formatHelpMessage = getFormatHelpMessage(attempts);
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: formatHelpMessage
+          }]);
+        }
       }
     } catch (error) {
       console.error('Error searching client:', error);
@@ -197,16 +219,12 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
 
   const handleRejectClient = () => {
     setFoundClient(null);
-    setSearchAttempts(prev => prev + 1);
+    const attempts = searchAttempts + 1;
+    setSearchAttempts(attempts);
     setState('not_found');
     
-    let message = "Je comprends, ce n'est pas vous.\n\n";
-    
-    if (searchAttempts >= 1) {
-      message += "Vous pouvez :\n• Essayer un autre identifiant\n• Ou remplir le formulaire manuellement ci-dessous.";
-    } else {
-      message += "Essayez avec un autre format d'identifiant :\n• CIN (8 chiffres)\n• Matricule fiscal\n• Passeport";
-    }
+    const formatHelp = getFormatHelpMessage(attempts);
+    const message = `Je comprends, ce n'est pas vous.\n\n${formatHelp}`;
 
     setMessages(prev => [...prev, 
       { role: 'user', content: "Ce n'est pas moi" },
