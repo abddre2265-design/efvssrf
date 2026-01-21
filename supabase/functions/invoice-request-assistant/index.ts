@@ -122,12 +122,13 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       } else {
-        // Client not found
+        // Client not found - provide detailed format examples
         return new Response(JSON.stringify({
           action: "not_found",
-          message: `❌ Aucun client trouvé avec cet identifiant.\n\nVous pouvez essayer :\n• Un autre format (CIN, matricule fiscal, passeport)\n• Vérifier l'orthographe\n\nOu remplir le formulaire manuellement.`,
+          message: `❌ Aucun client trouvé avec cet identifiant.`,
           clientData: null,
-          pendingRequests: searchResults.pendingRequests
+          pendingRequests: searchResults.pendingRequests,
+          showFormatHelp: true
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
