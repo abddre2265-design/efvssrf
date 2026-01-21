@@ -12,8 +12,12 @@ import {
   CheckCircle2, 
   XCircle,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  AlertTriangle,
+  Clock
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
@@ -40,6 +44,14 @@ interface ClientData {
   email: string | null;
 }
 
+interface PendingRequest {
+  id: string;
+  request_number: string;
+  identifier_value: string;
+  status: string;
+  created_at: string;
+}
+
 interface PublicFormAIAssistantProps {
   organizationId: string;
   organizationName: string;
@@ -59,6 +71,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [foundClient, setFoundClient] = useState<ClientData | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [state, setState] = useState<AssistantState>('greeting');
   const [searchAttempts, setSearchAttempts] = useState(0);
@@ -130,6 +143,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
   const searchClient = async (identifier: string) => {
     setIsLoading(true);
     setState('searching');
+    setPendingRequests([]);
 
     try {
       const { data, error } = await supabase.functions.invoke('invoice-request-assistant', {
@@ -142,6 +156,19 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
       });
 
       if (error) throw error;
+
+      // Handle pending requests - show warning if they exist
+      if (data.pendingRequests && data.pendingRequests.length > 0) {
+        setPendingRequests(data.pendingRequests);
+        const pendingMsg = data.pendingRequests.length === 1
+          ? `⚠️ **Attention :** Une demande est déjà en attente pour cet identifiant (N° ${data.pendingRequests[0].request_number}).\n\nVous pouvez continuer si c'est une nouvelle demande.`
+          : `⚠️ **Attention :** ${data.pendingRequests.length} demandes sont déjà en attente pour cet identifiant.\n\nVous pouvez continuer si c'est une nouvelle demande.`;
+        
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: pendingMsg
+        }]);
+      }
 
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -320,6 +347,36 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                 </motion.div>
               ))}
             </AnimatePresence>
+
+            {/* Pending requests warning card */}
+            {pendingRequests.length > 0 && state !== 'confirmed' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-start"
+              >
+                <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-muted rounded-bl-md">
+                  <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="font-medium text-sm text-amber-800 dark:text-amber-200">
+                        {pendingRequests.length === 1 ? 'Demande en attente' : `${pendingRequests.length} demandes en attente`}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {pendingRequests.map((req) => (
+                        <div key={req.id} className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
+                          <Clock className="h-3 w-3" />
+                          <span>N° {req.request_number}</span>
+                          <span className="text-amber-500">•</span>
+                          <span>{format(new Date(req.created_at), 'dd/MM/yyyy', { locale: fr })}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Client confirmation card - shown when client found */}
             {state === 'client_found' && foundClient && (
