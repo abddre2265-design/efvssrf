@@ -1139,6 +1139,31 @@ export const translations: Translations = {
   standard_creation_description: { fr: 'Créer une facture manuellement avec le formulaire classique. Détection automatique des réservations.', en: 'Create an invoice manually with the classic form. Automatic reservation detection.', ar: 'إنشاء فاتورة يدويًا باستخدام النموذج الكلاسيكي. الكشف التلقائي عن الحجوزات.' },
   ai_generation: { fr: 'Génération par IA', en: 'AI generation', ar: 'الإنشاء بالذكاء الاصطناعي' },
   ai_generation_description: { fr: 'Générer automatiquement une facture avec l\'aide de l\'intelligence artificielle.', en: 'Automatically generate an invoice with the help of artificial intelligence.', ar: 'إنشاء فاتورة تلقائيًا بمساعدة الذكاء الاصطناعي.' },
+  
+  // Points of Sale / Stores
+  pointsOfSaleDescription: { fr: 'Gérer vos magasins et leurs adresses', en: 'Manage your stores and their addresses', ar: 'إدارة متاجرك وعناوينها' },
+  storeName: { fr: 'Nom du magasin', en: 'Store Name', ar: 'اسم المتجر' },
+  storeNamePlaceholder: { fr: 'Ex: Magasin Centre Ville', en: 'Ex: Downtown Store', ar: 'مثال: متجر وسط المدينة' },
+  storeNameRequired: { fr: 'Le nom du magasin est requis', en: 'Store name is required', ar: 'اسم المتجر مطلوب' },
+  createStore: { fr: 'Créer un magasin', en: 'Create Store', ar: 'إنشاء متجر' },
+  editStore: { fr: 'Modifier le magasin', en: 'Edit Store', ar: 'تعديل المتجر' },
+  addStore: { fr: 'Ajouter un magasin', en: 'Add Store', ar: 'إضافة متجر' },
+  storeCreated: { fr: 'Magasin créé avec succès', en: 'Store created successfully', ar: 'تم إنشاء المتجر بنجاح' },
+  storeUpdated: { fr: 'Magasin mis à jour avec succès', en: 'Store updated successfully', ar: 'تم تحديث المتجر بنجاح' },
+  storeActivated: { fr: 'Magasin activé', en: 'Store activated', ar: 'تم تفعيل المتجر' },
+  storeDeactivated: { fr: 'Magasin désactivé', en: 'Store deactivated', ar: 'تم إلغاء تفعيل المتجر' },
+  googleMapsLink: { fr: 'Lien Google Maps', en: 'Google Maps Link', ar: 'رابط خرائط جوجل' },
+  viewOnMap: { fr: 'Voir sur la carte', en: 'View on map', ar: 'عرض على الخريطة' },
+  searchStores: { fr: 'Rechercher des magasins...', en: 'Search stores...', ar: 'البحث عن متاجر...' },
+  noStoresFound: { fr: 'Aucun magasin trouvé', en: 'No stores found', ar: 'لم يتم العثور على متاجر' },
+  showInactive: { fr: 'Afficher les inactifs', en: 'Show inactive', ar: 'عرض غير النشطة' },
+  storeActive: { fr: 'Actif', en: 'Active', ar: 'نشط' },
+  storeInactive: { fr: 'Inactif', en: 'Inactive', ar: 'غير نشط' },
+  deactivate: { fr: 'Désactiver', en: 'Deactivate', ar: 'إلغاء التفعيل' },
+  activateStore: { fr: 'Activer', en: 'Activate', ar: 'تفعيل' },
+  storeContact: { fr: 'Contact', en: 'Contact', ar: 'الاتصال' },
+  addressPlaceholder: { fr: 'Rue, numéro...', en: 'Street, number...', ar: 'الشارع، الرقم...' },
+  cityPlaceholder: { fr: 'Ex: Tunis', en: 'Ex: Tunis', ar: 'مثال: تونس' },
 };
 
 // Tunisian Governorates
