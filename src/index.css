@@ -1,0 +1,434 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Gaara Ledger - Futuristic Design System */
+
+@layer base {
+  :root {
+    --background: 30 20% 97%;
+    --foreground: 20 25% 10%;
+
+    --card: 30 25% 95%;
+    --card-foreground: 20 25% 10%;
+
+    --popover: 30 25% 95%;
+    --popover-foreground: 20 25% 10%;
+
+    --primary: 350 60% 35%;
+    --primary-foreground: 30 30% 97%;
+
+    --secondary: 35 45% 75%;
+    --secondary-foreground: 20 25% 15%;
+
+    --muted: 30 20% 90%;
+    --muted-foreground: 20 15% 45%;
+
+    --accent: 35 55% 55%;
+    --accent-foreground: 20 25% 10%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 20% 85%;
+    --input: 30 20% 88%;
+    --ring: 350 60% 35%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 30 20% 95%;
+    --sidebar-foreground: 20 25% 15%;
+    --sidebar-primary: 350 60% 35%;
+    --sidebar-primary-foreground: 30 30% 97%;
+    --sidebar-accent: 35 45% 85%;
+    --sidebar-accent-foreground: 20 25% 15%;
+    --sidebar-border: 30 20% 85%;
+    --sidebar-ring: 350 60% 35%;
+  }
+
+  .dark {
+    --background: 20 30% 6%;
+    --foreground: 30 25% 95%;
+
+    --card: 20 30% 10%;
+    --card-foreground: 30 25% 95%;
+
+    --popover: 20 30% 10%;
+    --popover-foreground: 30 25% 95%;
+
+    --primary: 350 60% 50%;
+    --primary-foreground: 20 30% 5%;
+
+    --secondary: 35 35% 25%;
+    --secondary-foreground: 30 25% 95%;
+
+    --muted: 20 25% 18%;
+    --muted-foreground: 30 15% 60%;
+
+    --accent: 35 55% 45%;
+    --accent-foreground: 30 25% 95%;
+
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 20 25% 20%;
+    --input: 20 25% 18%;
+    --ring: 350 60% 50%;
+
+    --sidebar-background: 20 30% 8%;
+    --sidebar-foreground: 30 25% 90%;
+    --sidebar-primary: 350 60% 50%;
+    --sidebar-primary-foreground: 20 30% 5%;
+    --sidebar-accent: 35 35% 20%;
+    --sidebar-accent-foreground: 30 25% 90%;
+    --sidebar-border: 20 25% 18%;
+    --sidebar-ring: 350 60% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer utilities {
+  /* Futuristic glass effect */
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  .glass-strong {
+    @apply bg-card/95 backdrop-blur-2xl border border-border/70;
+  }
+
+  /* Animated gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+    background-size: 200% auto;
+    animation: gradient-shift 3s linear infinite;
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3),
+                0 0 40px hsl(var(--primary) / 0.2),
+                0 0 60px hsl(var(--primary) / 0.1);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 20px hsl(var(--accent) / 0.3),
+                0 0 40px hsl(var(--accent) / 0.2);
+  }
+
+  /* Futuristic input styling */
+  .futuristic-input {
+    @apply bg-input/50 border-border/50 focus:border-primary/70 focus:ring-2 focus:ring-primary/20 transition-all duration-300;
+  }
+
+  /* Scan line animation */
+  .scan-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary)), transparent);
+    animation: scan 2s linear infinite;
+  }
+
+  /* Cyber grid background */
+  .cyber-grid {
+    background-image: 
+      linear-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* AI Agent Pulse Animation */
+@keyframes ai-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.4),
+                0 0 40px hsl(var(--primary) / 0.2),
+                0 0 60px hsl(var(--primary) / 0.1);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.6),
+                0 0 60px hsl(var(--primary) / 0.4),
+                0 0 90px hsl(var(--primary) / 0.2);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes ai-thinking {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes ai-halo {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.ai-agent-bubble {
+  animation: ai-pulse 2s ease-in-out infinite;
+}
+
+.ai-agent-thinking {
+  background: linear-gradient(270deg, 
+    hsl(var(--primary)), 
+    hsl(var(--accent)), 
+    hsl(var(--primary)));
+  background-size: 400% 400%;
+  animation: ai-thinking 1.5s ease infinite;
+}
+
+.ai-agent-halo {
+  animation: ai-halo 2s ease-in-out infinite;
+}
+
+.ai-particle {
+  animation: particle-float 2s ease-in-out infinite;
+}
+
+/* Futuristic Sidebar Styles */
+.sidebar-futuristic {
+  @apply relative overflow-hidden;
+  background: linear-gradient(
+    180deg,
+    hsl(var(--card) / 0.8) 0%,
+    hsl(var(--card) / 0.6) 100%
+  );
+  backdrop-filter: blur(20px);
+  border-right: 1px solid hsl(var(--border) / 0.3);
+}
+
+.sidebar-futuristic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--primary) / 0.5),
+    transparent
+  );
+}
+
+.sidebar-futuristic.rtl {
+  border-right: none;
+  border-left: 1px solid hsl(var(--border) / 0.3);
+}
+
+.sidebar-menu-item {
+  @apply relative transition-all duration-300;
+}
+
+.sidebar-menu-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 60%;
+  background: hsl(var(--primary));
+  border-radius: 0 4px 4px 0;
+  transition: width 0.3s ease;
+}
+
+.sidebar-menu-item.rtl::before {
+  left: auto;
+  right: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+.sidebar-menu-item.active::before {
+  width: 3px;
+}
+
+.sidebar-menu-item:hover::before {
+  width: 3px;
+  background: hsl(var(--primary) / 0.5);
+}
+
+.sidebar-menu-item.active:hover::before {
+  background: hsl(var(--primary));
+}
+
+/* Neon glow effect for icons */
+.icon-neon {
+  filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.3));
+  transition: filter 0.3s ease;
+}
+
+.icon-neon.active {
+  filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.6))
+          drop-shadow(0 0 12px hsl(var(--primary) / 0.3));
+}
+
+.sidebar-menu-item:hover .icon-neon {
+  filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.4));
+}
+
+/* Active halo effect */
+@keyframes sidebar-halo {
+  0%, 100% {
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.3),
+                0 0 16px hsl(var(--primary) / 0.1);
+  }
+  50% {
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.5),
+                0 0 24px hsl(var(--primary) / 0.2);
+  }
+}
+
+.sidebar-active-halo {
+  animation: sidebar-halo 2s ease-in-out infinite;
+}
+
+/* Group header styles */
+.sidebar-group-header {
+  @apply relative;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted) / 0.3) 0%,
+    transparent 100%
+  );
+}
+
+.sidebar-group-header.rtl {
+  background: linear-gradient(
+    -90deg,
+    hsl(var(--muted) / 0.3) 0%,
+    transparent 100%
+  );
+}
+
+/* Scan line effect for sidebar */
+@keyframes sidebar-scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+.sidebar-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--primary) / 0.3),
+    transparent
+  );
+  animation: sidebar-scan 8s linear infinite;
+  pointer-events: none;
+}
+
+/* Collapse button glow */
+.sidebar-collapse-btn {
+  @apply relative overflow-hidden;
+}
+
+.sidebar-collapse-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    hsl(var(--primary) / 0.2) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-collapse-btn:hover::after {
+  opacity: 1;
+}
+
+/* RTL support for Arabic */
+[dir="rtl"] {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
