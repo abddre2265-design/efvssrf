@@ -31,6 +31,10 @@ interface PendingRequest {
   identifier_value: string;
   status: string;
   created_at: string;
+  transaction_number: string;
+  total_ttc: number;
+  store_id: string | null;
+  purchase_date: string;
 }
 
 serve(async (req) => {
@@ -89,12 +93,12 @@ serve(async (req) => {
       // Search in pending invoice requests (for info only)
       const { data: pendingData } = await supabase
         .from("invoice_requests")
-        .select("id, request_number, identifier_value, status, created_at")
+        .select("id, request_number, identifier_value, status, created_at, transaction_number, total_ttc, store_id, purchase_date")
         .eq("organization_id", organizationId)
         .ilike("identifier_value", identifier)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
-        .limit(3);
+        .limit(5);
 
       if (pendingData && pendingData.length > 0) {
         searchResults.pendingRequests = pendingData;

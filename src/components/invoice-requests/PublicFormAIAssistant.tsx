@@ -50,12 +50,17 @@ interface PendingRequest {
   identifier_value: string;
   status: string;
   created_at: string;
+  transaction_number: string;
+  total_ttc: number;
+  store_id: string | null;
+  purchase_date: string;
 }
 
 interface PublicFormAIAssistantProps {
   organizationId: string;
   organizationName: string;
   onClientFound: (client: ClientData) => void;
+  onLoadPendingRequest: (request: PendingRequest) => void;
   onClose: () => void;
 }
 
@@ -65,6 +70,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
   organizationId,
   organizationName,
   onClientFound,
+  onLoadPendingRequest,
   onClose,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -259,6 +265,17 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     ]);
   };
 
+  const handleLoadPendingRequest = (request: PendingRequest) => {
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: `📋 Demande N° ${request.request_number} chargée !\n\n• Transaction: ${request.transaction_number}\n• Montant: ${request.total_ttc?.toFixed(3)} TND\n• Date d'achat: ${format(new Date(request.purchase_date), 'dd/MM/yyyy', { locale: fr })}\n\n⚠️ Cette demande existe déjà. Vous ne pouvez pas soumettre une nouvelle demande avec le même numéro de transaction.`
+    }]);
+    
+    onLoadPendingRequest(request);
+    setState('confirmed');
+    setTimeout(() => setIsMinimized(true), 1500);
+  };
+
   const getClientDisplayName = (client: ClientData) => {
     if (client.company_name) return client.company_name;
     return `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Client';
@@ -363,14 +380,28 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                         {pendingRequests.length === 1 ? 'Demande en attente' : `${pendingRequests.length} demandes en attente`}
                       </span>
                     </div>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+                      Cliquez sur une demande pour voir ses détails :
+                    </p>
                     <div className="space-y-2">
                       {pendingRequests.map((req) => (
-                        <div key={req.id} className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
-                          <Clock className="h-3 w-3" />
-                          <span>N° {req.request_number}</span>
-                          <span className="text-amber-500">•</span>
-                          <span>{format(new Date(req.created_at), 'dd/MM/yyyy', { locale: fr })}</span>
-                        </div>
+                        <button
+                          key={req.id}
+                          onClick={() => handleLoadPendingRequest(req)}
+                          className="w-full flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300 p-2 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors text-left"
+                        >
+                          <Clock className="h-3 w-3 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">N° {req.request_number}</span>
+                              <span className="text-amber-500">•</span>
+                              <span>{format(new Date(req.created_at), 'dd/MM/yyyy', { locale: fr })}</span>
+                            </div>
+                            <div className="text-amber-600/70 dark:text-amber-400/70 truncate">
+                              Transaction: {req.transaction_number} • {req.total_ttc?.toFixed(3)} TND
+                            </div>
+                          </div>
+                        </button>
                       ))}
                     </div>
                   </div>
