@@ -6,11 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
-
 interface ClientResult {
   id: string;
   client_type: string;
@@ -44,14 +39,9 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, organizationId, organizationName, searchIdentifier } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const { action, organizationId, organizationName, searchIdentifier } = await req.json();
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error("Supabase credentials not configured");
@@ -59,21 +49,36 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // If searching for a client
-    let searchResults: { client: ClientResult | null; pendingRequests: PendingRequest[] } = {
-      client: null,
-      pendingRequests: []
-    };
+    // Action: greeting - Return welcome message
+    if (action === "greeting") {
+      return new Response(JSON.stringify({
+        action: "greeting",
+        message: `Bienvenue ! 👋\n\nSi vous avez effectué un achat chez « ${organizationName} », vous pouvez saisir votre identifiant fiscal pour récupérer automatiquement vos informations.\n\n📋 Formats acceptés :\n• CIN : 8 chiffres\n• Matricule fiscal : 1234567/A/M/000\n• Passeport : format libre`,
+        clientData: null,
+        pendingRequests: null
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    if (searchIdentifier) {
-      const identifier = searchIdentifier.trim();
+    // Action: search - Search for client by identifier
+    if (action === "search" && searchIdentifier) {
+      const identifier = searchIdentifier.trim().toUpperCase();
       
-      // Search in clients
+      let searchResults: { 
+        client: ClientResult | null; 
+        pendingRequests: PendingRequest[];
+      } = {
+        client: null,
+        pendingRequests: []
+      };
+
+      // Search in clients table
       const { data: clientData } = await supabase
         .from("clients")
         .select("*")
         .eq("organization_id", organizationId)
-        .eq("identifier_value", identifier)
+        .ilike("identifier_value", identifier)
         .eq("status", "active")
         .maybeSingle();
 
@@ -81,149 +86,72 @@ serve(async (req) => {
         searchResults.client = clientData;
       }
 
-      // Search in pending invoice requests
+      // Search in pending invoice requests (for info only)
       const { data: pendingData } = await supabase
         .from("invoice_requests")
         .select("id, request_number, identifier_value, status, created_at")
         .eq("organization_id", organizationId)
-        .eq("identifier_value", identifier)
+        .ilike("identifier_value", identifier)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(3);
 
       if (pendingData && pendingData.length > 0) {
         searchResults.pendingRequests = pendingData;
       }
-    }
 
-    const systemPrompt = `Tu es un assistant IA pour le formulaire de demande de facture de "${organizationName}". Tu aides les utilisateurs à récupérer leurs informations client automatiquement.
+      // Build response based on search results
+      if (searchResults.client) {
+        const client = searchResults.client;
+        const displayName = client.company_name || 
+          `${client.first_name || ''} ${client.last_name || ''}`.trim() || 
+          'Client';
+        
+        let message = `✅ Client trouvé !\n\n👤 ${displayName}`;
+        if (client.email) message += `\n📧 ${client.email}`;
+        if (client.phone) message += `\n📱 ${client.phone_prefix || ''} ${client.phone}`;
+        if (client.address) message += `\n📍 ${client.address}`;
+        message += `\n\nEst-ce bien vous ?`;
 
-COMPORTEMENT:
-- Sois poli, professionnel et concis
-- Utilise le vouvoiement
-- Réponds toujours en français
-
-ÉTAPES:
-1. Accueil: Si c'est le premier message (messages vides), accueille l'utilisateur et explique qu'il peut saisir son identifiant pour récupérer ses informations automatiquement.
-
-2. Recherche: Quand l'utilisateur fournit un identifiant:
-   - CIN: 8 chiffres (ex: 12345678)
-   - Matricule fiscal: formats NNNNNNN/X, NNNNNNN/X/X, NNNNNNX/X/X/NNN, NNNNNNN/X/X/X/NNN
-   - Passeport: format libre
-
-3. Résultats:
-   - Si client trouvé: Affiche le nom et demande confirmation "Est-ce bien vous ?"
-   - Si demande en attente trouvée: Informe qu'une demande existe déjà
-   - Si non trouvé: Propose d'autres formats ou suggère la saisie manuelle
-
-RÉPONSE JSON (obligatoire):
-{
-  "message": "Ton message à l'utilisateur",
-  "action": "none" | "client_found" | "pending_found" | "not_found" | "confirm_client" | "fill_form",
-  "clientData": null | { données du client },
-  "extractedIdentifier": null | "identifiant extrait du message"
-}
-
-DONNÉES DE RECHERCHE:
-${searchIdentifier ? JSON.stringify(searchResults, null, 2) : "Aucune recherche effectuée"}`;
-
-    const aiMessages: Message[] = [
-      { role: "user" as const, content: messages.length === 0 ? "Bonjour" : messages[messages.length - 1].content }
-    ];
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...aiMessages,
-        ],
-        temperature: 0.3,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
         return new Response(JSON.stringify({
-          message: "Service temporairement indisponible. Veuillez remplir le formulaire manuellement.",
-          action: "error",
-          clientData: null,
-          extractedIdentifier: null
+          action: "client_found",
+          message,
+          clientData: searchResults.client,
+          pendingRequests: searchResults.pendingRequests
         }), {
-          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } else {
+        // Client not found
+        return new Response(JSON.stringify({
+          action: "not_found",
+          message: `❌ Aucun client trouvé avec cet identifiant.\n\nVous pouvez essayer :\n• Un autre format (CIN, matricule fiscal, passeport)\n• Vérifier l'orthographe\n\nOu remplir le formulaire manuellement.`,
+          clientData: null,
+          pendingRequests: searchResults.pendingRequests
+        }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({
-          message: "Service indisponible. Veuillez remplir le formulaire manuellement.",
-          action: "error",
-          clientData: null,
-          extractedIdentifier: null
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
     }
 
-    const aiData = await response.json();
-    const content = aiData.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("No response from AI");
-    }
-
-    // Parse JSON from response
-    let jsonStr = content;
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1];
-    }
-
-    let result;
-    try {
-      result = JSON.parse(jsonStr);
-    } catch {
-      // If JSON parsing fails, create a simple response
-      result = {
-        message: content,
-        action: "none",
-        clientData: null,
-        extractedIdentifier: null
-      };
-    }
-
-    // If client was found in DB, attach the data
-    if (searchResults.client && (result.action === "client_found" || result.action === "confirm_client")) {
-      result.clientData = searchResults.client;
-    }
-
-    // If pending requests found
-    if (searchResults.pendingRequests.length > 0) {
-      result.pendingRequests = searchResults.pendingRequests;
-    }
-
-    return new Response(JSON.stringify(result), {
+    // Default response
+    return new Response(JSON.stringify({
+      action: "unknown",
+      message: "Je n'ai pas compris. Veuillez saisir votre identifiant fiscal (CIN, matricule fiscal ou passeport).",
+      clientData: null,
+      pendingRequests: null
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
     console.error("Invoice request assistant error:", error);
 
     return new Response(JSON.stringify({
-      message: "Une erreur s'est produite. Veuillez remplir le formulaire manuellement.",
       action: "error",
+      message: "Une erreur s'est produite. Veuillez remplir le formulaire manuellement.",
       clientData: null,
-      extractedIdentifier: null
+      pendingRequests: null
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

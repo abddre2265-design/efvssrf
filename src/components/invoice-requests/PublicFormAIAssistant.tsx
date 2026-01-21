@@ -3,10 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  Bot, 
   X, 
   Send, 
   Loader2, 
@@ -21,8 +19,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
-  action?: string;
-  clientData?: any;
 }
 
 interface ClientData {
@@ -51,6 +47,8 @@ interface PublicFormAIAssistantProps {
   onClose: () => void;
 }
 
+type AssistantState = 'greeting' | 'waiting_input' | 'searching' | 'client_found' | 'not_found' | 'confirmed' | 'manual';
+
 export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
   organizationId,
   organizationName,
@@ -62,13 +60,10 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [foundClient, setFoundClient] = useState<ClientData | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [state, setState] = useState<AssistantState>('greeting');
+  const [searchAttempts, setSearchAttempts] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Initial greeting
-  useEffect(() => {
-    initializeAssistant();
-  }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -77,15 +72,19 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     }
   }, [messages]);
 
+  // Initial greeting
+  useEffect(() => {
+    initializeAssistant();
+  }, []);
+
   const initializeAssistant = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('invoice-request-assistant', {
         body: {
-          messages: [],
+          action: 'greeting',
           organizationId,
           organizationName,
-          searchIdentifier: null
         }
       });
 
@@ -93,54 +92,37 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
 
       setMessages([{
         role: 'assistant',
-        content: data.message || `Bienvenue ! Si vous avez effectué un achat chez "${organizationName}", vous pouvez saisir votre identifiant fiscal (CIN, matricule fiscal ou passeport) pour récupérer automatiquement vos informations.`,
-        action: 'greeting'
+        content: data.message
       }]);
+      setState('waiting_input');
     } catch (error) {
       console.error('Error initializing assistant:', error);
       setMessages([{
         role: 'assistant',
-        content: `Bienvenue ! Si vous avez effectué un achat chez "${organizationName}", vous pouvez saisir votre identifiant (CIN, matricule fiscal ou passeport) pour récupérer automatiquement vos informations.`,
-        action: 'greeting'
+        content: `Bienvenue ! 👋\n\nSi vous avez effectué un achat chez « ${organizationName} », vous pouvez saisir votre identifiant fiscal pour récupérer automatiquement vos informations.`
       }]);
+      setState('waiting_input');
     } finally {
       setIsLoading(false);
     }
   };
 
   const extractIdentifier = (text: string): string | null => {
-    // CIN: 8 digits
-    const cinMatch = text.match(/\b\d{8}\b/);
-    if (cinMatch) return cinMatch[0];
-
-    // Tax ID formats
-    const taxIdMatch = text.match(/\b\d{6,7}[A-Z]?\/[A-Z](?:\/[A-Z](?:\/[A-Z])?(?:\/\d{3})?)?\b/i);
-    if (taxIdMatch) return taxIdMatch[0].toUpperCase();
-
-    // If it's a short string that could be an identifier
     const trimmed = text.trim();
-    if (trimmed.length >= 6 && trimmed.length <= 20 && !trimmed.includes(' ')) {
+    if (trimmed.length >= 6 && trimmed.length <= 30) {
       return trimmed;
     }
-
     return null;
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMessage = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+  const searchClient = async (identifier: string) => {
     setIsLoading(true);
+    setState('searching');
 
     try {
-      // Extract potential identifier from message
-      const identifier = extractIdentifier(userMessage);
-
       const { data, error } = await supabase.functions.invoke('invoice-request-assistant', {
         body: {
-          messages: [...messages, { role: 'user', content: userMessage }],
+          action: 'search',
           organizationId,
           organizationName,
           searchIdentifier: identifier
@@ -149,54 +131,86 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
 
       if (error) throw error;
 
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: data.message,
-        action: data.action,
-        clientData: data.clientData
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // If client found, store it for confirmation
-      if (data.clientData && (data.action === 'client_found' || data.action === 'confirm_client')) {
-        setFoundClient(data.clientData);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "Désolé, une erreur s'est produite. Vous pouvez remplir le formulaire manuellement.",
-        action: 'error'
+        content: data.message
       }]);
+
+      if (data.action === 'client_found' && data.clientData) {
+        setFoundClient(data.clientData);
+        setState('client_found');
+      } else {
+        setSearchAttempts(prev => prev + 1);
+        setState('not_found');
+      }
+    } catch (error) {
+      console.error('Error searching client:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "Une erreur s'est produite. Veuillez réessayer ou remplir le formulaire manuellement."
+      }]);
+      setState('not_found');
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
     }
   };
 
-  const handleConfirmClient = () => {
-    if (foundClient) {
-      onClientFound(foundClient);
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = input.trim();
+    setInput('');
+    
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+
+    const identifier = extractIdentifier(userMessage);
+    if (identifier) {
+      await searchClient(identifier);
+    } else {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "Parfait ! Vos informations ont été pré-remplies dans le formulaire. Vous pouvez les vérifier et compléter les détails de votre transaction.",
-        action: 'fill_form'
+        content: "Veuillez saisir un identifiant valide (CIN à 8 chiffres, matricule fiscal, ou passeport)."
       }]);
-      setFoundClient(null);
-      setTimeout(() => setIsMinimized(true), 1500);
+    }
+  };
+
+  const handleConfirmClient = () => {
+    if (foundClient) {
+      setState('confirmed');
+      setMessages(prev => [...prev, 
+        { role: 'user', content: "Oui, c'est moi ✓" },
+        {
+          role: 'assistant',
+          content: "Parfait ! ✨\n\nVos informations ont été pré-remplies dans le formulaire.\n\nVous pouvez maintenant compléter les détails de votre transaction."
+        }
+      ]);
+      
+      // Auto-fill form and minimize after short delay
+      setTimeout(() => {
+        onClientFound(foundClient);
+        setFoundClient(null);
+        setTimeout(() => setIsMinimized(true), 1000);
+      }, 500);
     }
   };
 
   const handleRejectClient = () => {
     setFoundClient(null);
+    setSearchAttempts(prev => prev + 1);
+    setState('not_found');
+    
+    let message = "Je comprends, ce n'est pas vous.\n\n";
+    
+    if (searchAttempts >= 1) {
+      message += "Vous pouvez :\n• Essayer un autre identifiant\n• Ou remplir le formulaire manuellement ci-dessous.";
+    } else {
+      message += "Essayez avec un autre format d'identifiant :\n• CIN (8 chiffres)\n• Matricule fiscal\n• Passeport";
+    }
+
     setMessages(prev => [...prev, 
       { role: 'user', content: "Ce n'est pas moi" },
-      {
-        role: 'assistant',
-        content: "Je comprends. Essayez avec un autre format d'identifiant (CIN, matricule fiscal ou passeport), ou vous pouvez remplir le formulaire manuellement.",
-        action: 'not_found'
-      }
+      { role: 'assistant', content: message }
     ]);
   };
 
@@ -205,6 +219,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     return `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Client';
   };
 
+  // Minimized bubble view
   if (isMinimized) {
     return (
       <motion.div
@@ -283,49 +298,60 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    
-                    {/* Client confirmation buttons */}
-                    {message.action === 'confirm_client' && foundClient && (
-                      <div className="mt-3 p-3 rounded-lg bg-background/50 border">
-                        <div className="flex items-center gap-2 mb-2">
-                          <User className="h-4 w-4" />
-                          <span className="font-medium text-sm">
-                            {getClientDisplayName(foundClient)}
-                          </span>
-                        </div>
-                        {foundClient.email && (
-                          <p className="text-xs text-muted-foreground">{foundClient.email}</p>
-                        )}
-                        {foundClient.phone && (
-                          <p className="text-xs text-muted-foreground">
-                            {foundClient.phone_prefix} {foundClient.phone}
-                          </p>
-                        )}
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            size="sm"
-                            onClick={handleConfirmClient}
-                            className="flex-1"
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Oui, c'est moi
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleRejectClient}
-                            className="flex-1"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Non
-                          </Button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
+
+            {/* Client confirmation card - shown when client found */}
+            {state === 'client_found' && foundClient && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-start"
+              >
+                <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-muted rounded-bl-md">
+                  <div className="p-3 rounded-lg bg-background border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="h-4 w-4 text-primary" />
+                      <span className="font-medium text-sm">
+                        {getClientDisplayName(foundClient)}
+                      </span>
+                    </div>
+                    {foundClient.email && (
+                      <p className="text-xs text-muted-foreground">📧 {foundClient.email}</p>
+                    )}
+                    {foundClient.phone && (
+                      <p className="text-xs text-muted-foreground">
+                        📱 {foundClient.phone_prefix} {foundClient.phone}
+                      </p>
+                    )}
+                    {foundClient.address && (
+                      <p className="text-xs text-muted-foreground">📍 {foundClient.address}</p>
+                    )}
+                    <div className="flex gap-2 mt-3">
+                      <Button
+                        size="sm"
+                        onClick={handleConfirmClient}
+                        className="flex-1"
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Oui, c'est moi
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleRejectClient}
+                        className="flex-1"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Non
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {isLoading && (
               <motion.div
@@ -344,38 +370,49 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
           </div>
         </ScrollArea>
 
-        {/* Input */}
-        <div className="p-4 border-t bg-muted/30">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage();
-            }}
-            className="flex gap-2"
-          >
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Saisissez votre identifiant..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Ou{' '}
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-primary underline hover:no-underline"
+        {/* Input - hidden when client found and waiting for confirmation */}
+        {state !== 'client_found' && state !== 'confirmed' && (
+          <div className="p-4 border-t bg-muted/30">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage();
+              }}
+              className="flex gap-2"
             >
-              remplir manuellement
-            </button>
-          </p>
-        </div>
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Saisissez votre identifiant..."
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Ou{' '}
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-primary underline hover:no-underline"
+              >
+                remplir manuellement
+              </button>
+            </p>
+          </div>
+        )}
+
+        {/* Confirmed state - show close button */}
+        {state === 'confirmed' && (
+          <div className="p-4 border-t bg-muted/30 text-center">
+            <p className="text-sm text-muted-foreground">
+              Formulaire pré-rempli ✨
+            </p>
+          </div>
+        )}
       </Card>
     </motion.div>
   );
