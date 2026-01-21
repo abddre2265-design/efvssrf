@@ -92,7 +92,6 @@ const PdfSettings: React.FC = () => {
             {t('delivery_note_template')}
           </TabsTrigger>
         </TabsList>
-        </TabsList>
 
         <TabsContent value="invoice" className="mt-6">
           <PdfSettingsContent
@@ -113,6 +112,21 @@ const PdfSettings: React.FC = () => {
           <PdfSettingsContent
             documentType="credit-note"
             components={creditNoteComponents}
+            onToggleComponent={handleToggleComponent}
+            showAIAgent={showAIAgent}
+            setShowAIAgent={setShowAIAgent}
+            previewKey={previewKey}
+            enabledCount={enabledCount}
+            totalCount={totalCount}
+            t={t}
+            isRTL={isRTL}
+          />
+        </TabsContent>
+
+        <TabsContent value="delivery-note" className="mt-6">
+          <PdfSettingsContent
+            documentType="delivery-note"
+            components={deliveryNoteComponents}
             onToggleComponent={handleToggleComponent}
             showAIAgent={showAIAgent}
             setShowAIAgent={setShowAIAgent}
