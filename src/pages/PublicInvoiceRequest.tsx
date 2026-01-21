@@ -328,6 +328,23 @@ const PublicInvoiceRequest: React.FC = () => {
   const handleSubmit = async () => {
     if (!validate()) return;
 
+    // Check if transaction number already exists
+    const { data: existingRequest } = await supabase
+      .from('invoice_requests')
+      .select('id, request_number')
+      .eq('organization_id', organizationId)
+      .eq('transaction_number', transactionNumber.trim())
+      .maybeSingle();
+
+    if (existingRequest) {
+      setErrors(prev => ({
+        ...prev,
+        transactionNumber: `Ce numéro de transaction existe déjà (Demande N° ${existingRequest.request_number})`
+      }));
+      toast.error('Ce numéro de transaction a déjà été utilisé pour une autre demande');
+      return;
+    }
+
     // Check if partial payment equals total
     if (paymentStatus === 'partial') {
       const paid = parseFloat(paidAmount) || 0;
@@ -1029,6 +1046,13 @@ const PublicInvoiceRequest: React.FC = () => {
             setWhatsapp(client.whatsapp || '');
             setEmail(client.email || '');
             setLinkedClientId(client.id);
+          }}
+          onLoadPendingRequest={(request) => {
+            // Fill transaction data from pending request
+            setTransactionNumber(request.transaction_number);
+            setTotalTTC(String(request.total_ttc));
+            if (request.store_id) setStoreId(request.store_id);
+            if (request.purchase_date) setPurchaseDate(new Date(request.purchase_date));
           }}
           onClose={() => setShowAIAssistant(false)}
         />
