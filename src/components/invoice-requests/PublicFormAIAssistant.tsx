@@ -60,8 +60,9 @@ interface PublicFormAIAssistantProps {
   organizationId: string;
   organizationName: string;
   onClientFound: (client: ClientData) => void;
-  onLoadPendingRequest: (request: PendingRequest) => void;
+  onPendingRequestsFound: (requests: PendingRequest[]) => void;
   onClose: () => void;
+  clientValidated: boolean;
 }
 
 type AssistantState = 'greeting' | 'waiting_input' | 'searching' | 'client_found' | 'not_found' | 'confirmed' | 'manual';
@@ -70,8 +71,9 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
   organizationId,
   organizationName,
   onClientFound,
-  onLoadPendingRequest,
+  onPendingRequestsFound,
   onClose,
+  clientValidated,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -163,12 +165,13 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
 
       if (error) throw error;
 
-      // Handle pending requests - show warning if they exist
+      // Handle pending requests - open dialog automatically
       if (data.pendingRequests && data.pendingRequests.length > 0) {
         setPendingRequests(data.pendingRequests);
+        onPendingRequestsFound(data.pendingRequests);
         const pendingMsg = data.pendingRequests.length === 1
-          ? `⚠️ **Attention :** Une demande est déjà en attente pour cet identifiant (N° ${data.pendingRequests[0].request_number}).\n\nVous pouvez continuer si c'est une nouvelle demande.`
-          : `⚠️ **Attention :** ${data.pendingRequests.length} demandes sont déjà en attente pour cet identifiant.\n\nVous pouvez continuer si c'est une nouvelle demande.`;
+          ? `⚠️ **Attention :** Une demande est déjà en attente pour cet identifiant (N° ${data.pendingRequests[0].request_number}).\n\nUne fenêtre s'est ouverte pour voir les détails.`
+          : `⚠️ **Attention :** ${data.pendingRequests.length} demandes sont déjà en attente pour cet identifiant.\n\nUne fenêtre s'est ouverte pour voir les détails.`;
         
         setMessages(prev => [...prev, {
           role: 'assistant',
@@ -265,16 +268,13 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     ]);
   };
 
-  const handleLoadPendingRequest = (request: PendingRequest) => {
-    setMessages(prev => [...prev, {
-      role: 'assistant',
-      content: `📋 Demande N° ${request.request_number} chargée !\n\n• Transaction: ${request.transaction_number}\n• Montant: ${request.total_ttc?.toFixed(3)} TND\n• Date d'achat: ${format(new Date(request.purchase_date), 'dd/MM/yyyy', { locale: fr })}\n\n⚠️ Cette demande existe déjà. Vous ne pouvez pas soumettre une nouvelle demande avec le même numéro de transaction.`
-    }]);
-    
-    onLoadPendingRequest(request);
-    setState('confirmed');
-    setTimeout(() => setIsMinimized(true), 1500);
-  };
+  // Close automatically when client is validated externally
+  useEffect(() => {
+    if (clientValidated && state !== 'confirmed') {
+      setState('confirmed');
+      setIsMinimized(true);
+    }
+  }, [clientValidated]);
 
   const getClientDisplayName = (client: ClientData) => {
     if (client.company_name) return client.company_name;
@@ -365,7 +365,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
               ))}
             </AnimatePresence>
 
-            {/* Pending requests warning card */}
+            {/* Pending requests info - dialog handles the details */}
             {pendingRequests.length > 0 && state !== 'confirmed' && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -374,36 +374,18 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
               >
                 <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-muted rounded-bl-md">
                   <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       <span className="font-medium text-sm text-amber-800 dark:text-amber-200">
-                        {pendingRequests.length === 1 ? 'Demande en attente' : `${pendingRequests.length} demandes en attente`}
+                        {pendingRequests.length === 1 
+                          ? 'Une demande en attente détectée' 
+                          : `${pendingRequests.length} demandes en attente détectées`
+                        }
                       </span>
                     </div>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
-                      Cliquez sur une demande pour voir ses détails :
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      Consultez la fenêtre pour voir les détails.
                     </p>
-                    <div className="space-y-2">
-                      {pendingRequests.map((req) => (
-                        <button
-                          key={req.id}
-                          onClick={() => handleLoadPendingRequest(req)}
-                          className="w-full flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300 p-2 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors text-left"
-                        >
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">N° {req.request_number}</span>
-                              <span className="text-amber-500">•</span>
-                              <span>{format(new Date(req.created_at), 'dd/MM/yyyy', { locale: fr })}</span>
-                            </div>
-                            <div className="text-amber-600/70 dark:text-amber-400/70 truncate">
-                              Transaction: {req.transaction_number} • {req.total_ttc?.toFixed(3)} TND
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </motion.div>

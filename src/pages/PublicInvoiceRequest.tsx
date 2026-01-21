@@ -59,6 +59,7 @@ import {
   getIdentifierValidation,
 } from '@/components/clients/types';
 import { PublicFormAIAssistant } from '@/components/invoice-requests/PublicFormAIAssistant';
+import { PendingRequestDialog } from '@/components/invoice-requests/PendingRequestDialog';
 
 // Payment methods available for public form
 const PAYMENT_METHODS = [
@@ -151,6 +152,12 @@ const PublicInvoiceRequest: React.FC = () => {
   // AI Assistant state
   const [showAIAssistant, setShowAIAssistant] = useState(true);
   const [linkedClientId, setLinkedClientId] = useState<string | null>(null);
+  const [clientValidated, setClientValidated] = useState(false);
+
+  // Pending requests dialog
+  const [showPendingDialog, setShowPendingDialog] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
 
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -328,21 +335,24 @@ const PublicInvoiceRequest: React.FC = () => {
   const handleSubmit = async () => {
     if (!validate()) return;
 
-    // Check if transaction number already exists
-    const { data: existingRequest } = await supabase
-      .from('invoice_requests')
-      .select('id, request_number')
-      .eq('organization_id', organizationId)
-      .eq('transaction_number', transactionNumber.trim())
-      .maybeSingle();
+    // Skip duplicate check if we're editing an existing request
+    if (!editingRequestId) {
+      // Check if transaction number already exists
+      const { data: existingRequest } = await supabase
+        .from('invoice_requests')
+        .select('id, request_number')
+        .eq('organization_id', organizationId)
+        .eq('transaction_number', transactionNumber.trim())
+        .maybeSingle();
 
-    if (existingRequest) {
-      setErrors(prev => ({
-        ...prev,
-        transactionNumber: `Ce numéro de transaction existe déjà (Demande N° ${existingRequest.request_number})`
-      }));
-      toast.error('Ce numéro de transaction a déjà été utilisé pour une autre demande');
-      return;
+      if (existingRequest) {
+        setErrors(prev => ({
+          ...prev,
+          transactionNumber: `Ce numéro de transaction existe déjà (Demande N° ${existingRequest.request_number})`
+        }));
+        toast.error('Ce numéro de transaction a déjà été utilisé pour une autre demande');
+        return;
+      }
     }
 
     // Check if partial payment equals total
@@ -361,16 +371,6 @@ const PublicInvoiceRequest: React.FC = () => {
   const submitRequest = async () => {
     setIsSubmitting(true);
     try {
-      // Generate request number
-      const year = new Date().getFullYear();
-      const { count } = await supabase
-        .from('invoice_requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', organizationId);
-      
-      const counter = (count || 0) + 1;
-      const requestNumber = `DEM-${year}-${String(counter).padStart(5, '0')}`;
-
       // Build payment methods JSON
       let paymentMethods = null;
       if (paymentStatus !== 'unpaid') {
@@ -384,45 +384,73 @@ const PublicInvoiceRequest: React.FC = () => {
         }
       }
 
-      const { error } = await supabase
-        .from('invoice_requests')
-        .insert({
-          organization_id: organizationId,
-          request_number: requestNumber,
-          client_type: clientType,
-          first_name: firstName || null,
-          last_name: lastName || null,
-          company_name: companyName || null,
-          identifier_type: identifierType,
-          identifier_value: identifierValue,
-          country: country,
-          governorate: isLocal ? governorate : null,
-          address: address || null,
-          postal_code: postalCode || null,
-          phone_prefix: phonePrefix,
-          phone: phone || null,
-          whatsapp_prefix: whatsappPrefix,
-          whatsapp: whatsapp || null,
-          email: email || null,
-          purchase_date: format(purchaseDate, 'yyyy-MM-dd'),
-          store_id: storeId || null,
-          transaction_number: transactionNumber,
-          receipt_number: receiptNumber || null,
-          order_number: orderNumber || null,
-          total_ttc: parseFloat(totalTTC),
-          payment_status: paymentStatus,
-          paid_amount: paymentStatus === 'paid' ? parseFloat(totalTTC) : (paymentStatus === 'partial' ? parseFloat(paidAmount) : 0),
-          payment_methods: paymentMethods,
-          status: 'pending',
-        });
+      const requestData = {
+        client_type: clientType,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        company_name: companyName || null,
+        identifier_type: identifierType,
+        identifier_value: identifierValue,
+        country: country,
+        governorate: isLocal ? governorate : null,
+        address: address || null,
+        postal_code: postalCode || null,
+        phone_prefix: phonePrefix,
+        phone: phone || null,
+        whatsapp_prefix: whatsappPrefix,
+        whatsapp: whatsapp || null,
+        email: email || null,
+        purchase_date: format(purchaseDate, 'yyyy-MM-dd'),
+        store_id: storeId || null,
+        transaction_number: transactionNumber,
+        receipt_number: receiptNumber || null,
+        order_number: orderNumber || null,
+        total_ttc: parseFloat(totalTTC),
+        payment_status: paymentStatus,
+        paid_amount: paymentStatus === 'paid' ? parseFloat(totalTTC) : (paymentStatus === 'partial' ? parseFloat(paidAmount) : 0),
+        payment_methods: paymentMethods,
+        linked_client_id: linkedClientId,
+      };
 
-      if (error) throw error;
+      if (editingRequestId) {
+        // UPDATE existing request
+        const { error } = await supabase
+          .from('invoice_requests')
+          .update(requestData)
+          .eq('id', editingRequestId);
 
-      setIsSuccess(true);
-      toast.success('Demande envoyée avec succès');
+        if (error) throw error;
+
+        setIsSuccess(true);
+        toast.success('Demande mise à jour avec succès');
+      } else {
+        // CREATE new request
+        const year = new Date().getFullYear();
+        const { count } = await supabase
+          .from('invoice_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', organizationId);
+        
+        const counter = (count || 0) + 1;
+        const requestNumber = `DEM-${year}-${String(counter).padStart(5, '0')}`;
+
+        const { error } = await supabase
+          .from('invoice_requests')
+          .insert({
+            ...requestData,
+            organization_id: organizationId,
+            request_number: requestNumber,
+            status: 'pending',
+          });
+
+        if (error) throw error;
+
+        setIsSuccess(true);
+        toast.success('Demande envoyée avec succès');
+      }
     } catch (error: any) {
       console.error('Error submitting request:', error);
-      toast.error('Erreur lors de l\'envoi de la demande');
+      toast.error(editingRequestId ? 'Erreur lors de la mise à jour' : 'Erreur lors de l\'envoi de la demande');
     } finally {
       setIsSubmitting(false);
     }
@@ -472,10 +500,69 @@ const PublicInvoiceRequest: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Editing Banner */}
+        {editingRequestId && (
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <div>
+                  <p className="font-medium text-amber-800 dark:text-amber-200">
+                    Mode modification
+                  </p>
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    Vous modifiez une demande existante
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditingRequestId(null);
+                  setClientValidated(false);
+                  // Reset form fields
+                  setClientType('individual_local');
+                  setFirstName('');
+                  setLastName('');
+                  setCompanyName('');
+                  setIdentifierType('cin');
+                  setIdentifierValue('');
+                  setCountry('Tunisie');
+                  setGovernorate('');
+                  setAddress('');
+                  setPostalCode('');
+                  setPhonePrefix('+216');
+                  setPhone('');
+                  setWhatsappPrefix('+216');
+                  setWhatsapp('');
+                  setEmail('');
+                  setTransactionNumber('');
+                  setReceiptNumber('');
+                  setOrderNumber('');
+                  setTotalTTC('');
+                  setStoreId('');
+                  setPurchaseDate(new Date());
+                  setPaymentStatus('unpaid');
+                  setPaidAmount('');
+                  setPaymentMethod('');
+                  setLinkedClientId(null);
+                  toast.info('Nouvelle demande - formulaire réinitialisé');
+                }}
+                className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+              >
+                Annuler
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center space-y-2">
           <FileText className="h-12 w-12 mx-auto text-primary" />
-          <h1 className="text-2xl font-bold">Demande de facture</h1>
+          <h1 className="text-2xl font-bold">
+            {editingRequestId ? 'Modifier la demande' : 'Demande de facture'}
+          </h1>
           {organizationName && (
             <p className="text-muted-foreground">{organizationName}</p>
           )}
@@ -996,12 +1083,12 @@ const PublicInvoiceRequest: React.FC = () => {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Envoi en cours...
+              {editingRequestId ? 'Mise à jour...' : 'Envoi en cours...'}
             </>
           ) : (
             <>
               <CheckCircle2 className="mr-2 h-5 w-5" />
-              Envoyer la demande
+              {editingRequestId ? 'Mettre à jour la demande' : 'Envoyer la demande'}
             </>
           )}
         </Button>
@@ -1028,6 +1115,7 @@ const PublicInvoiceRequest: React.FC = () => {
         <PublicFormAIAssistant
           organizationId={organizationId}
           organizationName={organizationName}
+          clientValidated={clientValidated}
           onClientFound={(client) => {
             // Fill form with client data
             setClientType(client.client_type as ClientType);
@@ -1046,17 +1134,53 @@ const PublicInvoiceRequest: React.FC = () => {
             setWhatsapp(client.whatsapp || '');
             setEmail(client.email || '');
             setLinkedClientId(client.id);
+            setClientValidated(true);
           }}
-          onLoadPendingRequest={(request) => {
-            // Fill transaction data from pending request
-            setTransactionNumber(request.transaction_number);
-            setTotalTTC(String(request.total_ttc));
-            if (request.store_id) setStoreId(request.store_id);
-            if (request.purchase_date) setPurchaseDate(new Date(request.purchase_date));
+          onPendingRequestsFound={(requests) => {
+            setPendingRequests(requests);
+            setShowPendingDialog(true);
           }}
           onClose={() => setShowAIAssistant(false)}
         />
       )}
+
+      {/* Pending Requests Dialog */}
+      <PendingRequestDialog
+        open={showPendingDialog}
+        onOpenChange={setShowPendingDialog}
+        requests={pendingRequests}
+        stores={stores}
+        onEditRequest={(request) => {
+          // Fill ALL form fields from the existing request
+          setEditingRequestId(request.id);
+          setClientType((request.client_type as ClientType) || 'individual_local');
+          setFirstName(request.first_name || '');
+          setLastName(request.last_name || '');
+          setCompanyName(request.company_name || '');
+          setIdentifierType(request.identifier_type || 'cin');
+          setIdentifierValue(request.identifier_value || '');
+          setCountry(request.country || 'Tunisie');
+          setGovernorate(request.governorate || '');
+          setAddress(request.address || '');
+          setPostalCode(request.postal_code || '');
+          setPhonePrefix(request.phone_prefix || '+216');
+          setPhone(request.phone || '');
+          setWhatsappPrefix(request.whatsapp_prefix || '+216');
+          setWhatsapp(request.whatsapp || '');
+          setEmail(request.email || '');
+          setTransactionNumber(request.transaction_number || '');
+          setReceiptNumber(request.receipt_number || '');
+          setOrderNumber(request.order_number || '');
+          setTotalTTC(String(request.total_ttc || ''));
+          if (request.store_id) setStoreId(request.store_id);
+          if (request.purchase_date) setPurchaseDate(new Date(request.purchase_date));
+          setPaymentStatus((request.payment_status as 'paid' | 'partial' | 'unpaid') || 'unpaid');
+          setPaidAmount(String(request.paid_amount || ''));
+          // Set client as validated since it's an existing request
+          setClientValidated(true);
+          toast.info(`Demande N° ${request.request_number} chargée pour modification`);
+        }}
+      />
 
       {/* Floating button to reopen AI Assistant */}
       {!showAIAssistant && (
