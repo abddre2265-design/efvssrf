@@ -606,18 +606,18 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
             </p>
           )}
           
-          {/* Withholding Tax / Retenue à la source - ABOVE Total TTC */}
-          {isEnabled('withholding_tax') && invoice.withholding_applied && invoice.withholding_amount > 0 && (
-            <p>
-              <span>RETENUE À LA SOURCE ({invoice.withholding_rate}%)</span>
-              <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.withholding_amount, invoice.currency)}</span>
-            </p>
-          )}
-          
           {!isForeign && (
             <p>
               <span>Total TTC</span>
               <span>{formatCurrency(invoice.total_ttc, invoice.currency)}</span>
+            </p>
+          )}
+          
+          {/* Withholding Tax / Retenue à la source - BELOW Total TTC */}
+          {isEnabled('withholding_tax') && invoice.withholding_applied && invoice.withholding_amount > 0 && (
+            <p>
+              <span>RETENUE À LA SOURCE ({invoice.withholding_rate}%)</span>
+              <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.withholding_amount, invoice.currency)}</span>
             </p>
           )}
           

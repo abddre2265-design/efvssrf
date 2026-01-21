@@ -407,6 +407,14 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
                     </div>
                   )}
                   
+                  {/* Withholding Tax - BELOW Total TTC */}
+                  {!isForeign && invoice.withholding_applied && invoice.withholding_amount > 0 && (
+                    <div className="flex justify-between text-sm text-red-600">
+                      <span>{t('withholding_tax')} ({invoice.withholding_rate}%):</span>
+                      <span className="font-mono">-{formatCurrency(invoice.withholding_amount, invoice.currency)}</span>
+                    </div>
+                  )}
+                  
                   {!isForeign && invoice.stamp_duty_enabled && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{t('stamp_duty')}:</span>
