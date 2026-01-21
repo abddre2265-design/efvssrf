@@ -136,6 +136,28 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
     fetchData();
   }, [invoiceId, onReady]);
 
+  // Calculate VAT breakdown by rate
+  const vatBreakdown = useMemo(() => {
+    const breakdown: { [rate: number]: { baseHt: number; vatAmount: number } } = {};
+    
+    lines.forEach(line => {
+      const rate = line.vat_rate;
+      if (!breakdown[rate]) {
+        breakdown[rate] = { baseHt: 0, vatAmount: 0 };
+      }
+      breakdown[rate].baseHt += line.line_total_ht;
+      breakdown[rate].vatAmount += line.line_vat;
+    });
+    
+    return Object.entries(breakdown)
+      .map(([rate, values]) => ({
+        rate: Number(rate),
+        baseHt: values.baseHt,
+        vatAmount: values.vatAmount
+      }))
+      .sort((a, b) => a.rate - b.rate);
+  }, [lines]);
+
   // Calculate pages for pagination
   const pages = useMemo(() => {
     if (lines.length === 0) return [[]] as InvoiceLineWithProduct[][];
@@ -356,8 +378,55 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
     .invoice-totals {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       margin-top: 15px;
+      gap: 20px;
+    }
+
+    .invoice-vat-breakdown {
+      width: 240px;
+      border: 2px solid #0a84ff;
+      padding: 10px;
+    }
+
+    .invoice-vat-breakdown-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0a84ff;
+      margin-bottom: 8px;
+      text-align: center;
+      border-bottom: 1px solid #0a84ff;
+      padding-bottom: 5px;
+    }
+
+    .invoice-vat-breakdown table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .invoice-vat-breakdown th {
+      background: #f4faff;
+      padding: 4px 6px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid #b0bec5;
+    }
+
+    .invoice-vat-breakdown th:last-child,
+    .invoice-vat-breakdown td:last-child {
+      text-align: right;
+    }
+
+    .invoice-vat-breakdown td {
+      padding: 4px 6px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .invoice-vat-breakdown tfoot td {
+      font-weight: 700;
+      border-top: 1px solid #0a84ff;
+      background: #f4faff;
     }
 
     .invoice-total-box {
@@ -473,6 +542,39 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
   const renderTotals = () => (
     <div className="invoice-totals">
+      {/* VAT Breakdown by Rate - Left side */}
+      {!isForeign && vatBreakdown.length > 0 && (
+        <div className="invoice-vat-breakdown">
+          <div className="invoice-vat-breakdown-title">RÉCAPITULATIF TVA</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Taux</th>
+                <th>Base HT</th>
+                <th>TVA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vatBreakdown.map((item) => (
+                <tr key={item.rate}>
+                  <td>{item.rate}%</td>
+                  <td style={{ textAlign: 'right' }}>{formatCurrency(item.baseHt, invoice.currency)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatCurrency(item.vatAmount, invoice.currency)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td><strong>Total</strong></td>
+                <td style={{ textAlign: 'right' }}>{formatCurrency(invoice.subtotal_ht, invoice.currency)}</td>
+                <td style={{ textAlign: 'right' }}>{formatCurrency(invoice.total_vat, invoice.currency)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+
+      {/* Totals Box - Right side */}
       <div className="invoice-total-box">
         {!isForeign && (
           <>
