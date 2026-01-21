@@ -98,7 +98,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           .single();
 
         if (invoiceError) throw invoiceError;
-        setInvoice(invoiceData);
+        setInvoice(invoiceData as Invoice);
 
         // Fetch client
         const { data: clientData } = await supabase
