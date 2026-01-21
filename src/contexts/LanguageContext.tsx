@@ -1132,6 +1132,13 @@ export const translations: Translations = {
   reservationUsed: { fr: 'Réservation utilisée', en: 'Reservation used', ar: 'تم استخدام الحجز' },
   reservationCancelled: { fr: 'Réservation annulée', en: 'Reservation cancelled', ar: 'تم إلغاء الحجز' },
   reservationExpired: { fr: 'Réservation expirée', en: 'Reservation expired', ar: 'انتهى الحجز' },
+  
+  // Invoice creation from client
+  for_client: { fr: 'Pour le client', en: 'For client', ar: 'للعميل' },
+  standard_creation: { fr: 'Création standard', en: 'Standard creation', ar: 'إنشاء قياسي' },
+  standard_creation_description: { fr: 'Créer une facture manuellement avec le formulaire classique. Détection automatique des réservations.', en: 'Create an invoice manually with the classic form. Automatic reservation detection.', ar: 'إنشاء فاتورة يدويًا باستخدام النموذج الكلاسيكي. الكشف التلقائي عن الحجوزات.' },
+  ai_generation: { fr: 'Génération par IA', en: 'AI generation', ar: 'الإنشاء بالذكاء الاصطناعي' },
+  ai_generation_description: { fr: 'Générer automatiquement une facture avec l\'aide de l\'intelligence artificielle.', en: 'Automatically generate an invoice with the help of artificial intelligence.', ar: 'إنشاء فاتورة تلقائيًا بمساعدة الذكاء الاصطناعي.' },
 };
 
 // Tunisian Governorates
