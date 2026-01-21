@@ -533,6 +533,174 @@ export type Database = {
           },
         ]
       }
+      invoice_request_links: {
+        Row: {
+          access_code: string
+          access_token: string
+          created_at: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          access_code: string
+          access_token: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          access_code?: string
+          access_token?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_request_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_requests: {
+        Row: {
+          address: string | null
+          ai_conversation: Json | null
+          client_type: string
+          company_name: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          governorate: string | null
+          id: string
+          identifier_type: string
+          identifier_value: string
+          last_name: string | null
+          linked_client_id: string | null
+          order_number: string | null
+          organization_id: string
+          paid_amount: number | null
+          payment_methods: Json | null
+          payment_status: string
+          phone: string | null
+          phone_prefix: string | null
+          postal_code: string | null
+          purchase_date: string
+          receipt_number: string | null
+          request_date: string
+          request_number: string
+          status: string
+          store_id: string | null
+          total_ttc: number
+          transaction_number: string
+          updated_at: string
+          whatsapp: string | null
+          whatsapp_prefix: string | null
+        }
+        Insert: {
+          address?: string | null
+          ai_conversation?: Json | null
+          client_type: string
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          governorate?: string | null
+          id?: string
+          identifier_type: string
+          identifier_value: string
+          last_name?: string | null
+          linked_client_id?: string | null
+          order_number?: string | null
+          organization_id: string
+          paid_amount?: number | null
+          payment_methods?: Json | null
+          payment_status?: string
+          phone?: string | null
+          phone_prefix?: string | null
+          postal_code?: string | null
+          purchase_date: string
+          receipt_number?: string | null
+          request_date?: string
+          request_number: string
+          status?: string
+          store_id?: string | null
+          total_ttc: number
+          transaction_number: string
+          updated_at?: string
+          whatsapp?: string | null
+          whatsapp_prefix?: string | null
+        }
+        Update: {
+          address?: string | null
+          ai_conversation?: Json | null
+          client_type?: string
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          governorate?: string | null
+          id?: string
+          identifier_type?: string
+          identifier_value?: string
+          last_name?: string | null
+          linked_client_id?: string | null
+          order_number?: string | null
+          organization_id?: string
+          paid_amount?: number | null
+          payment_methods?: Json | null
+          payment_status?: string
+          phone?: string | null
+          phone_prefix?: string | null
+          postal_code?: string | null
+          purchase_date?: string
+          receipt_number?: string | null
+          request_date?: string
+          request_number?: string
+          status?: string
+          store_id?: string | null
+          total_ttc?: number
+          transaction_number?: string
+          updated_at?: string
+          whatsapp?: string | null
+          whatsapp_prefix?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_requests_linked_client_id_fkey"
+            columns: ["linked_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           client_id: string

@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import PublicUpload from "./pages/PublicUpload";
 import PublicQuoteRequest from "./pages/PublicQuoteRequest";
+import PublicInvoiceRequest from "./pages/PublicInvoiceRequest";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/dashboard/:page" element={<Dashboard />} />
               <Route path="/upload/:token" element={<PublicUpload />} />
               <Route path="/quote-request/:token" element={<PublicQuoteRequest />} />
+              <Route path="/invoice-request/:token" element={<PublicInvoiceRequest />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
