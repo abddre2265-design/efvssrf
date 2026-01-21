@@ -25,14 +25,26 @@ export interface PdfComponent {
 
 // Default components for Invoice PDF
 const defaultInvoiceComponents: PdfComponent[] = [
+  // Header
   { id: 'logo', labelKey: 'pdf_component_logo', enabled: true, category: 'header' },
   { id: 'company_info', labelKey: 'pdf_component_company_info', enabled: true, category: 'header' },
+  { id: 'company_name', labelKey: 'pdf_component_company_name', enabled: true, category: 'header' },
+  { id: 'company_address', labelKey: 'pdf_component_company_address', enabled: true, category: 'header' },
+  { id: 'company_phone', labelKey: 'pdf_component_company_phone', enabled: true, category: 'header' },
+  { id: 'company_email', labelKey: 'pdf_component_company_email', enabled: true, category: 'header' },
+  { id: 'company_identifier', labelKey: 'pdf_component_company_identifier', enabled: true, category: 'header' },
   { id: 'invoice_title', labelKey: 'pdf_component_invoice_title', enabled: true, category: 'header' },
   { id: 'invoice_number', labelKey: 'pdf_component_invoice_number', enabled: true, category: 'header' },
   { id: 'invoice_date', labelKey: 'pdf_component_invoice_date', enabled: true, category: 'header' },
   { id: 'due_date', labelKey: 'pdf_component_due_date', enabled: true, category: 'header' },
   { id: 'status_badge', labelKey: 'pdf_component_status_badge', enabled: true, category: 'header' },
+  // Content
   { id: 'client_info', labelKey: 'pdf_component_client_info', enabled: true, category: 'content' },
+  { id: 'client_name', labelKey: 'pdf_component_client_name', enabled: true, category: 'content' },
+  { id: 'client_address', labelKey: 'pdf_component_client_address', enabled: true, category: 'content' },
+  { id: 'client_identifier', labelKey: 'pdf_component_client_identifier', enabled: true, category: 'content' },
+  { id: 'client_phone', labelKey: 'pdf_component_client_phone', enabled: false, category: 'content' },
+  { id: 'client_email', labelKey: 'pdf_component_client_email', enabled: false, category: 'content' },
   { id: 'payment_status', labelKey: 'pdf_component_payment_status', enabled: true, category: 'content' },
   { id: 'products_table', labelKey: 'pdf_component_products_table', enabled: true, category: 'content' },
   { id: 'product_reference', labelKey: 'pdf_component_product_reference', enabled: true, category: 'content' },
@@ -41,6 +53,7 @@ const defaultInvoiceComponents: PdfComponent[] = [
   { id: 'discount_column', labelKey: 'pdf_component_discount_column', enabled: true, category: 'content' },
   { id: 'totals_box', labelKey: 'pdf_component_totals_box', enabled: true, category: 'content' },
   { id: 'stamp_duty', labelKey: 'pdf_component_stamp_duty', enabled: true, category: 'content' },
+  // Footer
   { id: 'decorative_corners', labelKey: 'pdf_component_decorative_corners', enabled: true, category: 'footer' },
   { id: 'bank_info', labelKey: 'pdf_component_bank_info', enabled: true, category: 'footer' },
   { id: 'signature_area', labelKey: 'pdf_component_signature_area', enabled: true, category: 'footer' },
@@ -51,19 +64,32 @@ const defaultInvoiceComponents: PdfComponent[] = [
 
 // Default components for Credit Note PDF
 const defaultCreditNoteComponents: PdfComponent[] = [
+  // Header
   { id: 'logo', labelKey: 'pdf_component_logo', enabled: true, category: 'header' },
   { id: 'company_info', labelKey: 'pdf_component_company_info', enabled: true, category: 'header' },
+  { id: 'company_name', labelKey: 'pdf_component_company_name', enabled: true, category: 'header' },
+  { id: 'company_address', labelKey: 'pdf_component_company_address', enabled: true, category: 'header' },
+  { id: 'company_phone', labelKey: 'pdf_component_company_phone', enabled: true, category: 'header' },
+  { id: 'company_email', labelKey: 'pdf_component_company_email', enabled: true, category: 'header' },
+  { id: 'company_identifier', labelKey: 'pdf_component_company_identifier', enabled: true, category: 'header' },
   { id: 'credit_note_title', labelKey: 'pdf_component_credit_note_title', enabled: true, category: 'header' },
   { id: 'credit_note_number', labelKey: 'pdf_component_credit_note_number', enabled: true, category: 'header' },
   { id: 'credit_note_date', labelKey: 'pdf_component_credit_note_date', enabled: true, category: 'header' },
   { id: 'credit_note_type', labelKey: 'pdf_component_credit_note_type', enabled: true, category: 'header' },
   { id: 'status_badge', labelKey: 'pdf_component_status_badge', enabled: true, category: 'header' },
+  // Content
   { id: 'client_info', labelKey: 'pdf_component_client_info', enabled: true, category: 'content' },
+  { id: 'client_name', labelKey: 'pdf_component_client_name', enabled: true, category: 'content' },
+  { id: 'client_address', labelKey: 'pdf_component_client_address', enabled: true, category: 'content' },
+  { id: 'client_identifier', labelKey: 'pdf_component_client_identifier', enabled: true, category: 'content' },
+  { id: 'client_phone', labelKey: 'pdf_component_client_phone', enabled: false, category: 'content' },
+  { id: 'client_email', labelKey: 'pdf_component_client_email', enabled: false, category: 'content' },
   { id: 'invoice_reference', labelKey: 'pdf_component_invoice_reference', enabled: true, category: 'content' },
   { id: 'products_table', labelKey: 'pdf_component_products_table', enabled: true, category: 'content' },
   { id: 'return_reason', labelKey: 'pdf_component_return_reason', enabled: true, category: 'content' },
   { id: 'totals_box', labelKey: 'pdf_component_totals_box', enabled: true, category: 'content' },
   { id: 'credit_status_section', labelKey: 'pdf_component_credit_status_section', enabled: true, category: 'content' },
+  // Footer
   { id: 'decorative_corners', labelKey: 'pdf_component_decorative_corners', enabled: true, category: 'footer' },
   { id: 'bank_info', labelKey: 'pdf_component_bank_info', enabled: true, category: 'footer' },
   { id: 'signature_area', labelKey: 'pdf_component_signature_area', enabled: true, category: 'footer' },
@@ -282,7 +308,11 @@ const PdfSettingsContent: React.FC<PdfSettingsContentProps> = ({
           </CardHeader>
           {showAIAgent && (
             <CardContent>
-              <PdfAIAgent documentType={documentType} />
+              <PdfAIAgent 
+                documentType={documentType} 
+                components={components}
+                onToggleComponent={onToggleComponent}
+              />
             </CardContent>
           )}
         </Card>

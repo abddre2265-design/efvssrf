@@ -1,23 +1,27 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Loader2, Sparkles, Code, Palette, Layout } from 'lucide-react';
+import { Send, User, Loader2, Sparkles, Code, Palette, Layout, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { DocumentType } from '@/pages/PdfSettings';
+import { DocumentType, PdfComponent } from '@/pages/PdfSettings';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  toggleActions?: Record<string, boolean>;
 }
 
 interface PdfAIAgentProps {
   documentType: DocumentType;
+  components: PdfComponent[];
+  onToggleComponent: (id: string, enabled: boolean) => void;
 }
 
 const quickSuggestions = [
@@ -26,7 +30,14 @@ const quickSuggestions = [
   { labelKey: 'pdf_ai_suggestion_code', icon: Code },
 ];
 
-export const PdfAIAgent: React.FC<PdfAIAgentProps> = ({ documentType }) => {
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const PdfAIAgent: React.FC<PdfAIAgentProps> = ({ 
+  documentType, 
+  components,
+  onToggleComponent 
+}) => {
   const { t, isRTL, language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -35,7 +46,6 @@ export const PdfAIAgent: React.FC<PdfAIAgentProps> = ({ documentType }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Welcome message
     const welcomeMessage: Message = {
       id: 'welcome',
       role: 'assistant',
@@ -51,6 +61,148 @@ export const PdfAIAgent: React.FC<PdfAIAgentProps> = ({ documentType }) => {
     }
   }, [messages]);
 
+  const getCurrentComponentsState = useCallback(() => {
+    const state: Record<string, boolean> = {};
+    components.forEach(c => {
+      state[c.id] = c.enabled;
+    });
+    return state;
+  }, [components]);
+
+  const extractToggleActions = (content: string): Record<string, boolean> | null => {
+    const regex = /\{"toggleComponents":\s*(\{[^}]+\})\}/;
+    const match = content.match(regex);
+    if (match) {
+      try {
+        return JSON.parse(match[1]);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const cleanContent = (content: string): string => {
+    return content.replace(/\{"toggleComponents":\s*\{[^}]+\}\}/g, '').trim();
+  };
+
+  const applyToggleActions = (actions: Record<string, boolean>) => {
+    Object.entries(actions).forEach(([componentId, enabled]) => {
+      onToggleComponent(componentId, enabled);
+    });
+    toast({
+      title: t('pdf_components_updated'),
+      description: t('pdf_components_updated_description'),
+    });
+  };
+
+  const streamChat = async (userMessage: string) => {
+    const conversationHistory = messages
+      .filter(m => m.id !== 'welcome')
+      .map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
+    conversationHistory.push({ role: 'user', content: userMessage });
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/pdf-ai-assistant`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        messages: conversationHistory,
+        language,
+        documentType,
+        currentComponents: getCurrentComponentsState(),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      if (response.status === 429) {
+        throw new Error(errorData?.message || t('rate_limit_exceeded'));
+      }
+      if (response.status === 402) {
+        throw new Error(errorData?.message || t('payment_required'));
+      }
+      throw new Error(errorData?.message || 'Failed to get AI response');
+    }
+
+    if (!response.body) {
+      throw new Error('No response body');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = '';
+    let fullContent = '';
+    let streamDone = false;
+
+    const assistantMessageId = `assistant-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    }]);
+
+    while (!streamDone) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith('\r')) line = line.slice(0, -1);
+        if (line.startsWith(':') || line.trim() === '') continue;
+        if (!line.startsWith('data: ')) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]') {
+          streamDone = true;
+          break;
+        }
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) {
+            fullContent += content;
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === assistantMessageId
+                  ? { ...m, content: cleanContent(fullContent) }
+                  : m
+              )
+            );
+          }
+        } catch {
+          textBuffer = line + '\n' + textBuffer;
+          break;
+        }
+      }
+    }
+
+    // Check for toggle actions in the final content
+    const toggleActions = extractToggleActions(fullContent);
+    if (toggleActions) {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantMessageId
+            ? { ...m, content: cleanContent(fullContent), toggleActions }
+            : m
+        )
+      );
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -65,17 +217,20 @@ export const PdfAIAgent: React.FC<PdfAIAgentProps> = ({ documentType }) => {
     setInput('');
     setIsLoading(true);
 
-    // Simulate AI response (in real implementation, this would call the AI edge function)
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: t('pdf_ai_response_placeholder'),
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+    try {
+      await streamChat(userMessage.content);
+    } catch (error) {
+      console.error('AI Chat error:', error);
+      toast({
+        variant: 'destructive',
+        title: t('error'),
+        description: error instanceof Error ? error.message : t('genericError'),
+      });
+      // Remove the empty assistant message on error
+      setMessages(prev => prev.filter(m => m.content !== ''));
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -118,16 +273,31 @@ export const PdfAIAgent: React.FC<PdfAIAgentProps> = ({ documentType }) => {
                     <User className="w-4 h-4" />
                   )}
                 </div>
-                <div className={cn(
-                  "max-w-[80%] rounded-lg p-3",
-                  message.role === 'assistant' 
-                    ? "bg-muted" 
-                    : "bg-primary text-primary-foreground"
-                )}>
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  <span className="text-[10px] opacity-60 mt-1 block">
-                    {message.timestamp.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                <div className="flex flex-col gap-2 max-w-[80%]">
+                  <div className={cn(
+                    "rounded-lg p-3",
+                    message.role === 'assistant' 
+                      ? "bg-muted" 
+                      : "bg-primary text-primary-foreground"
+                  )}>
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <span className="text-[10px] opacity-60 mt-1 block">
+                      {message.timestamp.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  
+                  {/* Apply button for toggle actions */}
+                  {message.toggleActions && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="self-start gap-2"
+                      onClick={() => applyToggleActions(message.toggleActions!)}
+                    >
+                      <Check className="w-3 h-3" />
+                      {t('apply_changes')}
+                    </Button>
+                  )}
                 </div>
               </motion.div>
             ))}

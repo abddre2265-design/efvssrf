@@ -1283,6 +1283,23 @@ export const translations: Translations = {
   pdf_ai_suggestion_layout: { fr: 'Changer la mise en page', en: 'Change layout', ar: 'تغيير التخطيط' },
   pdf_ai_suggestion_colors: { fr: 'Modifier les couleurs', en: 'Change colors', ar: 'تغيير الألوان' },
   pdf_ai_suggestion_code: { fr: 'Voir le code source', en: 'View source code', ar: 'عرض الكود المصدري' },
+  
+  // PDF Component sub-items
+  pdf_component_company_name: { fr: '↳ Nom de l\'entreprise', en: '↳ Company Name', ar: '↳ اسم الشركة' },
+  pdf_component_company_address: { fr: '↳ Adresse entreprise', en: '↳ Company Address', ar: '↳ عنوان الشركة' },
+  pdf_component_company_phone: { fr: '↳ Téléphone entreprise', en: '↳ Company Phone', ar: '↳ هاتف الشركة' },
+  pdf_component_company_email: { fr: '↳ Email entreprise', en: '↳ Company Email', ar: '↳ بريد الشركة' },
+  pdf_component_company_identifier: { fr: '↳ Matricule fiscal', en: '↳ Tax ID', ar: '↳ الرقم الضريبي' },
+  pdf_component_client_name: { fr: '↳ Nom du client', en: '↳ Client Name', ar: '↳ اسم العميل' },
+  pdf_component_client_address: { fr: '↳ Adresse client', en: '↳ Client Address', ar: '↳ عنوان العميل' },
+  pdf_component_client_identifier: { fr: '↳ Matricule fiscal client', en: '↳ Client Tax ID', ar: '↳ الرقم الضريبي للعميل' },
+  pdf_component_client_phone: { fr: '↳ Téléphone client', en: '↳ Client Phone', ar: '↳ هاتف العميل' },
+  pdf_component_client_email: { fr: '↳ Email client', en: '↳ Client Email', ar: '↳ بريد العميل' },
+  pdf_components_updated: { fr: 'Composants mis à jour', en: 'Components updated', ar: 'تم تحديث المكونات' },
+  pdf_components_updated_description: { fr: 'Les modifications ont été appliquées au template.', en: 'Changes have been applied to the template.', ar: 'تم تطبيق التغييرات على القالب.' },
+  apply_changes: { fr: 'Appliquer les modifications', en: 'Apply changes', ar: 'تطبيق التغييرات' },
+  rate_limit_exceeded: { fr: 'Limite de requêtes dépassée', en: 'Rate limit exceeded', ar: 'تم تجاوز حد الطلبات' },
+  payment_required: { fr: 'Paiement requis', en: 'Payment required', ar: 'الدفع مطلوب' },
 };
 
 // Tunisian Governorates
