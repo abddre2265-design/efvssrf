@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Eye, Pencil, Copy, MoreHorizontal, History, Wallet } from 'lucide-react';
+import { Eye, Pencil, Copy, MoreHorizontal, History, Wallet, FileText } from 'lucide-react';
 import { Client } from './types';
 import { formatCurrency } from '@/components/invoices/types';
 
@@ -28,6 +28,7 @@ interface ClientTableProps {
   onDuplicate: (client: Client) => void;
   onHistory: (client: Client) => void;
   onAssignPayment: (client: Client) => void;
+  onCreateInvoice: (client: Client) => void;
   isLoading?: boolean;
 }
 
@@ -38,6 +39,7 @@ export const ClientTable: React.FC<ClientTableProps> = ({
   onDuplicate,
   onHistory,
   onAssignPayment,
+  onCreateInvoice,
   isLoading = false,
 }) => {
   const { t, isRTL } = useLanguage();
@@ -159,6 +161,10 @@ export const ClientTable: React.FC<ClientTableProps> = ({
                       {t('duplicate')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onCreateInvoice(client)}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      {t('create_invoice')}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onHistory(client)}>
                       <History className="mr-2 h-4 w-4" />
                       {t('history')}

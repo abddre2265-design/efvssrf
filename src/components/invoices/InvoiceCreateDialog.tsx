@@ -62,12 +62,14 @@ interface InvoiceCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
+  preselectedClientId?: string | null;
 }
 
 export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
   open,
   onOpenChange,
   onCreated,
+  preselectedClientId = null,
 }) => {
   const { t, language, isRTL } = useLanguage();
   
@@ -173,6 +175,16 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
       fetchClients();
     }
   }, [open, organizationId, fetchClients]);
+
+  // Set preselected client when dialog opens
+  useEffect(() => {
+    if (open && preselectedClientId && clients.length > 0) {
+      const clientExists = clients.some(c => c.id === preselectedClientId);
+      if (clientExists && !selectedClientId) {
+        handleClientChange(preselectedClientId);
+      }
+    }
+  }, [open, preselectedClientId, clients]);
 
   // Stock bubbles calculation
   const stockBubbles = useMemo<StockBubble[]>(() => {

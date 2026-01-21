@@ -56,12 +56,14 @@ interface AIInvoiceGeneratorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onGenerated: () => void;
+  preselectedClientId?: string | null;
 }
 
 export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> = ({
   open,
   onOpenChange,
   onGenerated,
+  preselectedClientId = null,
 }) => {
   const { t, language, isRTL } = useLanguage();
   
@@ -123,6 +125,16 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   }, [organizationId]);
 
   useEffect(() => { if (open && organizationId) fetchData(); }, [open, organizationId, fetchData]);
+
+  // Set preselected client when dialog opens
+  useEffect(() => {
+    if (open && preselectedClientId && clients.length > 0) {
+      const clientExists = clients.some(c => c.id === preselectedClientId);
+      if (clientExists && !selectedClientId) {
+        setSelectedClientId(preselectedClientId);
+      }
+    }
+  }, [open, preselectedClientId, clients]);
 
   useEffect(() => {
     setVatTargets(prev => {

@@ -19,6 +19,9 @@ import { ClientExcelImportDialog } from '@/components/clients/ClientExcelImportD
 import { ClientAISearch } from '@/components/clients/ClientAISearch';
 import { ClientHistoryDialog } from '@/components/clients/ClientHistoryDialog';
 import { ClientDepositDialog } from '@/components/payments/ClientDepositDialog';
+import { CreateInvoiceChoiceDialog } from '@/components/clients/CreateInvoiceChoiceDialog';
+import { InvoiceCreateDialog } from '@/components/invoices/InvoiceCreateDialog';
+import { AIInvoiceGeneratorDialog } from '@/components/invoices/AIInvoiceGeneratorDialog';
 
 const Clients: React.FC = () => {
   const { t, isRTL } = useLanguage();
@@ -36,6 +39,12 @@ const Clients: React.FC = () => {
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [duplicateClient, setDuplicateClient] = useState<Client | null>(null);
+  
+  // Invoice creation dialogs
+  const [invoiceChoiceDialogOpen, setInvoiceChoiceDialogOpen] = useState(false);
+  const [invoiceCreateDialogOpen, setInvoiceCreateDialogOpen] = useState(false);
+  const [aiInvoiceDialogOpen, setAIInvoiceDialogOpen] = useState(false);
+  const [invoiceClientId, setInvoiceClientId] = useState<string | null>(null);
 
   const fetchOrganization = async () => {
     const { data } = await supabase
@@ -108,6 +117,26 @@ const Clients: React.FC = () => {
     fetchClients();
   };
 
+  const handleCreateInvoice = (client: Client) => {
+    setSelectedClient(client);
+    setInvoiceClientId(client.id);
+    setInvoiceChoiceDialogOpen(true);
+  };
+
+  const handleChooseStandardInvoice = () => {
+    setInvoiceChoiceDialogOpen(false);
+    setInvoiceCreateDialogOpen(true);
+  };
+
+  const handleChooseAIInvoice = () => {
+    setInvoiceChoiceDialogOpen(false);
+    setAIInvoiceDialogOpen(true);
+  };
+
+  const handleInvoiceCreated = () => {
+    setInvoiceClientId(null);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -159,6 +188,7 @@ const Clients: React.FC = () => {
         onDuplicate={handleDuplicate}
         onHistory={handleHistory}
         onAssignPayment={handleAssignPayment}
+        onCreateInvoice={handleCreateInvoice}
         isLoading={isLoading}
       />
 
@@ -207,6 +237,29 @@ const Clients: React.FC = () => {
           company_name: selectedClient.company_name,
           account_balance: selectedClient.account_balance,
         } : null}
+      />
+
+      {/* Invoice creation dialogs */}
+      <CreateInvoiceChoiceDialog
+        open={invoiceChoiceDialogOpen}
+        onOpenChange={setInvoiceChoiceDialogOpen}
+        client={selectedClient}
+        onChooseStandard={handleChooseStandardInvoice}
+        onChooseAI={handleChooseAIInvoice}
+      />
+
+      <InvoiceCreateDialog
+        open={invoiceCreateDialogOpen}
+        onOpenChange={setInvoiceCreateDialogOpen}
+        onCreated={handleInvoiceCreated}
+        preselectedClientId={invoiceClientId}
+      />
+
+      <AIInvoiceGeneratorDialog
+        open={aiInvoiceDialogOpen}
+        onOpenChange={setAIInvoiceDialogOpen}
+        onGenerated={handleInvoiceCreated}
+        preselectedClientId={invoiceClientId}
       />
     </motion.div>
   );
