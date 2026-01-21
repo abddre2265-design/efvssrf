@@ -1261,6 +1261,7 @@ export const translations: Translations = {
   pdf_component_vat_column: { fr: 'Colonne TVA', en: 'VAT Column', ar: 'عمود ضريبة القيمة المضافة' },
   pdf_component_discount_column: { fr: 'Colonne remise', en: 'Discount Column', ar: 'عمود الخصم' },
   pdf_component_totals_box: { fr: 'Encadré des totaux', en: 'Totals Box', ar: 'مربع الإجماليات' },
+  pdf_component_vat_breakdown: { fr: 'Récapitulatif TVA', en: 'VAT Breakdown', ar: 'تفصيل ضريبة القيمة المضافة' },
   pdf_component_stamp_duty: { fr: 'Droit de timbre', en: 'Stamp Duty', ar: 'رسوم الطوابع' },
   pdf_component_withholding_tax: { fr: 'Retenue à la source', en: 'Withholding Tax', ar: 'الاقتطاع من المصدر' },
   pdf_component_decorative_corners: { fr: 'Coins décoratifs', en: 'Decorative Corners', ar: 'الزوايا الزخرفية' },
