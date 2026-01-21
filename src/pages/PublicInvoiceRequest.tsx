@@ -44,7 +44,8 @@ import {
   Wallet,
   Layers,
   Trash2,
-  Plus
+  Plus,
+  MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -57,6 +58,7 @@ import {
   COUNTRIES,
   getIdentifierValidation,
 } from '@/components/clients/types';
+import { PublicFormAIAssistant } from '@/components/invoice-requests/PublicFormAIAssistant';
 
 // Payment methods available for public form
 const PAYMENT_METHODS = [
@@ -69,7 +71,7 @@ const PAYMENT_METHODS = [
   { value: 'mixed', label: 'Paiement mixte', icon: Layers },
 ];
 
-interface Store {
+interface StoreData {
   id: string;
   name: string;
 }
@@ -80,6 +82,25 @@ interface MixedPaymentLine {
   amount: string;
 }
 
+interface ClientData {
+  id: string;
+  client_type: string;
+  first_name: string | null;
+  last_name: string | null;
+  company_name: string | null;
+  identifier_type: string;
+  identifier_value: string;
+  country: string;
+  governorate: string | null;
+  address: string | null;
+  postal_code: string | null;
+  phone_prefix: string | null;
+  phone: string | null;
+  whatsapp_prefix: string | null;
+  whatsapp: string | null;
+  email: string | null;
+}
+
 const PublicInvoiceRequest: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   
@@ -88,7 +109,7 @@ const PublicInvoiceRequest: React.FC = () => {
   const [isValid, setIsValid] = useState(false);
   const [organizationId, setOrganizationId] = useState('');
   const [organizationName, setOrganizationName] = useState('');
-  const [stores, setStores] = useState<Store[]>([]);
+  const [stores, setStores] = useState<StoreData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   
@@ -126,6 +147,10 @@ const PublicInvoiceRequest: React.FC = () => {
   const [paidAmount, setPaidAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([]);
+
+  // AI Assistant state
+  const [showAIAssistant, setShowAIAssistant] = useState(true);
+  const [linkedClientId, setLinkedClientId] = useState<string | null>(null);
 
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -980,6 +1005,45 @@ const PublicInvoiceRequest: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* AI Assistant */}
+      {showAIAssistant && organizationId && (
+        <PublicFormAIAssistant
+          organizationId={organizationId}
+          organizationName={organizationName}
+          onClientFound={(client) => {
+            // Fill form with client data
+            setClientType(client.client_type as ClientType);
+            setFirstName(client.first_name || '');
+            setLastName(client.last_name || '');
+            setCompanyName(client.company_name || '');
+            setIdentifierType(client.identifier_type);
+            setIdentifierValue(client.identifier_value);
+            setCountry(client.country);
+            setGovernorate(client.governorate || '');
+            setAddress(client.address || '');
+            setPostalCode(client.postal_code || '');
+            setPhonePrefix(client.phone_prefix || '+216');
+            setPhone(client.phone || '');
+            setWhatsappPrefix(client.whatsapp_prefix || '+216');
+            setWhatsapp(client.whatsapp || '');
+            setEmail(client.email || '');
+            setLinkedClientId(client.id);
+          }}
+          onClose={() => setShowAIAssistant(false)}
+        />
+      )}
+
+      {/* Floating button to reopen AI Assistant */}
+      {!showAIAssistant && (
+        <Button
+          onClick={() => setShowAIAssistant(true)}
+          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-50"
+          size="icon"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </Button>
+      )}
     </div>
   );
 };
