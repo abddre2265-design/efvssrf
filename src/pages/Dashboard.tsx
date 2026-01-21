@@ -23,6 +23,7 @@ import Supply from '@/pages/Supply';
 import ClassificationRequests from '@/pages/ClassificationRequests';
 import PointsOfSale from '@/pages/PointsOfSale';
 import InvoiceRequests from '@/pages/InvoiceRequests';
+import PdfSettings from '@/pages/PdfSettings';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -111,6 +112,8 @@ const Dashboard: React.FC = () => {
         return <PointsOfSale />;
       case 'sales-invoice-requests':
         return <InvoiceRequests />;
+      case 'pdf-settings':
+        return <PdfSettings />;
       default:
         return (
           <motion.div
