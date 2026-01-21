@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2, Plus, Minus, AlertCircle, Infinity } from 'lucide-react';
+import { Trash2, Plus, Minus, AlertCircle, Infinity, Lock, Package } from 'lucide-react';
 import { InvoiceLineFormData, VAT_RATES, calculateLineTotal } from './types';
 
 interface InvoiceLineRowProps {
@@ -21,6 +21,8 @@ interface InvoiceLineRowProps {
   maxQuantity: number | null;
   onUpdate: (index: number, updates: Partial<InvoiceLineFormData>) => void;
   onRemove: (index: number) => void;
+  disableDelete?: boolean; // For reservation lines
+  disableQuantityEdit?: boolean; // For reservation lines
 }
 
 export const InvoiceLineRow: React.FC<InvoiceLineRowProps> = ({
@@ -30,6 +32,8 @@ export const InvoiceLineRow: React.FC<InvoiceLineRowProps> = ({
   maxQuantity,
   onUpdate,
   onRemove,
+  disableDelete = false,
+  disableQuantityEdit = false,
 }) => {
   const { t, isRTL } = useLanguage();
 
@@ -71,8 +75,20 @@ export const InvoiceLineRow: React.FC<InvoiceLineRowProps> = ({
     maxQuantity !== null &&
     line.quantity >= maxQuantity;
 
+  const isReservationLine = line.fromReservation === true;
+
   return (
-    <div className="border rounded-lg p-4 space-y-3 bg-card">
+    <div className={`border rounded-lg p-4 space-y-3 ${isReservationLine ? 'bg-primary/5 border-primary/30' : 'bg-card'}`}>
+      {/* Reservation badge */}
+      {isReservationLine && (
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs">
+            <Package className="h-3 w-3 mr-1" />
+            {t('from_reservation')}
+          </Badge>
+        </div>
+      )}
+      
       {/* Description field */}
       <Textarea
         value={line.description}
@@ -98,47 +114,55 @@ export const InvoiceLineRow: React.FC<InvoiceLineRowProps> = ({
         {/* Quantity */}
         <div className="col-span-2">
           <div className="text-xs text-muted-foreground">{t('quantity')}</div>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handleQuantityChange(-1)}
-              disabled={line.quantity <= 1}
-            >
-              <Minus className="h-3 w-3" />
-            </Button>
-            <Input
-              type="number"
-              value={line.quantity}
-              onChange={(e) => {
-                const val = parseInt(e.target.value) || 1;
-                onUpdate(index, { quantity: clampQty(val) });
-              }}
-              className="h-8 w-16 text-center"
-              min={1}
-              max={maxQuantity ?? undefined}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handleQuantityChange(1)}
-              disabled={!canIncreaseQuantity()}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-            {/* Stock indicator */}
-            {line.unlimited_stock ? (
-              <Badge variant="outline" className="text-xs">
-                <Infinity className="h-3 w-3" />
-              </Badge>
-            ) : stockWarning ? (
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
-            ) : null}
-          </div>
+          {disableQuantityEdit ? (
+            <div className="flex items-center gap-2 h-8">
+              <Lock className="h-3 w-3 text-muted-foreground" />
+              <span className="font-medium">{line.quantity}</span>
+              <span className="text-xs text-muted-foreground">({t('reserved')})</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleQuantityChange(-1)}
+                disabled={line.quantity <= 1}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <Input
+                type="number"
+                value={line.quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  onUpdate(index, { quantity: clampQty(val) });
+                }}
+                className="h-8 w-16 text-center"
+                min={1}
+                max={maxQuantity ?? undefined}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleQuantityChange(1)}
+                disabled={!canIncreaseQuantity()}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+              {/* Stock indicator */}
+              {line.unlimited_stock ? (
+                <Badge variant="outline" className="text-xs">
+                  <Infinity className="h-3 w-3" />
+                </Badge>
+              ) : stockWarning ? (
+                <AlertCircle className="h-4 w-4 text-yellow-500" />
+              ) : null}
+            </div>
+          )}
         </div>
 
         {/* Unit Price HT */}
@@ -208,15 +232,21 @@ export const InvoiceLineRow: React.FC<InvoiceLineRowProps> = ({
 
         {/* Delete button */}
         <div className="col-span-1 flex justify-end">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive"
-            onClick={() => onRemove(index)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {disableDelete ? (
+            <div className="h-8 w-8 flex items-center justify-center text-muted-foreground" title={t('cannot_delete_reservation_line')}>
+              <Lock className="h-4 w-4" />
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              onClick={() => onRemove(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

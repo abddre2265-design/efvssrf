@@ -37,6 +37,7 @@ import { ProductSearch } from './ProductSearch';
 import { InvoiceLineRow } from './InvoiceLineRow';
 import { InvoiceTotals } from './InvoiceTotals';
 import { StockBubbles } from './StockBubbles';
+import { ClientReservationsDialog } from './ClientReservationsDialog';
 import { clampInvoiceLinesQuantityAtIndex, computeMaxQuantityByIndex } from './stockConstraints';
 import { ClientCreateDialog } from '@/components/clients/ClientCreateDialog';
 import {
@@ -108,6 +109,10 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
   // Loading
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Reservations dialog
+  const [reservationsDialogOpen, setReservationsDialogOpen] = useState(false);
+  const [pendingClientId, setPendingClientId] = useState<string | null>(null);
 
   const selectedClient = useMemo(() => 
     clients.find(c => c.id === selectedClientId),
@@ -192,6 +197,73 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
 
   const maxQuantities = useMemo(() => computeMaxQuantityByIndex(lines), [lines]);
 
+  // Check if client has reservations when selecting
+  const handleClientChange = async (clientId: string) => {
+    setSelectedClientId(clientId);
+    
+    if (!clientId) return;
+    
+    // Check if client has active reservations
+    try {
+      const { data, error } = await supabase
+        .from('product_reservations')
+        .select('id')
+        .eq('client_id', clientId)
+        .in('status', ['active', 'expired'])
+        .limit(1);
+      
+      if (!error && data && data.length > 0) {
+        setPendingClientId(clientId);
+        setReservationsDialogOpen(true);
+      }
+    } catch (error) {
+      console.error('Error checking reservations:', error);
+    }
+  };
+
+  // Handle adding reservations to invoice
+  const handleAddReservations = (selectedReservations: Array<{
+    reservation: {
+      id: string;
+      product_id: string;
+      quantity: number;
+      product: {
+        id: string;
+        name: string;
+        reference: string | null;
+        price_ht: number;
+        vat_rate: number;
+        max_discount: number | null;
+        current_stock: number | null;
+        unlimited_stock: boolean;
+        allow_out_of_stock_sale: boolean | null;
+        reserved_stock: number;
+      };
+    };
+    quantityToUse: number;
+  }>) => {
+    const reservationLines: InvoiceLineFormData[] = selectedReservations.map(({ reservation, quantityToUse }) => ({
+      product_id: reservation.product.id,
+      product_name: reservation.product.name,
+      product_reference: reservation.product.reference,
+      description: '',
+      quantity: quantityToUse,
+      unit_price_ht: reservation.product.price_ht,
+      vat_rate: isForeignClient ? 0 : reservation.product.vat_rate,
+      discount_percent: 0,
+      max_discount: reservation.product.max_discount || 100,
+      current_stock: reservation.product.current_stock,
+      unlimited_stock: reservation.product.unlimited_stock,
+      allow_out_of_stock_sale: reservation.product.allow_out_of_stock_sale || false,
+      fromReservation: true,
+      reservationId: reservation.id,
+      reservationQuantity: quantityToUse,
+      reserved_stock: reservation.product.reserved_stock,
+    }));
+    
+    setLines((prev) => [...reservationLines, ...prev]);
+  };
+
   // Handle product selection
   const handleSelectProduct = (product: any) => {
     const newLine: InvoiceLineFormData = {
@@ -207,6 +279,7 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
       current_stock: product.current_stock,
       unlimited_stock: product.unlimited_stock,
       allow_out_of_stock_sale: product.allow_out_of_stock_sale || false,
+      reserved_stock: product.reserved_stock || 0,
     };
     setLines([...lines, newLine]);
   };
@@ -328,7 +401,51 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
 
       if (linesError) throw linesError;
 
-      // Update stock for each product
+      // Process reservation lines - update reservation status and reserved_stock
+      const reservationLines = lines.filter(line => line.fromReservation && line.reservationId);
+      for (const line of reservationLines) {
+        // Get current reservation
+        const { data: reservation } = await supabase
+          .from('product_reservations')
+          .select('quantity')
+          .eq('id', line.reservationId!)
+          .maybeSingle();
+        
+        if (reservation) {
+          const remainingQuantity = reservation.quantity - line.quantity;
+          
+          if (remainingQuantity <= 0) {
+            // Fully consumed - mark as used
+            await supabase
+              .from('product_reservations')
+              .update({ status: 'used', quantity: 0 })
+              .eq('id', line.reservationId!);
+          } else {
+            // Partially consumed - update remaining quantity
+            await supabase
+              .from('product_reservations')
+              .update({ quantity: remainingQuantity })
+              .eq('id', line.reservationId!);
+          }
+          
+          // Update product reserved_stock
+          const { data: product } = await supabase
+            .from('products')
+            .select('reserved_stock')
+            .eq('id', line.product_id)
+            .maybeSingle();
+          
+          if (product) {
+            const newReservedStock = Math.max(0, (product.reserved_stock || 0) - line.quantity);
+            await supabase
+              .from('products')
+              .update({ reserved_stock: newReservedStock })
+              .eq('id', line.product_id);
+          }
+        }
+      }
+
+      // Update stock for each product (non-reservation lines only affect available stock)
       for (const bubble of stockBubbles) {
         if (!bubble.unlimited_stock) {
           // Create stock movement
@@ -462,7 +579,7 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
                     {t('add_client')}
                   </Button>
                 </div>
-                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <Select value={selectedClientId} onValueChange={handleClientChange}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('select_client')} />
                   </SelectTrigger>
@@ -544,6 +661,8 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
                         maxQuantity={maxQuantities[index] ?? null}
                         onUpdate={handleUpdateLine}
                         onRemove={handleRemoveLine}
+                        disableDelete={line.fromReservation === true}
+                        disableQuantityEdit={line.fromReservation === true}
                       />
                     ))}
                   </div>
@@ -628,6 +747,14 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
           fetchClients();
         }}
         duplicateFrom={null}
+      />
+
+      {/* Client Reservations Dialog */}
+      <ClientReservationsDialog
+        clientId={pendingClientId}
+        open={reservationsDialogOpen}
+        onOpenChange={setReservationsDialogOpen}
+        onAddReservations={handleAddReservations}
       />
     </>
   );
