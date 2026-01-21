@@ -99,6 +99,21 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
     );
   };
 
+  const getDeliveryBadge = (deliveryStatus: string | null) => {
+    if (!deliveryStatus || deliveryStatus === 'pending') {
+      return (
+        <Badge variant="outline" className="bg-gray-500/20 text-gray-700 dark:text-gray-400">
+          {t('delivery_pending')}
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="default" className="bg-purple-500/20 text-purple-700 dark:text-purple-400">
+        {t('delivery_delivered')}
+      </Badge>
+    );
+  };
+
   const getClientName = (invoice: Invoice): string => {
     if (!invoice.client) return '-';
     if (invoice.client.company_name) return invoice.client.company_name;
@@ -144,6 +159,7 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
             <TableHead className="text-right">{t('net_payable')}</TableHead>
             <TableHead>{t('status')}</TableHead>
             <TableHead>{t('payment')}</TableHead>
+            <TableHead>{t('delivery')}</TableHead>
             <TableHead className="w-[60px]">{t('actions')}</TableHead>
           </TableRow>
         </TableHeader>
@@ -176,6 +192,9 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
               </TableCell>
               <TableCell>
                 {getPaymentBadge(invoice.payment_status)}
+              </TableCell>
+              <TableCell>
+                {invoice.status === 'validated' ? getDeliveryBadge(invoice.delivery_status) : '-'}
               </TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -228,7 +247,7 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
                     )}
                     {invoice.status === 'validated' && (
                       <>
-                        {onDeliver && (invoice as any).delivery_status !== 'delivered' && (
+                        {onDeliver && invoice.delivery_status !== 'delivered' && (
                           <DropdownMenuItem onClick={() => onDeliver(invoice)}>
                             <Truck className="mr-2 h-4 w-4" />
                             {t('deliver_invoice')}

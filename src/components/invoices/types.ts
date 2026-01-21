@@ -1,5 +1,6 @@
 export type InvoiceStatus = 'created' | 'draft' | 'validated';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
+export type DeliveryStatus = 'pending' | 'delivered';
 
 export interface Invoice {
   id: string;
@@ -27,6 +28,7 @@ export interface Invoice {
   withholding_applied: boolean;
   status: InvoiceStatus;
   payment_status: PaymentStatus;
+  delivery_status: DeliveryStatus | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
