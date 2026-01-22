@@ -25,6 +25,7 @@ import PointsOfSale from '@/pages/PointsOfSale';
 import InvoiceRequests from '@/pages/InvoiceRequests';
 import PdfSettings from '@/pages/PdfSettings';
 import DeliveryNotes from '@/pages/DeliveryNotes';
+import Taxes from '@/pages/Taxes';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -117,6 +118,8 @@ const Dashboard: React.FC = () => {
         return <PdfSettings />;
       case 'delivery-notes':
         return <DeliveryNotes />;
+      case 'taxes':
+        return <Taxes />;
       default:
         return (
           <motion.div
