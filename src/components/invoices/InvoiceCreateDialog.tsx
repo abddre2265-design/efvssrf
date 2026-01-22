@@ -109,6 +109,19 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
   const [stampDutyEnabled, setStampDutyEnabled] = useState(true);
   const [stampDutyAmount, setStampDutyAmount] = useState(1);
   
+  // Custom taxes
+  const [selectedCustomTaxes, setSelectedCustomTaxes] = useState<import('./InvoiceTotals').SelectedCustomTax[]>([]);
+  
+  // Fetch dynamic tax rates
+  const { customTaxTypes, stampDutyAmount: defaultStampDuty } = useTaxRates(organizationId);
+  
+  // Set default stamp duty from organization settings
+  React.useEffect(() => {
+    if (defaultStampDuty && defaultStampDuty !== stampDutyAmount) {
+      setStampDutyAmount(defaultStampDuty);
+    }
+  }, [defaultStampDuty]);
+  
   // Loading
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -517,7 +530,8 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
     setCurrency('TND');
     setExchangeRate(1);
     setStampDutyEnabled(true);
-    setStampDutyAmount(1);
+    setStampDutyAmount(defaultStampDuty || 1);
+    setSelectedCustomTaxes([]);
   };
 
   const getClientName = (client: Client): string => {
@@ -707,6 +721,9 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
                   stampDutyAmount={stampDutyAmount}
                   onStampDutyEnabledChange={setStampDutyEnabled}
                   onStampDutyAmountChange={setStampDutyAmount}
+                  customTaxTypes={customTaxTypes}
+                  selectedCustomTaxes={selectedCustomTaxes}
+                  onCustomTaxesChange={setSelectedCustomTaxes}
                 />
               )}
 

@@ -152,7 +152,7 @@ export const PdfComponentsList: React.FC<PdfComponentsListProps> = ({
   };
 
   return (
-    <ScrollArea className="h-[400px] pr-4">
+    <ScrollArea className="h-[500px] pr-4">
       <div className="space-y-6">
         {renderCategory(t('pdf_category_header'), headerComponents, 'header')}
         <Separator />
