@@ -9,9 +9,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ProductFormData, UNITS, VAT_RATES } from './types';
+import { ProductFormData, UNITS } from './types';
 import { useProductValidation } from './useProductValidation';
 import { generateEAN13 } from '@/utils/ean13Generator';
+import { useTaxRates } from '@/hooks/useTaxRates';
 
 interface ProductFormProps {
   initialData?: Partial<ProductFormData>;
@@ -37,6 +38,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   
   // Real-time validation hook
   const { validation, validateField, hasErrors, isValidating } = useProductValidation(organizationId, isEdit);
+  
+  // Dynamic VAT rates from Taxes page
+  const { vatRates } = useTaxRates(organizationId);
 
 
   const [data, setData] = useState<ProductFormData>({
@@ -316,8 +320,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           {/* VAT Rate */}
           <div className="space-y-2">
             <Label>{t('vatRate')} *</Label>
-            <div className="flex gap-2">
-              {VAT_RATES.map(rate => (
+            <div className="flex flex-wrap gap-2">
+              {vatRates.map(rate => (
                 <motion.button
                   key={rate}
                   type="button"
