@@ -342,6 +342,77 @@ export type Database = {
           },
         ]
       }
+      custom_tax_types: {
+        Row: {
+          application_order: string
+          application_type: string
+          applies_to_payment: boolean
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string
+          value_type: string
+        }
+        Insert: {
+          application_order: string
+          application_type: string
+          applies_to_payment?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+          value_type: string
+        }
+        Update: {
+          application_order?: string
+          application_type?: string
+          applies_to_payment?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+          value_type?: string
+        }
+        Relationships: []
+      }
+      custom_tax_values: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          tax_type_id: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          tax_type_id: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          tax_type_id?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_tax_values_tax_type_id_fkey"
+            columns: ["tax_type_id"]
+            isOneToOne: false
+            referencedRelation: "custom_tax_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_note_lines: {
         Row: {
           created_at: string
@@ -617,6 +688,45 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      invoice_custom_taxes: {
+        Row: {
+          applied_value: number
+          created_at: string
+          id: string
+          invoice_id: string
+          tax_value_id: string
+        }
+        Insert: {
+          applied_value: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          tax_value_id: string
+        }
+        Update: {
+          applied_value?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          tax_value_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_custom_taxes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_custom_taxes_tax_value_id_fkey"
+            columns: ["tax_value_id"]
+            isOneToOne: false
+            referencedRelation: "custom_tax_values"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_lines: {
         Row: {
@@ -1830,6 +1940,30 @@ export type Database = {
           },
         ]
       }
+      stamp_duty_settings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stock_movements: {
         Row: {
           created_at: string
@@ -2198,6 +2332,63 @@ export type Database = {
           },
         ]
       }
+      vat_rates: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          organization_id: string
+          rate: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          organization_id: string
+          rate: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          organization_id?: string
+          rate?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      withholding_rates: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string | null
+          organization_id: string
+          rate: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string | null
+          organization_id: string
+          rate: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string | null
+          organization_id?: string
+          rate?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2207,6 +2398,10 @@ export type Database = {
       has_organization: { Args: never; Returns: boolean }
       is_credit_note_owner: {
         Args: { credit_note_id: string }
+        Returns: boolean
+      }
+      is_custom_tax_value_in_use: {
+        Args: { value_id: string }
         Returns: boolean
       }
       is_delivery_note_owner: { Args: { dn_id: string }; Returns: boolean }
@@ -2228,6 +2423,11 @@ export type Database = {
       }
       is_supplier_credit_note_owner: {
         Args: { scn_id: string }
+        Returns: boolean
+      }
+      is_vat_rate_in_use: { Args: { rate_value: number }; Returns: boolean }
+      is_withholding_rate_in_use: {
+        Args: { rate_value: number }
         Returns: boolean
       }
     }
