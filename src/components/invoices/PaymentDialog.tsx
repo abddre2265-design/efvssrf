@@ -53,6 +53,7 @@ import {
   Coins
 } from 'lucide-react';
 import { Invoice, formatCurrency, CURRENCIES } from './types';
+import { useTaxRates, DEFAULT_WITHHOLDING_RATES } from '@/hooks/useTaxRates';
 
 interface Payment {
   id: string;
@@ -80,8 +81,6 @@ interface PaymentDialogProps {
   invoice: Invoice | null;
   onPaymentComplete: () => void;
 }
-
-const WITHHOLDING_RATES = [0, 0.5, 1, 1.5, 2, 3, 5, 10, 15, 20, 25];
 
 const PAYMENT_METHODS = [
   { value: 'cash', icon: Banknote, requiresReference: false },
@@ -113,6 +112,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   
   // Active tab state
   const [activeTab, setActiveTab] = useState<string>('config');
@@ -141,6 +141,25 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   
   // Mixed payment state
   const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([]);
+  
+  // Dynamic withholding rates from Taxes page
+  const { withholdingRates } = useTaxRates(organizationId);
+
+  // Fetch organization ID
+  useEffect(() => {
+    const fetchOrg = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (data) setOrganizationId(data.id);
+      }
+    };
+    if (open) fetchOrg();
+  }, [open]);
 
   const getDateLocale = () => {
     switch (language) {
@@ -1053,7 +1072,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                           <SelectValue placeholder={t('select_withholding_rate')} />
                         </SelectTrigger>
                         <SelectContent>
-                          {WITHHOLDING_RATES.map((rate) => (
+                          {withholdingRates.map((rate) => (
                             <SelectItem key={rate} value={String(rate)}>
                               {rate}%
                             </SelectItem>

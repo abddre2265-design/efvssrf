@@ -54,6 +54,7 @@ export const UNITS = [
   'pallet', 'roll', 'sheet', 'unit'
 ];
 
+// Default VAT rates - dynamic rates should be fetched via useTaxRates hook
 export const VAT_RATES = [0, 7, 13, 19];
 
 export const STOCK_ADD_REASONS = {

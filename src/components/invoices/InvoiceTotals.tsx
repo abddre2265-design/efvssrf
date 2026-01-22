@@ -4,7 +4,28 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plus, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { InvoiceLineFormData, calculateLineTotal, formatCurrency } from './types';
+import { CustomTaxType } from '@/hooks/useTaxRates';
+
+export interface SelectedCustomTax {
+  taxTypeId: string;
+  taxValueId: string;
+  taxName: string;
+  value: number;
+  valueType: 'fixed' | 'percentage';
+  applicationType: 'add' | 'deduct';
+  applicationOrder: 'before_stamp' | 'after_stamp';
+}
 
 interface InvoiceTotalsProps {
   lines: InvoiceLineFormData[];
@@ -14,6 +35,10 @@ interface InvoiceTotalsProps {
   stampDutyAmount: number;
   onStampDutyEnabledChange: (enabled: boolean) => void;
   onStampDutyAmountChange: (amount: number) => void;
+  // Custom taxes support
+  customTaxTypes?: CustomTaxType[];
+  selectedCustomTaxes?: SelectedCustomTax[];
+  onCustomTaxesChange?: (taxes: SelectedCustomTax[]) => void;
 }
 
 interface VatBreakdown {
@@ -30,6 +55,9 @@ export const InvoiceTotals: React.FC<InvoiceTotalsProps> = ({
   stampDutyAmount,
   onStampDutyEnabledChange,
   onStampDutyAmountChange,
+  customTaxTypes = [],
+  selectedCustomTaxes = [],
+  onCustomTaxesChange,
 }) => {
   const { t, isRTL } = useLanguage();
 
@@ -76,11 +104,96 @@ export const InvoiceTotals: React.FC<InvoiceTotalsProps> = ({
   );
 
   const { subtotalHt, totalVat, totalDiscount, totalTtc, vatBreakdown } = calculations;
+  
+  // Calculate custom tax amounts
+  const calculateCustomTaxAmount = (tax: SelectedCustomTax, baseAmount: number): number => {
+    if (tax.valueType === 'fixed') {
+      return tax.value;
+    }
+    return baseAmount * (tax.value / 100);
+  };
+
+  // Separate taxes by application order
+  const taxesBeforeStamp = selectedCustomTaxes.filter(t => t.applicationOrder === 'before_stamp');
+  const taxesAfterStamp = selectedCustomTaxes.filter(t => t.applicationOrder === 'after_stamp');
+
+  // Calculate running total with custom taxes
+  let runningTotal = totalTtc;
+  
+  // Apply taxes before stamp
+  taxesBeforeStamp.forEach(tax => {
+    const amount = calculateCustomTaxAmount(tax, totalTtc);
+    if (tax.applicationType === 'add') {
+      runningTotal += amount;
+    } else {
+      runningTotal -= amount;
+    }
+  });
+
+  // Apply stamp duty
   const stampDuty = isForeign ? 0 : stampDutyEnabled ? stampDutyAmount : 0;
-  const netPayable = totalTtc + stampDuty;
+  runningTotal += stampDuty;
+
+  // Apply taxes after stamp
+  taxesAfterStamp.forEach(tax => {
+    const amount = calculateCustomTaxAmount(tax, totalTtc);
+    if (tax.applicationType === 'add') {
+      runningTotal += amount;
+    } else {
+      runningTotal -= amount;
+    }
+  });
+
+  const netPayable = runningTotal;
 
   // Sort VAT breakdown by rate
   vatBreakdown.sort((a, b) => a.rate - b.rate);
+
+  // Handler to add a custom tax
+  const handleAddCustomTax = (taxTypeId: string, taxValueId: string) => {
+    const taxType = customTaxTypes.find(t => t.id === taxTypeId);
+    const taxValue = taxType?.values.find(v => v.id === taxValueId);
+    
+    if (!taxType || !taxValue || !onCustomTaxesChange) return;
+
+    // Check if already added
+    if (selectedCustomTaxes.some(t => t.taxValueId === taxValueId)) return;
+
+    const newTax: SelectedCustomTax = {
+      taxTypeId: taxType.id,
+      taxValueId: taxValue.id,
+      taxName: `${taxType.name}${taxValue.label ? ` - ${taxValue.label}` : ''}`,
+      value: taxValue.value,
+      valueType: taxType.value_type,
+      applicationType: taxType.application_type,
+      applicationOrder: taxType.application_order,
+    };
+
+    onCustomTaxesChange([...selectedCustomTaxes, newTax]);
+  };
+
+  // Handler to remove a custom tax
+  const handleRemoveCustomTax = (taxValueId: string) => {
+    if (!onCustomTaxesChange) return;
+    onCustomTaxesChange(selectedCustomTaxes.filter(t => t.taxValueId !== taxValueId));
+  };
+
+  // Get available tax values (not already selected)
+  const getAvailableTaxValues = () => {
+    const selectedIds = new Set(selectedCustomTaxes.map(t => t.taxValueId));
+    return customTaxTypes.flatMap(type => 
+      type.values
+        .filter(v => !selectedIds.has(v.id))
+        .map(v => ({
+          taxTypeId: type.id,
+          taxValueId: v.id,
+          label: `${type.name}${v.label ? ` - ${v.label}` : ''}: ${type.value_type === 'fixed' ? formatCurrency(v.value, 'TND') : `${v.value}%`}`,
+          applicationType: type.application_type,
+        }))
+    );
+  };
+
+  const availableTaxValues = getAvailableTaxValues();
 
   if (isForeign) {
     // Foreign client - simplified totals
@@ -158,6 +271,31 @@ export const InvoiceTotals: React.FC<InvoiceTotalsProps> = ({
           <span>{formatCurrency(totalTtc, 'TND')}</span>
         </div>
 
+        {/* Custom taxes before stamp */}
+        {taxesBeforeStamp.map((tax) => {
+          const amount = calculateCustomTaxAmount(tax, totalTtc);
+          const isDeduction = tax.applicationType === 'deduct';
+          return (
+            <div 
+              key={tax.taxValueId} 
+              className={`flex justify-between items-center text-sm ${isDeduction ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}
+            >
+              <div className="flex items-center gap-2">
+                <span>{tax.taxName}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0"
+                  onClick={() => handleRemoveCustomTax(tax.taxValueId)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              <span>{isDeduction ? '-' : '+'}{formatCurrency(amount, 'TND')}</span>
+            </div>
+          );
+        })}
+
         {/* Stamp duty */}
         <div className="flex items-center justify-between py-2">
           <div className="flex items-center gap-2">
@@ -181,6 +319,90 @@ export const InvoiceTotals: React.FC<InvoiceTotalsProps> = ({
             </div>
           )}
         </div>
+
+        {/* Custom taxes after stamp */}
+        {taxesAfterStamp.map((tax) => {
+          const amount = calculateCustomTaxAmount(tax, totalTtc);
+          const isDeduction = tax.applicationType === 'deduct';
+          return (
+            <div 
+              key={tax.taxValueId} 
+              className={`flex justify-between items-center text-sm ${isDeduction ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}`}
+            >
+              <div className="flex items-center gap-2">
+                <span>{tax.taxName}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 w-5 p-0"
+                  onClick={() => handleRemoveCustomTax(tax.taxValueId)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+              <span>{isDeduction ? '-' : '+'}{formatCurrency(amount, 'TND')}</span>
+            </div>
+          );
+        })}
+
+        {/* Add custom tax selector */}
+        {customTaxTypes.length > 0 && availableTaxValues.length > 0 && onCustomTaxesChange && (
+          <div className="pt-2">
+            <Select
+              value=""
+              onValueChange={(value) => {
+                const [taxTypeId, taxValueId] = value.split('|');
+                handleAddCustomTax(taxTypeId, taxValueId);
+              }}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <div className="flex items-center gap-2">
+                  <Plus className="h-3 w-3" />
+                  <SelectValue placeholder={t('add_custom_tax')} />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {availableTaxValues.map((tv) => (
+                  <SelectItem 
+                    key={tv.taxValueId} 
+                    value={`${tv.taxTypeId}|${tv.taxValueId}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs ${tv.applicationType === 'add' ? 'text-blue-600' : 'text-amber-600'}`}
+                      >
+                        {tv.applicationType === 'add' ? '+' : '-'}
+                      </Badge>
+                      {tv.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Selected taxes badges */}
+        {selectedCustomTaxes.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-1">
+            {selectedCustomTaxes.map((tax) => (
+              <Badge 
+                key={tax.taxValueId} 
+                variant="secondary" 
+                className="text-xs gap-1"
+              >
+                {tax.taxName}
+                <button
+                  onClick={() => handleRemoveCustomTax(tax.taxValueId)}
+                  className="hover:text-destructive"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
 
         <Separator />
 

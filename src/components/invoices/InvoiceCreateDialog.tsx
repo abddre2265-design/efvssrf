@@ -49,6 +49,7 @@ import {
   generateInvoiceNumber,
 } from './types';
 import { Language } from '@/contexts/LanguageContext';
+import { useTaxRates } from '@/hooks/useTaxRates';
 
 interface Client {
   id: string;
