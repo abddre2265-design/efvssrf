@@ -30,7 +30,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
   };
 
   return (
-    <ScrollArea className="h-[600px] rounded-lg border bg-white">
+    <ScrollArea className="h-[550px] rounded-lg border bg-white">
       <div className="p-4">
         <div 
           className="relative bg-white shadow-lg mx-auto"
@@ -308,6 +308,13 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                     <span>Total TTC</span>
                     <span>238.000 DT</span>
                   </div>
+                  {/* Custom taxes before stamp */}
+                  {isEnabled('custom_taxes') && documentType === 'invoice' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3, color: '#1565c0' }}>
+                      <span>Taxe personnalisée</span>
+                      <span>+5.000 DT</span>
+                    </div>
+                  )}
                   {isEnabled('stamp_duty') && documentType === 'invoice' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
                       <span>Timbre</span>
