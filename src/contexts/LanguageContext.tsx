@@ -1468,6 +1468,9 @@ export const translations: Translations = {
   retry_search: { fr: 'Relancer la recherche', en: 'Retry search', ar: 'إعادة البحث' },
   client_created_automatically: { fr: 'Client créé avec succès', en: 'Client created successfully', ar: 'تم إنشاء العميل بنجاح' },
   error_creating_client_auto: { fr: 'Erreur lors de la création automatique du client', en: 'Error auto-creating client', ar: 'خطأ في الإنشاء التلقائي للعميل' },
+  select_existing_client: { fr: 'Sélectionner un client existant', en: 'Select existing client', ar: 'اختر عميل موجود' },
+  search_client_placeholder: { fr: 'Rechercher par nom, raison sociale ou identifiant...', en: 'Search by name, company or identifier...', ar: 'البحث بالاسم أو الشركة أو المعرف...' },
+  no_clients_found: { fr: 'Aucun client trouvé', en: 'No clients found', ar: 'لم يتم العثور على عملاء' },
 };
 
 // Tunisian Governorates
