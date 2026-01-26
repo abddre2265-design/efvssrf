@@ -1115,6 +1115,7 @@ const PublicInvoiceRequest: React.FC = () => {
         {showAIAssistant && organizationId && (
           <PublicFormAIAssistant
             organizationId={organizationId}
+            organizationName={organizationName}
             onClientFound={(clientData) => {
               if (clientData) {
                 setClientType(clientData.client_type as ClientType);
@@ -1136,6 +1137,12 @@ const PublicInvoiceRequest: React.FC = () => {
                 setClientValidated(true);
               }
             }}
+            onPendingRequestsFound={(requests) => {
+              setPendingRequests(requests);
+              setShowPendingDialog(true);
+            }}
+            onClose={() => setShowAIAssistant(false)}
+            clientValidated={clientValidated}
           />
         )}
 
@@ -1197,14 +1204,15 @@ const PublicInvoiceRequest: React.FC = () => {
         open={showPendingDialog}
         onOpenChange={setShowPendingDialog}
         requests={pendingRequests}
+        stores={stores}
         onEditRequest={(request) => {
           // Load request data into form for editing
           setEditingRequestId(request.id);
-          setClientType(request.client_type as ClientType);
+          setClientType((request.client_type || 'individual_local') as ClientType);
           setFirstName(request.first_name || '');
           setLastName(request.last_name || '');
           setCompanyName(request.company_name || '');
-          setIdentifierType(request.identifier_type);
+          setIdentifierType(request.identifier_type || 'cin');
           setIdentifierValue(request.identifier_value);
           setCountry(request.country || 'Tunisie');
           setGovernorate(request.governorate || '');
@@ -1221,9 +1229,9 @@ const PublicInvoiceRequest: React.FC = () => {
           setTotalTTC(request.total_ttc.toString());
           setStoreId(request.store_id || '');
           setPurchaseDate(new Date(request.purchase_date));
-          setPaymentStatus(request.payment_status as any);
+          setPaymentStatus((request.payment_status || 'paid') as any);
           setPaidAmount(request.paid_amount?.toString() || '');
-          setLinkedClientId(request.linked_client_id);
+          setLinkedClientId(request.linked_client_id || null);
           setClientValidated(true);
           setShowPendingDialog(false);
           toast.info(t('request_loaded_for_editing'));
