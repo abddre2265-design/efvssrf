@@ -1401,10 +1401,8 @@ export const translations: Translations = {
   // Invoice Request Processing
   choose_creation_method: { fr: 'Choisir le mode de création', en: 'Choose creation method', ar: 'اختر طريقة الإنشاء' },
   choose_creation_method_description: { fr: 'Comment souhaitez-vous créer la facture à partir de cette demande ?', en: 'How would you like to create the invoice from this request?', ar: 'كيف تريد إنشاء الفاتورة من هذا الطلب؟' },
-  standard_creation: { fr: 'Création standard', en: 'Standard creation', ar: 'إنشاء عادي' },
-  standard_creation_desc: { fr: 'Ajouter les produits manuellement', en: 'Add products manually', ar: 'إضافة المنتجات يدوياً' },
-  ai_generation: { fr: 'Génération IA', en: 'AI Generation', ar: 'توليد بالذكاء الاصطناعي' },
-  ai_generation_desc: { fr: 'Générer automatiquement les lignes', en: 'Auto-generate invoice lines', ar: 'توليد خطوط الفاتورة تلقائياً' },
+  request_standard_creation_desc: { fr: 'Ajouter les produits manuellement', en: 'Add products manually', ar: 'إضافة المنتجات يدوياً' },
+  request_ai_generation_desc: { fr: 'Générer automatiquement les lignes', en: 'Auto-generate invoice lines', ar: 'توليد خطوط الفاتورة تلقائياً' },
   process_request: { fr: 'Traiter', en: 'Process', ar: 'معالجة' },
   reject: { fr: 'Rejeter', en: 'Reject', ar: 'رفض' },
   restore_request: { fr: 'Restaurer la demande', en: 'Restore request', ar: 'استعادة الطلب' },
@@ -1455,7 +1453,7 @@ export const translations: Translations = {
   fill_all_payment_methods: { fr: 'Veuillez remplir tous les modes de paiement', en: 'Please fill all payment methods', ar: 'يرجى ملء جميع طرق الدفع' },
   transaction_already_exists: { fr: 'Ce numéro de transaction existe déjà', en: 'This transaction number already exists', ar: 'رقم المعاملة هذا موجود بالفعل' },
   your_requests: { fr: 'Vos demandes', en: 'Your requests', ar: 'طلباتك' },
-  all_statuses: { fr: 'Tous les statuts', en: 'All statuses', ar: 'جميع الحالات' },
+  all_request_statuses: { fr: 'Tous les statuts', en: 'All statuses', ar: 'جميع الحالات' },
 };
 
 // Tunisian Governorates

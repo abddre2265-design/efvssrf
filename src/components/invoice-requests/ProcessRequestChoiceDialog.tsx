@@ -50,7 +50,7 @@ export const ProcessRequestChoiceDialog: React.FC<ProcessRequestChoiceDialogProp
               <div className="text-center">
                 <div className="font-semibold">{t('standard_creation')}</div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {t('standard_creation_desc')}
+                  {t('request_standard_creation_desc')}
                 </div>
               </div>
             </Button>
@@ -69,7 +69,7 @@ export const ProcessRequestChoiceDialog: React.FC<ProcessRequestChoiceDialogProp
               <div className="text-center">
                 <div className="font-semibold">{t('ai_generation')}</div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {t('ai_generation_desc')}
+                  {t('request_ai_generation_desc')}
                 </div>
               </div>
             </Button>
