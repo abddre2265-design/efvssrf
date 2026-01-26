@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarIcon, Sparkles, Loader2, AlertCircle, CheckCircle2, User, Package, Calculator, Settings2, Lock } from 'lucide-react';
+import { CalendarIcon, Sparkles, Loader2, AlertCircle, CheckCircle2, User, Package, Calculator, Settings2, Lock, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,8 @@ import { StockBubbles } from '@/components/invoices/StockBubbles';
 import { InvoiceLineFormData, StockBubble, INVOICE_PREFIXES, VAT_RATES, calculateLineTotal, formatCurrency } from '@/components/invoices/types';
 import { InvoiceRequest } from './types';
 import { RequestTTCComparisonBubble } from './RequestTTCComparisonBubble';
+import { ClientLookupBanner } from './ClientLookupBanner';
+import { useClientLookup, PendingClientData } from '@/hooks/useClientLookup';
 
 interface Product {
   id: string;
@@ -44,6 +46,14 @@ interface VatTarget {
   targetHt: string;
   targetTtc: string;
   editMode: 'ht' | 'ttc';
+}
+
+interface Client {
+  id: string;
+  client_type: string;
+  first_name: string | null;
+  last_name: string | null;
+  company_name: string | null;
 }
 
 interface RequestAIInvoiceDialogProps {
@@ -72,8 +82,17 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
     number: '',
   });
   const [isNumberValid, setIsNumberValid] = useState(false);
+  
+  // Client state - can be existing client ID or pending new client data
   const [clientId, setClientId] = useState<string | null>(null);
   const [clientName, setClientName] = useState('');
+  const [pendingClientData, setPendingClientData] = useState<PendingClientData | null>(null);
+  const [showClientSelector, setShowClientSelector] = useState(false);
+  const [allClients, setAllClients] = useState<Client[]>([]);
+  
+  // Client lookup hook
+  const { isLooking, lookupResult, lookupClientFromRequest, createClientFromPending, resetLookup } = useClientLookup(organizationId);
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [maxLines, setMaxLines] = useState<string>('10');
   const [minPriceTtc, setMinPriceTtc] = useState<string>('0');
@@ -121,77 +140,47 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
     }
   }, [open, request.total_ttc]);
 
+  // Perform client lookup when dialog opens
+  const performClientLookup = useCallback(async () => {
+    if (!organizationId) return;
+    
+    const result = await lookupClientFromRequest(request);
+    
+    if (result.found && result.client) {
+      setClientId(result.client.id);
+      setClientName(result.client.company_name || 
+        `${result.client.first_name || ''} ${result.client.last_name || ''}`.trim() ||
+        result.client.identifier_value
+      );
+      setPendingClientData(null);
+    } else if (result.isNewClient && result.pendingClient) {
+      setClientId(null);
+      setPendingClientData(result.pendingClient);
+      setClientName(result.pendingClient.company_name || 
+        `${result.pendingClient.first_name || ''} ${result.pendingClient.last_name || ''}`.trim() ||
+        result.pendingClient.identifier_value
+      );
+    }
+  }, [organizationId, request, lookupClientFromRequest]);
+
   const fetchData = useCallback(async () => {
     if (!organizationId) return;
     setIsLoading(true);
     
-    // Get or create client
-    let existingClientId = request.linked_client_id;
-    let existingClientName = '';
+    // Perform client lookup using the new hook
+    await performClientLookup();
     
-    if (!existingClientId) {
-      // Check if client already exists by identifier
-      const { data: existingClient } = await supabase
-        .from('clients')
-        .select('id, first_name, last_name, company_name')
-        .eq('organization_id', organizationId)
-        .eq('identifier_value', request.identifier_value)
-        .maybeSingle();
+    // Fetch all clients for potential replacement
+    const { data: clientsData } = await supabase
+      .from('clients')
+      .select('id, client_type, first_name, last_name, company_name')
+      .eq('organization_id', organizationId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+    
+    if (clientsData) setAllClients(clientsData as Client[]);
 
-      if (existingClient) {
-        existingClientId = existingClient.id;
-        existingClientName = existingClient.company_name || `${existingClient.first_name || ''} ${existingClient.last_name || ''}`.trim();
-      } else {
-        // Create new client
-        const { data: newClient, error } = await supabase
-          .from('clients')
-          .insert({
-            organization_id: organizationId,
-            client_type: request.client_type as 'individual_local' | 'business_local' | 'foreign',
-            first_name: request.first_name,
-            last_name: request.last_name,
-            company_name: request.company_name,
-            identifier_type: request.identifier_type,
-            identifier_value: request.identifier_value,
-            country: request.country || 'Tunisie',
-            governorate: request.governorate,
-            address: request.address,
-            postal_code: request.postal_code,
-            phone_prefix: request.phone_prefix,
-            phone: request.phone,
-            whatsapp_prefix: request.whatsapp_prefix,
-            whatsapp: request.whatsapp,
-            email: request.email,
-          })
-          .select()
-          .single();
-
-        if (!error && newClient) {
-          existingClientId = newClient.id;
-          existingClientName = newClient.company_name || `${newClient.first_name || ''} ${newClient.last_name || ''}`.trim();
-          await supabase
-            .from('invoice_requests')
-            .update({ linked_client_id: newClient.id })
-            .eq('id', request.id);
-        }
-      }
-    }
-
-    if (existingClientId) {
-      const { data: client } = await supabase
-        .from('clients')
-        .select('id, first_name, last_name, company_name')
-        .eq('id', existingClientId)
-        .maybeSingle();
-      
-      if (client) {
-        existingClientName = client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim();
-      }
-    }
-
-    setClientId(existingClientId);
-    setClientName(existingClientName);
-
+    // Fetch products
     const { data: productsData } = await supabase
       .from('products')
       .select('id, name, reference, price_ht, price_ttc, vat_rate, max_discount, current_stock, unlimited_stock, allow_out_of_stock_sale')
@@ -201,9 +190,21 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
     
     if (productsData) setProducts(productsData as Product[]);
     setIsLoading(false);
-  }, [organizationId, request]);
+  }, [organizationId, performClientLookup]);
 
   useEffect(() => { if (open && organizationId) fetchData(); }, [open, organizationId, fetchData]);
+
+  // Handle replacing client with an existing one
+  const handleReplaceClient = (newClientId: string) => {
+    const client = allClients.find(c => c.id === newClientId);
+    if (client) {
+      setClientId(client.id);
+      setClientName(client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim());
+      setPendingClientData(null);
+      resetLookup();
+    }
+    setShowClientSelector(false);
+  };
 
   const handleVatTargetChange = (index: number, field: 'targetHt' | 'targetTtc', value: string) => {
     setVatTargets(prev => {
@@ -232,7 +233,11 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
   const ttcMatches = Math.abs(currentTTC - request.total_ttc) < 0.01;
 
   const handleGenerate = async () => {
-    if (!clientId || allowedVatRates.length === 0) { toast.error(t('fill_required_fields')); return; }
+    // Need either an existing client or pending client data
+    if ((!clientId && !pendingClientData) || allowedVatRates.length === 0) { 
+      toast.error(t('fill_required_fields')); 
+      return; 
+    }
     const activeTargets = vatTargets.filter(t => parseFloat(t.targetHt) > 0 || parseFloat(t.targetTtc) > 0);
     if (activeTargets.length === 0) { toast.error(t('enter_at_least_one_target')); return; }
     
@@ -289,10 +294,41 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
   };
 
   const handleSave = async () => {
-    if (!organizationId || !clientId || generatedLines.length === 0 || !isNumberValid) return;
+    if (!organizationId || generatedLines.length === 0 || !isNumberValid) return;
+    
+    // Need either existing client or pending client data
+    if (!clientId && !pendingClientData) {
+      toast.error(t('fill_required_fields'));
+      return;
+    }
+    
     setIsSaving(true);
     setStep('saving');
+    
     try {
+      let finalClientId = clientId;
+      
+      // If we have pending client data (new client), create it now
+      if (!finalClientId && pendingClientData) {
+        const newClientId = await createClientFromPending(pendingClientData);
+        if (!newClientId) {
+          throw new Error(t('error_creating_client_auto'));
+        }
+        finalClientId = newClientId;
+        setClientId(finalClientId);
+        toast.success(t('client_created_automatically'));
+        
+        // Link the client to the request
+        await supabase
+          .from('invoice_requests')
+          .update({ linked_client_id: finalClientId })
+          .eq('id', request.id);
+      }
+      
+      if (!finalClientId) {
+        throw new Error(t('fill_required_fields'));
+      }
+      
       const totals = generatedLines.reduce((acc, line) => { 
         const { lineHt, lineVat, lineTtc } = calculateLineTotal(line.quantity, line.unit_price_ht, line.vat_rate, line.discount_percent, isForeignClient); 
         acc.subtotalHt += lineHt; 
@@ -307,14 +343,14 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
       
       const { data: invoice, error: invoiceError } = await supabase.from('invoices').insert({ 
         organization_id: organizationId, 
-        client_id: clientId, 
+        client_id: finalClientId, 
         invoice_number: invoiceNumber.number, 
         invoice_prefix: invoiceNumber.prefix, 
         invoice_year: invoiceNumber.year, 
         invoice_counter: invoiceNumber.counter, 
         invoice_date: format(invoiceDate, 'yyyy-MM-dd'), 
         due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null, 
-        client_type: request.client_type, 
+        client_type: pendingClientData?.client_type || request.client_type, 
         currency: 'TND', 
         exchange_rate: 1, 
         subtotal_ht: totals.subtotalHt, 
@@ -467,6 +503,54 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
           <AnimatePresence mode="wait">
             {step === 'config' && (
               <motion.div key="config" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="p-6 space-y-6">
+                
+                {/* Client Lookup Banner */}
+                <ClientLookupBanner
+                  isLooking={isLooking}
+                  lookupResult={lookupResult}
+                  onReplaceClient={() => setShowClientSelector(true)}
+                  onRetryLookup={performClientLookup}
+                />
+                
+                {/* Client Selector (when replacing) */}
+                {showClientSelector && (
+                  <Card className="border-primary/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        {t('select_existing')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Select 
+                        value={clientId || ''} 
+                        onValueChange={(value) => {
+                          handleReplaceClient(value);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('select_client')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allClients.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="mt-2" 
+                        onClick={() => setShowClientSelector(false)}
+                      >
+                        {t('cancel')}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -477,13 +561,31 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         {t('client')} 
-                        <Lock className="h-3 w-3 text-muted-foreground" />
+                        {!showClientSelector && <Lock className="h-3 w-3 text-muted-foreground" />}
                       </Label>
                       <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{clientName || t('loading')}...</span>
-                        <Badge variant="outline" className="ml-auto">{t('locked')}</Badge>
+                        {pendingClientData && (
+                          <Badge variant="outline" className="ml-auto bg-blue-500/10 text-blue-600 border-blue-500/30">
+                            {t('new_client')}
+                          </Badge>
+                        )}
+                        {clientId && !pendingClientData && (
+                          <Badge variant="outline" className="ml-auto">{t('locked')}</Badge>
+                        )}
                       </div>
+                      {!showClientSelector && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs"
+                          onClick={() => setShowClientSelector(true)}
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          {t('replace_client')}
+                        </Button>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
