@@ -37,7 +37,6 @@ import {
   CalendarIcon,
   Store,
   FileText,
-  Search,
   Banknote,
   Building2,
   Globe,
@@ -48,7 +47,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, arSA } from 'date-fns/locale';
 import { toast } from 'sonner';
 import {
   ClientType,
@@ -60,17 +59,9 @@ import {
 } from '@/components/clients/types';
 import { PublicFormAIAssistant } from '@/components/invoice-requests/PublicFormAIAssistant';
 import { PendingRequestDialog } from '@/components/invoice-requests/PendingRequestDialog';
-
-// Payment methods available for public form
-const PAYMENT_METHODS = [
-  { value: 'cash', label: 'Espèces', icon: Banknote },
-  { value: 'card', label: 'Carte bancaire', icon: CreditCard },
-  { value: 'check', label: 'Chèque', icon: Receipt },
-  { value: 'iban_transfer', label: 'Virement IBAN', icon: Building2 },
-  { value: 'swift_transfer', label: 'Virement SWIFT', icon: Globe },
-  { value: 'bank_deposit', label: 'Versement bancaire', icon: Wallet },
-  { value: 'mixed', label: 'Paiement mixte', icon: Layers },
-];
+import { useLanguage, governorates } from '@/contexts/LanguageContext';
+import { ThemeToggle } from '@/components/auth/ThemeToggle';
+import { LanguageSelector } from '@/components/auth/LanguageSelector';
 
 interface StoreData {
   id: string;
@@ -83,28 +74,14 @@ interface MixedPaymentLine {
   amount: string;
 }
 
-interface ClientData {
-  id: string;
-  client_type: string;
-  first_name: string | null;
-  last_name: string | null;
-  company_name: string | null;
-  identifier_type: string;
-  identifier_value: string;
-  country: string;
-  governorate: string | null;
-  address: string | null;
-  postal_code: string | null;
-  phone_prefix: string | null;
-  phone: string | null;
-  whatsapp_prefix: string | null;
-  whatsapp: string | null;
-  email: string | null;
-}
-
 const PublicInvoiceRequest: React.FC = () => {
   const { token } = useParams<{ token: string }>();
+  const { t, language, isRTL } = useLanguage();
   
+  const getDateLocale = () => {
+    switch (language) { case 'ar': return arSA; case 'en': return enUS; default: return fr; }
+  };
+
   // Page state
   const [isLoading, setIsLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -161,6 +138,17 @@ const PublicInvoiceRequest: React.FC = () => {
 
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Payment methods with i18n
+  const PAYMENT_METHODS = [
+    { value: 'cash', labelKey: 'cash', icon: Banknote },
+    { value: 'card', labelKey: 'card', icon: CreditCard },
+    { value: 'check', labelKey: 'check', icon: Receipt },
+    { value: 'iban_transfer', labelKey: 'iban_transfer', icon: Building2 },
+    { value: 'swift_transfer', labelKey: 'swift_transfer', icon: Globe },
+    { value: 'bank_deposit', labelKey: 'bank_deposit', icon: Wallet },
+    { value: 'mixed', labelKey: 'mixed_payment', icon: Layers },
+  ];
 
   useEffect(() => {
     const validateToken = async () => {
@@ -266,64 +254,64 @@ const PublicInvoiceRequest: React.FC = () => {
 
     // Name validation
     if (clientType === 'individual_local') {
-      if (!firstName.trim()) newErrors.firstName = 'Requis';
-      if (!lastName.trim()) newErrors.lastName = 'Requis';
+      if (!firstName.trim()) newErrors.firstName = t('field_required');
+      if (!lastName.trim()) newErrors.lastName = t('field_required');
     } else if (clientType === 'business_local') {
-      if (!companyName.trim()) newErrors.companyName = 'Requis';
+      if (!companyName.trim()) newErrors.companyName = t('field_required');
     } else if (clientType === 'foreign') {
       const hasName = firstName.trim() && lastName.trim();
       const hasCompany = companyName.trim();
       if (!hasName && !hasCompany) {
-        newErrors.companyName = 'Nom ou raison sociale requis';
+        newErrors.companyName = t('name_or_company_required');
       }
     }
 
     // Identifier validation
     const identifierValidation = getIdentifierValidation(identifierType, identifierValue);
     if (!identifierValidation.valid && identifierValidation.message) {
-      newErrors.identifierValue = identifierValidation.message === 'required' ? 'Requis' :
-        identifierValidation.message === 'cin_invalid' ? 'CIN invalide (8 chiffres)' :
-        identifierValidation.message === 'tax_id_invalid' ? 'Matricule fiscal invalide' : 'Invalide';
+      newErrors.identifierValue = identifierValidation.message === 'required' ? t('field_required') :
+        identifierValidation.message === 'cin_invalid' ? t('cin_invalid_format') :
+        identifierValidation.message === 'tax_id_invalid' ? t('tax_id_invalid_format') : t('invalid');
     }
 
     // Governorate for local clients
     if (isLocal && !governorate) {
-      newErrors.governorate = 'Requis';
+      newErrors.governorate = t('field_required');
     }
 
     // Country for foreign clients
     if (!isLocal && !country) {
-      newErrors.country = 'Requis';
+      newErrors.country = t('field_required');
     }
 
     // Email validation if provided
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Email invalide';
+      newErrors.email = t('invalid_email');
     }
 
     // Transaction validation
-    if (!storeId) newErrors.storeId = 'Requis';
-    if (!transactionNumber.trim()) newErrors.transactionNumber = 'Requis';
-    if (!totalTTC || parseFloat(totalTTC) <= 0) newErrors.totalTTC = 'Requis';
+    if (!storeId) newErrors.storeId = t('field_required');
+    if (!transactionNumber.trim()) newErrors.transactionNumber = t('field_required');
+    if (!totalTTC || parseFloat(totalTTC) <= 0) newErrors.totalTTC = t('field_required');
 
     // Payment validation
     if (paymentStatus !== 'unpaid') {
-      if (!paymentMethod) newErrors.paymentMethod = 'Requis';
+      if (!paymentMethod) newErrors.paymentMethod = t('field_required');
       
       if (paymentStatus === 'partial') {
         const paid = parseFloat(paidAmount) || 0;
         const total = parseFloat(totalTTC) || 0;
-        if (paid <= 0) newErrors.paidAmount = 'Requis';
-        if (paid > total) newErrors.paidAmount = 'Supérieur au total';
+        if (paid <= 0) newErrors.paidAmount = t('field_required');
+        if (paid > total) newErrors.paidAmount = t('amount_greater_than_total');
       }
 
       if (paymentMethod === 'mixed') {
         if (!isMixedAmountValid) {
-          newErrors.mixedPayment = 'Le total des paiements doit correspondre au montant';
+          newErrors.mixedPayment = t('mixed_total_mismatch');
         }
         const invalidLines = mixedLines.some(line => !line.method || parseFloat(line.amount) <= 0);
         if (invalidLines) {
-          newErrors.mixedPayment = 'Veuillez remplir tous les modes de paiement';
+          newErrors.mixedPayment = t('fill_all_payment_methods');
         }
       }
     }
@@ -348,9 +336,9 @@ const PublicInvoiceRequest: React.FC = () => {
       if (existingRequest) {
         setErrors(prev => ({
           ...prev,
-          transactionNumber: `Ce numéro de transaction existe déjà (Demande N° ${existingRequest.request_number})`
+          transactionNumber: `${t('transaction_already_exists')} (${existingRequest.request_number})`
         }));
-        toast.error('Ce numéro de transaction a déjà été utilisé pour une autre demande');
+        toast.error(t('transaction_already_exists'));
         return;
       }
     }
@@ -422,7 +410,7 @@ const PublicInvoiceRequest: React.FC = () => {
         if (error) throw error;
 
         setIsSuccess(true);
-        toast.success('Demande mise à jour avec succès');
+        toast.success(t('request_updated_success'));
       } else {
         // CREATE new request
         const year = new Date().getFullYear();
@@ -446,14 +434,48 @@ const PublicInvoiceRequest: React.FC = () => {
         if (error) throw error;
 
         setIsSuccess(true);
-        toast.success('Demande envoyée avec succès');
+        toast.success(t('request_sent_success'));
       }
     } catch (error: any) {
       console.error('Error submitting request:', error);
-      toast.error(editingRequestId ? 'Erreur lors de la mise à jour' : 'Erreur lors de l\'envoi de la demande');
+      toast.error(editingRequestId ? t('error_updating_request') : t('error_submitting_request'));
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Get governorate label based on language
+  const getGovernorateLabel = (value: string) => {
+    const gov = governorates.find(g => g.value === value);
+    if (!gov) return value;
+    return gov[language as keyof typeof gov] || gov.fr;
+  };
+
+  // Get identifier type label
+  const getIdentifierTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      cin: t('cin'),
+      tax_id: t('tax_id'),
+      passport: t('passport'),
+      ssn: t('ssn'),
+      vat_eu: t('vat_eu'),
+      business_number_ca: t('business_number_ca'),
+      trade_register: t('trade_register'),
+      national_id: t('national_id'),
+      diplomatic_passport: t('diplomatic_passport'),
+      internal_id: t('internal_id'),
+    };
+    return labels[type] || type;
+  };
+
+  // Get client type label
+  const getClientTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      individual_local: t('individual_local'),
+      business_local: t('business_local'),
+      foreign: t('foreign'),
+    };
+    return labels[type] || type;
   };
 
   if (isLoading) {
@@ -466,13 +488,18 @@ const PublicInvoiceRequest: React.FC = () => {
 
   if (!isValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Theme & Language toggles */}
+        <div className="fixed top-4 right-4 flex items-center gap-2 z-50">
+          <LanguageSelector />
+          <ThemeToggle />
+        </div>
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
             <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
-            <CardTitle>Lien invalide</CardTitle>
+            <CardTitle>{t('invalid_link')}</CardTitle>
             <CardDescription>
-              Ce lien de demande de facture n'est plus valide ou a expiré.
+              {t('link_expired_or_invalid')}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -482,14 +509,18 @@ const PublicInvoiceRequest: React.FC = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Theme & Language toggles */}
+        <div className="fixed top-4 right-4 flex items-center gap-2 z-50">
+          <LanguageSelector />
+          <ThemeToggle />
+        </div>
         <Card className="max-w-md w-full">
           <CardHeader className="text-center">
             <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
-            <CardTitle>Demande envoyée !</CardTitle>
+            <CardTitle>{t('request_sent_success')}</CardTitle>
             <CardDescription>
-              Votre demande de facture a été transmise à {organizationName}. 
-              Vous serez contacté pour la suite.
+              {t('request_sent_description')}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -498,7 +529,13 @@ const PublicInvoiceRequest: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted py-8 px-4" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Theme & Language toggles */}
+      <div className="fixed top-4 right-4 flex items-center gap-2 z-50">
+        <LanguageSelector />
+        <ThemeToggle />
+      </div>
+
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Editing Banner */}
         {editingRequestId && (
@@ -508,10 +545,10 @@ const PublicInvoiceRequest: React.FC = () => {
                 <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                 <div>
                   <p className="font-medium text-amber-800 dark:text-amber-200">
-                    Mode modification
+                    {t('edit_mode')}
                   </p>
                   <p className="text-sm text-amber-600 dark:text-amber-400">
-                    Vous modifiez une demande existante
+                    {t('editing_existing_request')}
                   </p>
                 </div>
               </div>
@@ -547,11 +584,11 @@ const PublicInvoiceRequest: React.FC = () => {
                   setPaidAmount('');
                   setPaymentMethod('');
                   setLinkedClientId(null);
-                  toast.info('Nouvelle demande - formulaire réinitialisé');
+                  toast.info(t('new_request_form_reset'));
                 }}
                 className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50"
               >
-                Annuler
+                {t('cancel')}
               </Button>
             </div>
           </div>
@@ -561,7 +598,7 @@ const PublicInvoiceRequest: React.FC = () => {
         <div className="text-center space-y-2">
           <FileText className="h-12 w-12 mx-auto text-primary" />
           <h1 className="text-2xl font-bold">
-            {editingRequestId ? 'Modifier la demande' : 'Demande de facture'}
+            {editingRequestId ? t('edit_request') : t('invoice_request')}
           </h1>
           {organizationName && (
             <p className="text-muted-foreground">{organizationName}</p>
@@ -576,23 +613,23 @@ const PublicInvoiceRequest: React.FC = () => {
                 <User className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg">Vos coordonnées</CardTitle>
-                <CardDescription>Informations pour la facturation</CardDescription>
+                <CardTitle className="text-lg">{t('your_details')}</CardTitle>
+                <CardDescription>{t('billing_information')}</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Client Type */}
             <div className="space-y-2">
-              <Label>Type de client *</Label>
+              <Label>{t('client_type')} *</Label>
               <Select value={clientType} onValueChange={(v: ClientType) => setClientType(v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="individual_local">Particulier (Tunisie)</SelectItem>
-                  <SelectItem value="business_local">Entreprise (Tunisie)</SelectItem>
-                  <SelectItem value="foreign">Client étranger</SelectItem>
+                  <SelectItem value="individual_local">{t('individual_local')}</SelectItem>
+                  <SelectItem value="business_local">{t('business_local')}</SelectItem>
+                  <SelectItem value="foreign">{t('foreign')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -601,7 +638,7 @@ const PublicInvoiceRequest: React.FC = () => {
             {clientType === 'individual_local' && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Prénom *</Label>
+                  <Label>{t('first_name')} *</Label>
                   <Input
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -610,7 +647,7 @@ const PublicInvoiceRequest: React.FC = () => {
                   {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label>Nom *</Label>
+                  <Label>{t('last_name')} *</Label>
                   <Input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
@@ -623,7 +660,7 @@ const PublicInvoiceRequest: React.FC = () => {
 
             {clientType === 'business_local' && (
               <div className="space-y-2">
-                <Label>Raison sociale *</Label>
+                <Label>{t('company_name')} *</Label>
                 <Input
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
@@ -637,16 +674,16 @@ const PublicInvoiceRequest: React.FC = () => {
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Prénom</Label>
+                    <Label>{t('first_name')}</Label>
                     <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Nom</Label>
+                    <Label>{t('last_name')}</Label>
                     <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Raison sociale</Label>
+                  <Label>{t('company_name')}</Label>
                   <Input
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
@@ -662,7 +699,7 @@ const PublicInvoiceRequest: React.FC = () => {
             {/* Identification */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Type d'identifiant *</Label>
+                <Label>{t('identifier_type')} *</Label>
                 <Select value={identifierType} onValueChange={setIdentifierType}>
                   <SelectTrigger>
                     <SelectValue />
@@ -670,23 +707,14 @@ const PublicInvoiceRequest: React.FC = () => {
                   <SelectContent>
                     {IDENTIFIER_TYPES[clientType].map((type) => (
                       <SelectItem key={type} value={type}>
-                        {type === 'cin' ? 'CIN' :
-                         type === 'tax_id' ? 'Matricule fiscal' :
-                         type === 'passport' ? 'Passeport' :
-                         type === 'ssn' ? 'Numéro SS' :
-                         type === 'vat_eu' ? 'TVA UE' :
-                         type === 'business_number_ca' ? 'NE Canada' :
-                         type === 'trade_register' ? 'Registre commerce' :
-                         type === 'national_id' ? 'ID National' :
-                         type === 'diplomatic_passport' ? 'Passeport diplomatique' :
-                         type === 'internal_id' ? 'ID Interne' : type}
+                        {getIdentifierTypeLabel(type)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Valeur *</Label>
+                <Label>{t('identifier_value')} *</Label>
                 <Input
                   value={identifierValue}
                   onChange={(e) => setIdentifierValue(e.target.value)}
@@ -702,90 +730,77 @@ const PublicInvoiceRequest: React.FC = () => {
 
             <Separator />
 
-            {/* Address */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-sm text-muted-foreground">Adresse</h4>
-              
-              {/* Country */}
+            {/* Location */}
+            {isLocal ? (
               <div className="space-y-2">
-                <Label>Pays {!isLocal && '*'}</Label>
-                {isLocal ? (
-                  <Input value="Tunisie" disabled className="bg-muted" />
-                ) : (
-                  <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
-                      <SelectValue placeholder="Sélectionner un pays" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="p-2">
-                        <div className="relative">
-                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Rechercher..."
-                            value={countrySearch}
-                            onChange={(e) => setCountrySearch(e.target.value)}
-                            className="pl-8"
-                          />
-                        </div>
-                      </div>
-                      <ScrollArea className="h-[200px]">
-                        {filteredCountries.map((c) => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </ScrollArea>
-                    </SelectContent>
-                  </Select>
-                )}
+                <Label>{t('governorate')} *</Label>
+                <Select value={governorate} onValueChange={setGovernorate}>
+                  <SelectTrigger className={errors.governorate ? 'border-destructive' : ''}>
+                    <SelectValue placeholder={t('select_governorate')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {governorates.map((gov) => (
+                      <SelectItem key={gov.value} value={gov.value}>
+                        {gov[language as keyof typeof gov] || gov.fr}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.governorate && <p className="text-xs text-destructive">{errors.governorate}</p>}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>{t('country')} *</Label>
+                <Select value={country} onValueChange={setCountry}>
+                  <SelectTrigger className={errors.country ? 'border-destructive' : ''}>
+                    <SelectValue placeholder={t('select_country')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="p-2">
+                      <Input
+                        placeholder={t('search')}
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        className="mb-2"
+                      />
+                    </div>
+                    <ScrollArea className="h-48">
+                      {filteredCountries.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </ScrollArea>
+                  </SelectContent>
+                </Select>
                 {errors.country && <p className="text-xs text-destructive">{errors.country}</p>}
               </div>
+            )}
 
-              {/* Governorate */}
-              {isLocal && (
-                <div className="space-y-2">
-                  <Label>Gouvernorat *</Label>
-                  <Select value={governorate} onValueChange={setGovernorate}>
-                    <SelectTrigger className={errors.governorate ? 'border-destructive' : ''}>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TUNISIA_GOVERNORATES.map((gov) => (
-                        <SelectItem key={gov} value={gov}>{gov}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.governorate && <p className="text-xs text-destructive">{errors.governorate}</p>}
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Adresse</Label>
-                  <Input value={address} onChange={(e) => setAddress(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Code postal</Label>
-                  <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('address')}</Label>
+                <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('postal_code')}</Label>
+                <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
               </div>
             </div>
 
             <Separator />
 
             {/* Contact */}
-            <div className="space-y-4">
-              <h4 className="font-medium text-sm text-muted-foreground">Contact</h4>
-              
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Téléphone</Label>
+                <Label>{t('phone')}</Label>
                 <div className="flex gap-2">
                   <Select value={phonePrefix} onValueChange={setPhonePrefix}>
-                    <SelectTrigger className="w-[130px]">
+                    <SelectTrigger className="w-24">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {COUNTRY_PHONE_PREFIXES.map((prefix) => (
-                        <SelectItem key={prefix.code} value={prefix.code}>
-                          {prefix.flag} {prefix.code}
+                      {COUNTRY_PHONE_PREFIXES.map((p) => (
+                        <SelectItem key={p.code} value={p.code}>
+                          {p.flag} {p.code}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -793,23 +808,22 @@ const PublicInvoiceRequest: React.FC = () => {
                   <Input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    placeholder="XX XXX XXX"
                     className="flex-1"
-                    placeholder="12345678"
                   />
                 </div>
               </div>
-
               <div className="space-y-2">
-                <Label>WhatsApp</Label>
+                <Label>{t('whatsapp')}</Label>
                 <div className="flex gap-2">
                   <Select value={whatsappPrefix} onValueChange={setWhatsappPrefix}>
-                    <SelectTrigger className="w-[130px]">
+                    <SelectTrigger className="w-24">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {COUNTRY_PHONE_PREFIXES.map((prefix) => (
-                        <SelectItem key={prefix.code} value={prefix.code}>
-                          {prefix.flag} {prefix.code}
+                      {COUNTRY_PHONE_PREFIXES.map((p) => (
+                        <SelectItem key={p.code} value={p.code}>
+                          {p.flag} {p.code}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -817,22 +831,23 @@ const PublicInvoiceRequest: React.FC = () => {
                   <Input
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
+                    placeholder="XX XXX XXX"
                     className="flex-1"
-                    placeholder="12345678"
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={errors.email ? 'border-destructive' : ''}
-                />
-                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
-              </div>
+            <div className="space-y-2">
+              <Label>{t('email')}</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={errors.email ? 'border-destructive' : ''}
+                placeholder="email@example.com"
+              />
+              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
             </div>
           </CardContent>
         </Card>
@@ -845,39 +860,38 @@ const PublicInvoiceRequest: React.FC = () => {
                 <Receipt className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg">Informations de transaction</CardTitle>
-                <CardDescription>Détails de votre achat</CardDescription>
+                <CardTitle className="text-lg">{t('transaction_details')}</CardTitle>
+                <CardDescription>{t('purchase_information')}</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Date d'achat *</Label>
+                <Label>{t('purchase_date')} *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(purchaseDate, 'dd/MM/yyyy', { locale: fr })}
+                      {format(purchaseDate, 'PPP', { locale: getDateLocale() })}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
                       selected={purchaseDate}
                       onSelect={(date) => date && setPurchaseDate(date)}
                       initialFocus
-                      locale={fr}
+                      locale={getDateLocale()}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
-
               <div className="space-y-2">
-                <Label>Magasin *</Label>
+                <Label>{t('store')} *</Label>
                 <Select value={storeId} onValueChange={setStoreId}>
                   <SelectTrigger className={errors.storeId ? 'border-destructive' : ''}>
-                    <SelectValue placeholder="Sélectionner" />
+                    <SelectValue placeholder={t('select_store')} />
                   </SelectTrigger>
                   <SelectContent>
                     {stores.map((store) => (
@@ -895,36 +909,53 @@ const PublicInvoiceRequest: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Numéro de transaction *</Label>
+              <Label>{t('transaction_number')} *</Label>
               <Input
                 value={transactionNumber}
                 onChange={(e) => setTransactionNumber(e.target.value)}
                 className={errors.transactionNumber ? 'border-destructive' : ''}
+                placeholder={t('transaction_number_placeholder')}
               />
               {errors.transactionNumber && <p className="text-xs text-destructive">{errors.transactionNumber}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Numéro de ticket de caisse</Label>
-                <Input value={receiptNumber} onChange={(e) => setReceiptNumber(e.target.value)} />
+                <Label>{t('receipt_number')}</Label>
+                <Input
+                  value={receiptNumber}
+                  onChange={(e) => setReceiptNumber(e.target.value)}
+                  placeholder={t('optional')}
+                />
               </div>
               <div className="space-y-2">
-                <Label>Numéro de commande</Label>
-                <Input value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} />
+                <Label>{t('order_number')}</Label>
+                <Input
+                  value={orderNumber}
+                  onChange={(e) => setOrderNumber(e.target.value)}
+                  placeholder={t('optional')}
+                />
               </div>
             </div>
 
+            <Separator />
+
             <div className="space-y-2">
-              <Label>Montant total TTC (DT) *</Label>
-              <Input
-                type="number"
-                step="0.001"
-                min="0"
-                value={totalTTC}
-                onChange={(e) => setTotalTTC(e.target.value)}
-                className={errors.totalTTC ? 'border-destructive' : ''}
-              />
+              <Label>{t('total_ttc')} *</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={totalTTC}
+                  onChange={(e) => setTotalTTC(e.target.value)}
+                  className={`${errors.totalTTC ? 'border-destructive' : ''} pr-16`}
+                  placeholder="0.000"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  TND
+                </span>
+              </div>
               {errors.totalTTC && <p className="text-xs text-destructive">{errors.totalTTC}</p>}
             </div>
           </CardContent>
@@ -938,132 +969,138 @@ const PublicInvoiceRequest: React.FC = () => {
                 <CreditCard className="h-4 w-4 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg">Statut de paiement</CardTitle>
-                <CardDescription>Indiquez le statut du paiement</CardDescription>
+                <CardTitle className="text-lg">{t('payment_status')}</CardTitle>
+                <CardDescription>{t('payment_status_description')}</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <RadioGroup value={paymentStatus} onValueChange={(v: 'paid' | 'partial' | 'unpaid') => setPaymentStatus(v)}>
+            <RadioGroup value={paymentStatus} onValueChange={(v: any) => setPaymentStatus(v)}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="paid" id="paid" />
-                <Label htmlFor="paid" className="cursor-pointer">Payée</Label>
+                <RadioGroupItem value="unpaid" id="unpaid" />
+                <Label htmlFor="unpaid">{t('payment_unpaid')}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="partial" id="partial" />
-                <Label htmlFor="partial" className="cursor-pointer">Partiellement payée</Label>
+                <Label htmlFor="partial">{t('payment_partial')}</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="unpaid" id="unpaid" />
-                <Label htmlFor="unpaid" className="cursor-pointer">Impayée</Label>
+                <RadioGroupItem value="paid" id="paid" />
+                <Label htmlFor="paid">{t('payment_paid')}</Label>
               </div>
             </RadioGroup>
 
-            {/* Block 4: Payment Details (shown when paid or partial) */}
             {paymentStatus !== 'unpaid' && (
               <>
                 <Separator />
-
+                
                 {paymentStatus === 'partial' && (
                   <div className="space-y-2">
-                    <Label>Montant payé (DT) *</Label>
-                    <Input
-                      type="number"
-                      step="0.001"
-                      min="0"
-                      max={totalTTC}
-                      value={paidAmount}
-                      onChange={(e) => setPaidAmount(e.target.value)}
-                      className={errors.paidAmount ? 'border-destructive' : ''}
-                    />
+                    <Label>{t('paid_amount')} *</Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="0.001"
+                        min="0"
+                        value={paidAmount}
+                        onChange={(e) => setPaidAmount(e.target.value)}
+                        className={`${errors.paidAmount ? 'border-destructive' : ''} pr-16`}
+                        placeholder="0.000"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                        TND
+                      </span>
+                    </div>
                     {errors.paidAmount && <p className="text-xs text-destructive">{errors.paidAmount}</p>}
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <Label>Mode de paiement *</Label>
+                  <Label>{t('payment_method')} *</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger className={errors.paymentMethod ? 'border-destructive' : ''}>
-                      <SelectValue placeholder="Sélectionner" />
+                      <SelectValue placeholder={t('select_payment_method')} />
                     </SelectTrigger>
                     <SelectContent>
-                      {PAYMENT_METHODS.map((method) => {
-                        const Icon = method.icon;
-                        return (
-                          <SelectItem key={method.value} value={method.value}>
-                            <div className="flex items-center gap-2">
-                              <Icon className="h-4 w-4" />
-                              {method.label}
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
+                      {PAYMENT_METHODS.map((method) => (
+                        <SelectItem key={method.value} value={method.value}>
+                          <div className="flex items-center gap-2">
+                            <method.icon className="h-4 w-4" />
+                            {t(method.labelKey)}
+                          </div>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {errors.paymentMethod && <p className="text-xs text-destructive">{errors.paymentMethod}</p>}
                 </div>
 
-                {/* Mixed Payment Lines */}
                 {paymentMethod === 'mixed' && (
-                  <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
+                  <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">Détail des paiements</Label>
-                      <Button type="button" variant="ghost" size="sm" onClick={addMixedLine}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Ajouter
+                      <Label>{t('payment_breakdown')}</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addMixedLine}
+                        className="gap-1"
+                      >
+                        <Plus className="h-3 w-3" />
+                        {t('add')}
                       </Button>
                     </div>
-
                     {mixedLines.map((line, index) => (
-                      <div key={line.id} className="flex items-center gap-2">
-                        <Select
-                          value={line.method}
+                      <div key={line.id} className="flex gap-2 items-start">
+                        <Select 
+                          value={line.method} 
                           onValueChange={(v) => updateMixedLine(line.id, 'method', v)}
                         >
                           <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Mode" />
+                            <SelectValue placeholder={t('method')} />
                           </SelectTrigger>
                           <SelectContent>
-                            {PAYMENT_METHODS.filter(m => m.value !== 'mixed').map((method) => {
-                              const Icon = method.icon;
-                              return (
-                                <SelectItem key={method.value} value={method.value}>
-                                  <div className="flex items-center gap-2">
-                                    <Icon className="h-4 w-4" />
-                                    {method.label}
-                                  </div>
-                                </SelectItem>
-                              );
-                            })}
+                            {PAYMENT_METHODS.filter(m => m.value !== 'mixed').map((method) => (
+                              <SelectItem key={method.value} value={method.value}>
+                                <div className="flex items-center gap-2">
+                                  <method.icon className="h-4 w-4" />
+                                  {t(method.labelKey)}
+                                </div>
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                        <Input
-                          type="number"
-                          step="0.001"
-                          min="0"
-                          value={line.amount}
-                          onChange={(e) => updateMixedLine(line.id, 'amount', e.target.value)}
-                          placeholder="Montant"
-                          className="w-32"
-                        />
+                        <div className="relative w-32">
+                          <Input
+                            type="number"
+                            step="0.001"
+                            min="0"
+                            value={line.amount}
+                            onChange={(e) => updateMixedLine(line.id, 'amount', e.target.value)}
+                            placeholder="0.000"
+                            className="pr-10"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                            TND
+                          </span>
+                        </div>
                         {mixedLines.length > 1 && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
                             onClick={() => removeMixedLine(line.id)}
+                            className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
                     ))}
-
                     <div className="flex justify-between text-sm pt-2 border-t">
-                      <span>Total:</span>
-                      <span className={!isMixedAmountValid ? 'text-destructive font-medium' : 'text-green-600 font-medium'}>
-                        {mixedLinesTotal.toFixed(3)} DT / {expectedMixedTotal.toFixed(3)} DT
+                      <span className="text-muted-foreground">{t('total')}:</span>
+                      <span className={!isMixedAmountValid ? 'text-destructive' : 'text-green-600'}>
+                        {mixedLinesTotal.toFixed(3)} / {expectedMixedTotal.toFixed(3)} TND
                       </span>
                     </div>
                     {errors.mixedPayment && <p className="text-xs text-destructive">{errors.mixedPayment}</p>}
@@ -1074,91 +1111,101 @@ const PublicInvoiceRequest: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* AI Assistant */}
+        {showAIAssistant && organizationId && (
+          <PublicFormAIAssistant
+            organizationId={organizationId}
+            onClientFound={(clientData) => {
+              if (clientData) {
+                setClientType(clientData.client_type as ClientType);
+                setFirstName(clientData.first_name || '');
+                setLastName(clientData.last_name || '');
+                setCompanyName(clientData.company_name || '');
+                setIdentifierType(clientData.identifier_type);
+                setIdentifierValue(clientData.identifier_value);
+                setCountry(clientData.country);
+                setGovernorate(clientData.governorate || '');
+                setAddress(clientData.address || '');
+                setPostalCode(clientData.postal_code || '');
+                setPhonePrefix(clientData.phone_prefix || '+216');
+                setPhone(clientData.phone || '');
+                setWhatsappPrefix(clientData.whatsapp_prefix || '+216');
+                setWhatsapp(clientData.whatsapp || '');
+                setEmail(clientData.email || '');
+                setLinkedClientId(clientData.id);
+                setClientValidated(true);
+              }
+            }}
+          />
+        )}
+
         {/* Submit Button */}
-        <Button 
-          onClick={handleSubmit} 
-          className="w-full h-12 text-lg"
+        <Button
+          onClick={handleSubmit}
           disabled={isSubmitting}
+          className="w-full h-12 text-lg gap-2"
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              {editingRequestId ? 'Mise à jour...' : 'Envoi en cours...'}
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {t('submitting')}...
             </>
           ) : (
             <>
-              <CheckCircle2 className="mr-2 h-5 w-5" />
-              {editingRequestId ? 'Mettre à jour la demande' : 'Envoyer la demande'}
+              <FileText className="h-5 w-5" />
+              {editingRequestId ? t('update_request') : t('submit_request')}
             </>
           )}
         </Button>
+
+        {/* AI Chat Button */}
+        <div className="fixed bottom-6 right-6">
+          <Button
+            size="icon"
+            className="h-14 w-14 rounded-full shadow-lg"
+            onClick={() => setShowAIAssistant(!showAIAssistant)}
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
 
-      {/* Confirmation Dialog for partial = total */}
+      {/* Payment Confirmation Dialog */}
       <AlertDialog open={showPaymentConfirm} onOpenChange={setShowPaymentConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le statut de paiement</AlertDialogTitle>
+            <AlertDialogTitle>{t('payment_confirmation')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Le montant payé est égal au montant total. Ce paiement sera traité comme "Payé" et non "Partiellement payé".
+              {t('partial_equals_total_confirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler pour corriger</AlertDialogCancel>
-            <AlertDialogAction onClick={submitRequest}>Confirmer</AlertDialogAction>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowPaymentConfirm(false);
+              setPaymentStatus('paid');
+              submitRequest();
+            }}>
+              {t('yes_treat_as_paid')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* AI Assistant */}
-      {showAIAssistant && organizationId && (
-        <PublicFormAIAssistant
-          organizationId={organizationId}
-          organizationName={organizationName}
-          clientValidated={clientValidated}
-          onClientFound={(client) => {
-            // Fill form with client data
-            setClientType(client.client_type as ClientType);
-            setFirstName(client.first_name || '');
-            setLastName(client.last_name || '');
-            setCompanyName(client.company_name || '');
-            setIdentifierType(client.identifier_type);
-            setIdentifierValue(client.identifier_value);
-            setCountry(client.country);
-            setGovernorate(client.governorate || '');
-            setAddress(client.address || '');
-            setPostalCode(client.postal_code || '');
-            setPhonePrefix(client.phone_prefix || '+216');
-            setPhone(client.phone || '');
-            setWhatsappPrefix(client.whatsapp_prefix || '+216');
-            setWhatsapp(client.whatsapp || '');
-            setEmail(client.email || '');
-            setLinkedClientId(client.id);
-            setClientValidated(true);
-          }}
-          onPendingRequestsFound={(requests) => {
-            setPendingRequests(requests);
-            setShowPendingDialog(true);
-          }}
-          onClose={() => setShowAIAssistant(false)}
-        />
-      )}
 
       {/* Pending Requests Dialog */}
       <PendingRequestDialog
         open={showPendingDialog}
         onOpenChange={setShowPendingDialog}
         requests={pendingRequests}
-        stores={stores}
         onEditRequest={(request) => {
-          // Fill ALL form fields from the existing request
+          // Load request data into form for editing
           setEditingRequestId(request.id);
-          setClientType((request.client_type as ClientType) || 'individual_local');
+          setClientType(request.client_type as ClientType);
           setFirstName(request.first_name || '');
           setLastName(request.last_name || '');
           setCompanyName(request.company_name || '');
-          setIdentifierType(request.identifier_type || 'cin');
-          setIdentifierValue(request.identifier_value || '');
+          setIdentifierType(request.identifier_type);
+          setIdentifierValue(request.identifier_value);
           setCountry(request.country || 'Tunisie');
           setGovernorate(request.governorate || '');
           setAddress(request.address || '');
@@ -1168,30 +1215,20 @@ const PublicInvoiceRequest: React.FC = () => {
           setWhatsappPrefix(request.whatsapp_prefix || '+216');
           setWhatsapp(request.whatsapp || '');
           setEmail(request.email || '');
-          setTransactionNumber(request.transaction_number || '');
+          setTransactionNumber(request.transaction_number);
           setReceiptNumber(request.receipt_number || '');
           setOrderNumber(request.order_number || '');
-          setTotalTTC(String(request.total_ttc || ''));
-          if (request.store_id) setStoreId(request.store_id);
-          if (request.purchase_date) setPurchaseDate(new Date(request.purchase_date));
-          setPaymentStatus((request.payment_status as 'paid' | 'partial' | 'unpaid') || 'unpaid');
-          setPaidAmount(String(request.paid_amount || ''));
-          // Set client as validated since it's an existing request
+          setTotalTTC(request.total_ttc.toString());
+          setStoreId(request.store_id || '');
+          setPurchaseDate(new Date(request.purchase_date));
+          setPaymentStatus(request.payment_status as any);
+          setPaidAmount(request.paid_amount?.toString() || '');
+          setLinkedClientId(request.linked_client_id);
           setClientValidated(true);
-          toast.info(`Demande N° ${request.request_number} chargée pour modification`);
+          setShowPendingDialog(false);
+          toast.info(t('request_loaded_for_editing'));
         }}
       />
-
-      {/* Floating button to reopen AI Assistant */}
-      {!showAIAssistant && (
-        <Button
-          onClick={() => setShowAIAssistant(true)}
-          className="fixed bottom-4 right-4 h-14 w-14 rounded-full shadow-lg z-50"
-          size="icon"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-      )}
     </div>
   );
 };
