@@ -839,6 +839,7 @@ export type Database = {
           created_at: string
           email: string | null
           first_name: string | null
+          generated_invoice_id: string | null
           governorate: string | null
           id: string
           identifier_type: string
@@ -874,6 +875,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           first_name?: string | null
+          generated_invoice_id?: string | null
           governorate?: string | null
           id?: string
           identifier_type: string
@@ -909,6 +911,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           first_name?: string | null
+          generated_invoice_id?: string | null
           governorate?: string | null
           id?: string
           identifier_type?: string
@@ -936,6 +939,13 @@ export type Database = {
           whatsapp_prefix?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoice_requests_generated_invoice_id_fkey"
+            columns: ["generated_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoice_requests_linked_client_id_fkey"
             columns: ["linked_client_id"]
@@ -974,6 +984,7 @@ export type Database = {
           invoice_date: string
           invoice_number: string
           invoice_prefix: string
+          invoice_request_id: string | null
           invoice_year: number
           net_payable: number
           notes: string | null
@@ -1007,6 +1018,7 @@ export type Database = {
           invoice_date: string
           invoice_number: string
           invoice_prefix: string
+          invoice_request_id?: string | null
           invoice_year: number
           net_payable?: number
           notes?: string | null
@@ -1040,6 +1052,7 @@ export type Database = {
           invoice_date?: string
           invoice_number?: string
           invoice_prefix?: string
+          invoice_request_id?: string | null
           invoice_year?: number
           net_payable?: number
           notes?: string | null
@@ -1065,6 +1078,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_invoice_request_id_fkey"
+            columns: ["invoice_request_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_requests"
             referencedColumns: ["id"]
           },
           {

@@ -5,7 +5,7 @@ export interface InvoiceRequest {
   request_date: string;
   
   // Client info
-  client_type: 'company' | 'individual';
+  client_type: 'company' | 'individual' | 'individual_local' | 'business_local' | 'foreign';
   company_name?: string;
   first_name?: string;
   last_name?: string;
@@ -39,6 +39,9 @@ export interface InvoiceRequest {
   
   // Linked client
   linked_client_id?: string;
+  
+  // Generated invoice
+  generated_invoice_id?: string;
   
   // AI
   ai_conversation: AiMessage[];

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -11,16 +12,26 @@ import {
   InvoiceRequestViewDialog,
   InvoiceRequest 
 } from '@/components/invoice-requests';
+import { RequestInvoiceCreateDialog } from '@/components/invoice-requests/RequestInvoiceCreateDialog';
+import { RequestAIInvoiceDialog } from '@/components/invoice-requests/RequestAIInvoiceDialog';
 import { Search, RefreshCw, Clock, CheckCircle, XCircle } from 'lucide-react';
 
 const InvoiceRequests: React.FC = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const [requests, setRequests] = useState<InvoiceRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<InvoiceRequest | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('pending');
+  
+  // Processing state
+  const [processingRequest, setProcessingRequest] = useState<InvoiceRequest | null>(null);
+  const [standardDialogOpen, setStandardDialogOpen] = useState(false);
+  const [aiDialogOpen, setAIDialogOpen] = useState(false);
 
   const fetchRequests = async () => {
     setIsLoading(true);
@@ -46,7 +57,7 @@ const InvoiceRequests: React.FC = () => {
       // Transform data to match our types
       const transformedData: InvoiceRequest[] = (data || []).map(item => ({
         ...item,
-        client_type: item.client_type as 'company' | 'individual',
+        client_type: item.client_type as InvoiceRequest['client_type'],
         payment_status: item.payment_status as 'paid' | 'partial' | 'unpaid',
         status: item.status as 'pending' | 'processed' | 'rejected' | 'converted',
         payment_methods: (item.payment_methods as any[]) || [],
@@ -54,6 +65,19 @@ const InvoiceRequests: React.FC = () => {
       }));
 
       setRequests(transformedData);
+      
+      // Check if we need to open a specific request
+      const openRequestId = searchParams.get('openRequest');
+      if (openRequestId) {
+        const requestToOpen = transformedData.find(r => r.id === openRequestId);
+        if (requestToOpen) {
+          setSelectedRequest(requestToOpen);
+          setViewDialogOpen(true);
+        }
+        // Clear the param
+        searchParams.delete('openRequest');
+        setSearchParams(searchParams);
+      }
     } catch (error: any) {
       console.error('Error fetching requests:', error);
       toast.error(t('error_loading_requests'));
@@ -71,6 +95,22 @@ const InvoiceRequests: React.FC = () => {
     setViewDialogOpen(true);
   };
 
+  const handleProcessRequest = (request: InvoiceRequest, method: 'standard' | 'ai') => {
+    setProcessingRequest(request);
+    if (method === 'standard') {
+      setStandardDialogOpen(true);
+    } else {
+      setAIDialogOpen(true);
+    }
+  };
+
+  const handleInvoiceCreated = () => {
+    fetchRequests();
+    setStandardDialogOpen(false);
+    setAIDialogOpen(false);
+    setProcessingRequest(null);
+  };
+
   const filteredRequests = requests.filter(request => {
     // Filter by tab
     if (activeTab === 'pending' && request.status !== 'pending') return false;
@@ -81,7 +121,7 @@ const InvoiceRequests: React.FC = () => {
     if (!searchTerm) return true;
     
     const search = searchTerm.toLowerCase();
-    const clientName = request.client_type === 'company'
+    const clientName = request.client_type === 'company' || request.client_type === 'business_local'
       ? request.company_name?.toLowerCase()
       : `${request.first_name} ${request.last_name}`.toLowerCase();
     
@@ -189,7 +229,29 @@ const InvoiceRequests: React.FC = () => {
         request={selectedRequest}
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
+        onProcessRequest={handleProcessRequest}
+        onRefresh={fetchRequests}
       />
+
+      {/* Standard Invoice Creation Dialog */}
+      {processingRequest && (
+        <RequestInvoiceCreateDialog
+          open={standardDialogOpen}
+          onOpenChange={setStandardDialogOpen}
+          request={processingRequest}
+          onCreated={handleInvoiceCreated}
+        />
+      )}
+
+      {/* AI Invoice Generation Dialog */}
+      {processingRequest && (
+        <RequestAIInvoiceDialog
+          open={aiDialogOpen}
+          onOpenChange={setAIDialogOpen}
+          request={processingRequest}
+          onCreated={handleInvoiceCreated}
+        />
+      )}
     </div>
   );
 };
