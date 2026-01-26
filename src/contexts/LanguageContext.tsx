@@ -1454,6 +1454,20 @@ export const translations: Translations = {
   transaction_already_exists: { fr: 'Ce numéro de transaction existe déjà', en: 'This transaction number already exists', ar: 'رقم المعاملة هذا موجود بالفعل' },
   your_requests: { fr: 'Vos demandes', en: 'Your requests', ar: 'طلباتك' },
   all_request_statuses: { fr: 'Tous les statuts', en: 'All statuses', ar: 'جميع الحالات' },
+  
+  // Client Lookup for Invoice Creation
+  client_lookup_in_progress: { fr: 'Recherche du client...', en: 'Searching for client...', ar: 'جارٍ البحث عن العميل...' },
+  client_lookup_description: { fr: 'Vérification de l\'existence du client dans la base de données', en: 'Checking if client exists in database', ar: 'التحقق من وجود العميل في قاعدة البيانات' },
+  client_found_auto_assigned: { fr: 'Client trouvé et assigné', en: 'Client found and assigned', ar: 'تم العثور على العميل وتعيينه' },
+  existing_client: { fr: 'Client existant', en: 'Existing client', ar: 'عميل موجود' },
+  client_not_found_will_create: { fr: 'Client non trouvé - Sera créé', en: 'Client not found - Will be created', ar: 'العميل غير موجود - سيتم إنشاؤه' },
+  new_client: { fr: 'Nouveau client', en: 'New client', ar: 'عميل جديد' },
+  client_created_on_validation: { fr: 'Le client sera créé à la validation de la facture', en: 'Client will be created when invoice is validated', ar: 'سيتم إنشاء العميل عند التحقق من الفاتورة' },
+  replace_client: { fr: 'Remplacer le client', en: 'Replace client', ar: 'استبدال العميل' },
+  select_existing: { fr: 'Sélectionner un existant', en: 'Select existing', ar: 'اختر موجود' },
+  retry_search: { fr: 'Relancer la recherche', en: 'Retry search', ar: 'إعادة البحث' },
+  client_created_automatically: { fr: 'Client créé avec succès', en: 'Client created successfully', ar: 'تم إنشاء العميل بنجاح' },
+  error_creating_client_auto: { fr: 'Erreur lors de la création automatique du client', en: 'Error auto-creating client', ar: 'خطأ في الإنشاء التلقائي للعميل' },
 };
 
 // Tunisian Governorates
