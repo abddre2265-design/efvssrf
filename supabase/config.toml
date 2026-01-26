@@ -1,4 +1,1 @@
 project_id = "uzrkeuweietxkwubhbym"
-
-[functions.invoice-request-assistant]
-verify_jwt = false
