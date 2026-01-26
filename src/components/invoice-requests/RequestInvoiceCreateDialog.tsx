@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -14,7 +15,8 @@ import {
   Loader2, 
   User,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
@@ -37,6 +39,8 @@ import { useTaxRates } from '@/hooks/useTaxRates';
 import { InvoiceRequest } from './types';
 import { RequestTTCComparisonBubble } from './RequestTTCComparisonBubble';
 import { PaymentPromptDialog } from './PaymentPromptDialog';
+import { useClientLookup, PendingClientData, LookedUpClient } from '@/hooks/useClientLookup';
+import { ClientLookupBanner } from './ClientLookupBanner';
 
 interface RequestInvoiceCreateDialogProps {
   open: boolean;
@@ -56,10 +60,24 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
   // Organization
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   
-  // Client that will be created from the request
-  const [createdClientId, setCreatedClientId] = useState<string | null>(null);
-  const [createdClientName, setCreatedClientName] = useState<string>('');
+  // Client lookup hook - handles verification and deferred creation
+  const { 
+    isLooking, 
+    lookupResult, 
+    lookupClientFromRequest, 
+    createClientFromPending, 
+    resetLookup 
+  } = useClientLookup(organizationId);
+  
+  // Selected client (can be from lookup or manually selected)
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedClientName, setSelectedClientName] = useState<string>('');
   const [isForeignClient, setIsForeignClient] = useState(false);
+  const [pendingClientData, setPendingClientData] = useState<PendingClientData | null>(null);
+  const [isNewClient, setIsNewClient] = useState(false);
+  const [showClientSelector, setShowClientSelector] = useState(false);
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [searchedClients, setSearchedClients] = useState<any[]>([]);
   
   // Form state
   const [invoiceDate] = useState<Date>(new Date(request.purchase_date));
@@ -93,7 +111,6 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
   // Loading
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isCreatingClient, setIsCreatingClient] = useState(false);
   
   // Payment prompt
   const [paymentPromptOpen, setPaymentPromptOpen] = useState(false);
@@ -114,13 +131,12 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
     }
   };
 
-  // Fetch organization and create client
+  // Fetch organization and perform client lookup
   useEffect(() => {
     const initializeForm = async () => {
       if (!open) return;
       
       setIsLoading(true);
-      setIsCreatingClient(true);
       
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -134,70 +150,98 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
         if (!org) return;
         setOrganizationId(org.id);
-
-        // Check if client already exists
-        const { data: existingClient } = await supabase
-          .from('clients')
-          .select('id, client_type, first_name, last_name, company_name')
-          .eq('organization_id', org.id)
-          .eq('identifier_value', request.identifier_value)
-          .maybeSingle();
-
-        if (existingClient) {
-          setCreatedClientId(existingClient.id);
-          setIsForeignClient(existingClient.client_type === 'foreign');
-          setCreatedClientName(
-            existingClient.company_name || 
-            `${existingClient.first_name || ''} ${existingClient.last_name || ''}`.trim()
-          );
-        } else {
-          // Create new client from request
-          const clientType = request.client_type === 'business_local' ? 'business_local' :
-                             request.client_type === 'foreign' ? 'foreign' : 'individual_local';
-          
-          const { data: newClient, error } = await supabase
-            .from('clients')
-            .insert({
-              organization_id: org.id,
-              client_type: clientType,
-              first_name: request.first_name || null,
-              last_name: request.last_name || null,
-              company_name: request.company_name || null,
-              identifier_type: request.identifier_type,
-              identifier_value: request.identifier_value,
-              email: request.email || null,
-              phone: request.phone || null,
-              phone_prefix: request.phone_prefix || null,
-              whatsapp: request.whatsapp || null,
-              whatsapp_prefix: request.whatsapp_prefix || null,
-              address: request.address || null,
-              governorate: request.governorate || null,
-              postal_code: request.postal_code || null,
-              country: request.country || 'Tunisie',
-            })
-            .select()
-            .single();
-
-          if (error) throw error;
-
-          setCreatedClientId(newClient.id);
-          setIsForeignClient(newClient.client_type === 'foreign');
-          setCreatedClientName(
-            newClient.company_name || 
-            `${newClient.first_name || ''} ${newClient.last_name || ''}`.trim()
-          );
-        }
       } catch (error) {
-        console.error('Error initializing form:', error);
-        toast.error(t('error_creating_client'));
+        console.error('Error fetching organization:', error);
       } finally {
         setIsLoading(false);
-        setIsCreatingClient(false);
       }
     };
 
     initializeForm();
-  }, [open, request]);
+  }, [open]);
+
+  // Perform client lookup once organization is loaded
+  useEffect(() => {
+    const performLookup = async () => {
+      if (!organizationId || !open) return;
+
+      const result = await lookupClientFromRequest(request);
+      
+      if (result.found && result.client) {
+        // Client found in database - auto-assign
+        setSelectedClientId(result.client.id);
+        setSelectedClientName(
+          result.client.company_name || 
+          `${result.client.first_name || ''} ${result.client.last_name || ''}`.trim()
+        );
+        setIsForeignClient(result.client.client_type === 'foreign');
+        setPendingClientData(null);
+        setIsNewClient(false);
+      } else if (result.pendingClient) {
+        // Client not found - prepare for deferred creation
+        setSelectedClientId(null);
+        setSelectedClientName(
+          result.pendingClient.company_name || 
+          `${result.pendingClient.first_name || ''} ${result.pendingClient.last_name || ''}`.trim()
+        );
+        setIsForeignClient(result.pendingClient.client_type === 'foreign');
+        setPendingClientData(result.pendingClient);
+        setIsNewClient(true);
+      }
+    };
+
+    performLookup();
+  }, [organizationId, open, request, lookupClientFromRequest]);
+
+  // Search for clients when selector is open
+  useEffect(() => {
+    const searchClients = async () => {
+      if (!showClientSelector || !organizationId || clientSearchTerm.length < 2) {
+        setSearchedClients([]);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('clients')
+        .select('id, client_type, first_name, last_name, company_name, identifier_value')
+        .eq('organization_id', organizationId)
+        .eq('status', 'active')
+        .or(`first_name.ilike.%${clientSearchTerm}%,last_name.ilike.%${clientSearchTerm}%,company_name.ilike.%${clientSearchTerm}%,identifier_value.ilike.%${clientSearchTerm}%`)
+        .limit(10);
+
+      setSearchedClients(data || []);
+    };
+
+    const debounce = setTimeout(searchClients, 300);
+    return () => clearTimeout(debounce);
+  }, [clientSearchTerm, showClientSelector, organizationId]);
+
+  // Handle selecting an existing client (to replace the auto-detected one)
+  const handleSelectExistingClient = async (clientId: string) => {
+    try {
+      const { data: client } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', clientId)
+        .single();
+
+      if (client) {
+        setSelectedClientId(client.id);
+        setSelectedClientName(
+          client.company_name || 
+          `${client.first_name || ''} ${client.last_name || ''}`.trim()
+        );
+        setIsForeignClient(client.client_type === 'foreign');
+        setPendingClientData(null);
+        setIsNewClient(false);
+        setShowClientSelector(false);
+        setClientSearchTerm('');
+        setSearchedClients([]);
+      }
+    } catch (error) {
+      console.error('Error selecting client:', error);
+    }
+  };
 
   // Stock bubbles calculation
   const stockBubbles = useMemo<StockBubble[]>(() => {
@@ -297,7 +341,10 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
   // Handle save
   const handleSave = async () => {
-    if (!organizationId || !createdClientId || !dueDate || lines.length === 0) {
+    // Validate that we have either an existing client or pending client data
+    const hasClient = selectedClientId || pendingClientData;
+    
+    if (!organizationId || !hasClient || !dueDate || lines.length === 0) {
       toast.error(t('fill_required_fields'));
       return;
     }
@@ -314,12 +361,22 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
     setIsSaving(true);
     try {
+      // If this is a new client, create them now (deferred creation)
+      let finalClientId = selectedClientId;
+      
+      if (!finalClientId && pendingClientData) {
+        finalClientId = await createClientFromPending(pendingClientData);
+        if (!finalClientId) {
+          throw new Error('Failed to create client');
+        }
+      }
+
       // Create invoice
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
           organization_id: organizationId,
-          client_id: createdClientId,
+          client_id: finalClientId,
           invoice_number: invoiceNumber.number,
           invoice_prefix: invoiceNumber.prefix,
           invoice_year: invoiceNumber.year,
@@ -413,7 +470,7 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
         .update({ 
           status: 'processed',
           generated_invoice_id: invoice.id,
-          linked_client_id: createdClientId,
+          linked_client_id: finalClientId,
         })
         .eq('id', request.id);
 
@@ -442,8 +499,11 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
     setStampDutyEnabled(true);
     setStampDutyAmount(defaultStampDuty || 1);
     setSelectedCustomTaxes([]);
-    setCreatedClientId(null);
-    setCreatedClientName('');
+    setSelectedClientId(null);
+    setSelectedClientName('');
+    setPendingClientData(null);
+    setIsNewClient(false);
+    resetLookup();
   };
 
   const handlePaymentPromptClose = (processPayment: boolean) => {
@@ -458,13 +518,13 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLooking) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-6xl h-[95vh] flex items-center justify-center">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p>{isCreatingClient ? t('creating_client') : t('loading')}</p>
+            <p>{isLooking ? t('client_lookup_in_progress') : t('loading')}</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -490,30 +550,78 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
           <ScrollArea className="min-h-0">
             <div className="p-6 space-y-6">
-              {/* Locked fields from request */}
+              {/* Client lookup banner */}
+              <ClientLookupBanner
+                isLooking={isLooking}
+                lookupResult={lookupResult}
+                onReplaceClient={() => setShowClientSelector(true)}
+                showReplaceButton={true}
+              />
+
+              {/* Client Selector (when replacing) */}
+              {showClientSelector && (
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>{t('select_existing_client')}</Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        setShowClientSelector(false);
+                        setClientSearchTerm('');
+                        setSearchedClients([]);
+                      }}
+                    >
+                      {t('cancel')}
+                    </Button>
+                  </div>
+                  <Input
+                    placeholder={t('search_client_placeholder')}
+                    value={clientSearchTerm}
+                    onChange={(e) => setClientSearchTerm(e.target.value)}
+                    autoFocus
+                  />
+                  {searchedClients.length > 0 && (
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {searchedClients.map((client) => (
+                        <button
+                          key={client.id}
+                          className="w-full text-left p-2 rounded hover:bg-accent flex items-center gap-3"
+                          onClick={() => handleSelectExistingClient(client.id)}
+                        >
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <div className="font-medium">
+                              {client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim()}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-mono">
+                              {client.identifier_value}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {clientSearchTerm.length >= 2 && searchedClients.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      {t('no_clients_found')}
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="bg-muted/50 rounded-lg p-4 space-y-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Lock className="h-4 w-4" />
-                  {t('client_locked_from_request')}
+                  {t('date_locked_from_request')}
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t('client')}</Label>
-                    <div className="flex items-center gap-2 bg-background rounded-md border p-3">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{createdClientName}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>{t('invoice_date')}</Label>
-                    <div className="flex items-center gap-2 bg-background rounded-md border p-3">
-                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {format(invoiceDate, 'PPP', { locale: getDateLocale() })}
-                      </span>
-                    </div>
+                <div className="space-y-2">
+                  <Label>{t('invoice_date')}</Label>
+                  <div className="flex items-center gap-2 bg-background rounded-md border p-3">
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">
+                      {format(invoiceDate, 'PPP', { locale: getDateLocale() })}
+                    </span>
                   </div>
                 </div>
               </div>
