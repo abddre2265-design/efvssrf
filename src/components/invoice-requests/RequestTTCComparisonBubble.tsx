@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
 }) => {
   const { t } = useLanguage();
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   
   const difference = requestTTC - currentTTC;
   const isMatch = Math.abs(difference) < 0.001;
@@ -27,37 +29,40 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
     return `${amount.toFixed(3)} ${currency}`;
   };
 
-  return (
+  const bubbleContent = (
     <motion.div
       drag
       dragMomentum={false}
       dragElastic={0}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0, x: position.x }}
+      onDragStart={() => setIsDragging(true)}
       onDragEnd={(_, info) => {
+        setIsDragging(false);
         setPosition(prev => ({
           x: prev.x + info.offset.x,
           y: prev.y + info.offset.y
         }));
       }}
-      style={{ x: position.x, y: position.y }}
-      className="fixed bottom-6 right-6 z-[9999] cursor-grab active:cursor-grabbing"
-      whileDrag={{ scale: 1.02, cursor: 'grabbing' }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ 
+        opacity: 1, 
+        scale: 1,
+        x: position.x,
+        y: position.y
+      }}
+      whileDrag={{ scale: 1.05, zIndex: 99999 }}
+      className={cn(
+        "fixed bottom-6 right-6 cursor-grab active:cursor-grabbing select-none",
+        isDragging ? "z-[99999]" : "z-[9999]"
+      )}
+      style={{ touchAction: 'none' }}
     >
-      <motion.div
+      <div
         className={cn(
           "rounded-xl shadow-2xl min-w-[280px] border-2 backdrop-blur-sm overflow-hidden",
           isMatch 
             ? "bg-green-500/10 border-green-500/50 text-green-700 dark:text-green-400"
             : "bg-red-500/10 border-red-500/50 text-red-700 dark:text-red-400"
         )}
-        animate={{
-          scale: isMatch ? [1, 1.02, 1] : 1,
-        }}
-        transition={{
-          duration: 0.5,
-          repeat: isMatch ? 2 : 0,
-        }}
       >
         {/* Drag handle header */}
         <div 
@@ -142,7 +147,14 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
             )}
           </div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
+
+  // Use portal to render outside of any containing stacking context
+  if (typeof document !== 'undefined') {
+    return createPortal(bubbleContent, document.body);
+  }
+  
+  return bubbleContent;
 };
