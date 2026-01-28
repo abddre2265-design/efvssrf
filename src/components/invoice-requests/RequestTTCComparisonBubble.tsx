@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, TrendingUp, TrendingDown, Minus, GripVertical } from 'lucide-react';
 
@@ -19,7 +18,7 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
   const { t } = useLanguage();
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const initialPos = useRef({ x: 0, y: 0 });
   
@@ -27,6 +26,12 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
   const isMatch = Math.abs(difference) < 0.001;
   const isOver = difference < -0.001;
   const isUnder = difference > 0.001;
+
+  // Animate in on mount
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const formatAmount = (amount: number) => {
     return `${amount.toFixed(3)} ${currency}`;
@@ -67,6 +72,7 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging) return;
+    e.preventDefault(); // Prevent scrolling while dragging
     
     const touch = e.touches[0];
     const deltaX = touch.clientX - dragStartPos.current.x;
@@ -86,7 +92,7 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
       window.addEventListener('touchend', handleTouchEnd);
     }
     
@@ -99,23 +105,23 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   const bubbleContent = (
-    <motion.div
-      ref={dragRef}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+    <div
       className={cn(
-        "fixed bottom-6 right-6 select-none",
-        isDragging ? "z-[99999]" : "z-[99999]"
+        "fixed select-none transition-opacity duration-300",
+        isVisible ? "opacity-100" : "opacity-0",
+        "z-[99999]"
       )}
       style={{ 
-        transform: `translate(${position.x}px, ${position.y}px)`,
+        bottom: `calc(24px - ${position.y}px)`,
+        right: `calc(24px - ${position.x}px)`,
         touchAction: 'none',
         pointerEvents: 'auto'
       }}
     >
       <div
         className={cn(
-          "rounded-xl shadow-2xl min-w-[280px] border-2 backdrop-blur-sm overflow-hidden",
+          "rounded-xl shadow-2xl min-w-[280px] border-2 backdrop-blur-sm overflow-hidden transition-transform duration-200",
+          isDragging && "scale-105",
           isMatch 
             ? "bg-green-500/10 border-green-500/50 text-green-700 dark:text-green-400"
             : "bg-red-500/10 border-red-500/50 text-red-700 dark:text-red-400"
@@ -124,8 +130,7 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
         {/* Drag handle header */}
         <div 
           className={cn(
-            "flex items-center gap-2 px-3 py-2 cursor-grab",
-            isDragging && "cursor-grabbing",
+            "flex items-center gap-2 px-3 py-2 cursor-grab active:cursor-grabbing",
             isMatch ? "bg-green-500/20" : "bg-red-500/20"
           )}
           onMouseDown={handleMouseDown}
@@ -133,29 +138,13 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
         >
           <GripVertical className="h-4 w-4" />
           <span className="text-sm font-medium">{t('ttc_comparison')}</span>
-          <AnimatePresence mode="wait">
+          <div className="ml-auto">
             {isMatch ? (
-              <motion.div
-                key="match"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                className="ml-auto"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-              </motion.div>
+              <CheckCircle2 className="h-4 w-4" />
             ) : (
-              <motion.div
-                key="nomatch"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                className="ml-auto"
-              >
-                <XCircle className="h-4 w-4" />
-              </motion.div>
+              <XCircle className="h-4 w-4" />
             )}
-          </AnimatePresence>
+          </div>
         </div>
 
         <div className="p-4 pt-2">
@@ -208,7 +197,7 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 
   // Use portal to render outside of any containing stacking context
