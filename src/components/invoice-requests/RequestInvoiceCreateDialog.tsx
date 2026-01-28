@@ -521,7 +521,11 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
   if (isLoading || isLooking) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl h-[95vh] flex items-center justify-center">
+        <DialogContent 
+          className="max-w-6xl h-[95vh] flex items-center justify-center"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
             <p>{isLooking ? t('client_lookup_in_progress') : t('loading')}</p>
@@ -537,6 +541,8 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
         <DialogContent 
           className="max-w-6xl h-[95vh] max-h-[95vh] p-0 overflow-hidden grid grid-rows-[auto,1fr,auto]" 
           dir={isRTL ? 'rtl' : 'ltr'}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader className="p-6 pb-0">
             <DialogTitle className="flex items-center gap-2 text-xl">
