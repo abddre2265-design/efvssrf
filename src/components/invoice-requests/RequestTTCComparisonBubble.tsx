@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +19,9 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
   const { t } = useLanguage();
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<HTMLDivElement>(null);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const initialPos = useRef({ x: 0, y: 0 });
   
   const difference = requestTTC - currentTTC;
   const isMatch = Math.abs(difference) < 0.001;
@@ -29,32 +32,86 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
     return `${amount.toFixed(3)} ${currency}`;
   };
 
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+    dragStartPos.current = { x: e.clientX, y: e.clientY };
+    initialPos.current = { x: position.x, y: position.y };
+  }, [position]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaX = e.clientX - dragStartPos.current.x;
+    const deltaY = e.clientY - dragStartPos.current.y;
+    
+    setPosition({
+      x: initialPos.current.x + deltaX,
+      y: initialPos.current.y + deltaY
+    });
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Touch events for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    const touch = e.touches[0];
+    setIsDragging(true);
+    dragStartPos.current = { x: touch.clientX, y: touch.clientY };
+    initialPos.current = { x: position.x, y: position.y };
+  }, [position]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - dragStartPos.current.x;
+    const deltaY = touch.clientY - dragStartPos.current.y;
+    
+    setPosition({
+      x: initialPos.current.x + deltaX,
+      y: initialPos.current.y + deltaY
+    });
+  }, [isDragging]);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleTouchEnd);
+    }
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
+
   const bubbleContent = (
     <motion.div
-      drag
-      dragMomentum={false}
-      dragElastic={0}
-      onDragStart={() => setIsDragging(true)}
-      onDragEnd={(_, info) => {
-        setIsDragging(false);
-        setPosition(prev => ({
-          x: prev.x + info.offset.x,
-          y: prev.y + info.offset.y
-        }));
-      }}
+      ref={dragRef}
       initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ 
-        opacity: 1, 
-        scale: 1,
-        x: position.x,
-        y: position.y
-      }}
-      whileDrag={{ scale: 1.05, zIndex: 99999 }}
+      animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        "fixed bottom-6 right-6 cursor-grab active:cursor-grabbing select-none",
-        isDragging ? "z-[99999]" : "z-[9999]"
+        "fixed bottom-6 right-6 select-none",
+        isDragging ? "z-[99999]" : "z-[99999]"
       )}
-      style={{ touchAction: 'none' }}
+      style={{ 
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        touchAction: 'none',
+        pointerEvents: 'auto'
+      }}
     >
       <div
         className={cn(
@@ -67,9 +124,12 @@ export const RequestTTCComparisonBubble: React.FC<RequestTTCComparisonBubbleProp
         {/* Drag handle header */}
         <div 
           className={cn(
-            "flex items-center gap-2 px-3 py-2",
+            "flex items-center gap-2 px-3 py-2 cursor-grab",
+            isDragging && "cursor-grabbing",
             isMatch ? "bg-green-500/20" : "bg-red-500/20"
           )}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         >
           <GripVertical className="h-4 w-4" />
           <span className="text-sm font-medium">{t('ttc_comparison')}</span>
