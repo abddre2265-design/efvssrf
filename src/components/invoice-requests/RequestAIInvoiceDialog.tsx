@@ -479,27 +479,22 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
   }, { subtotalHt: 0, totalVat: 0, totalTtc: 0, totalDiscount: 0 }), [generatedLines, isForeignClient]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[95vh] max-h-[95vh] p-0 overflow-hidden grid grid-rows-[auto,1fr,auto]" dir={isRTL ? 'rtl' : 'ltr'}>
-        <DialogHeader className="p-6 pb-0 bg-gradient-to-r from-primary/10 to-accent/10">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-            {t('ai_generation')} - {request.request_number}
-          </DialogTitle>
-          <div className="flex gap-2 mt-2">
-            <Badge variant={step === 'config' ? 'default' : 'secondary'}>1. {t('configuration')}</Badge>
-            <Badge variant={step === 'preview' ? 'default' : 'secondary'}>2. {t('preview')}</Badge>
-            <Badge variant={step === 'saving' ? 'default' : 'secondary'}>3. {t('save')}</Badge>
-          </div>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-5xl h-[95vh] max-h-[95vh] p-0 overflow-hidden grid grid-rows-[auto,1fr,auto]" dir={isRTL ? 'rtl' : 'ltr'}>
+          <DialogHeader className="p-6 pb-0 bg-gradient-to-r from-primary/10 to-accent/10">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+              {t('ai_generation')} - {request.request_number}
+            </DialogTitle>
+            <div className="flex gap-2 mt-2">
+              <Badge variant={step === 'config' ? 'default' : 'secondary'}>1. {t('configuration')}</Badge>
+              <Badge variant={step === 'preview' ? 'default' : 'secondary'}>2. {t('preview')}</Badge>
+              <Badge variant={step === 'saving' ? 'default' : 'secondary'}>3. {t('save')}</Badge>
+            </div>
+          </DialogHeader>
 
-        {/* Floating TTC Comparison Bubble */}
-        <RequestTTCComparisonBubble
-          requestTTC={request.total_ttc}
-          currentTTC={step === 'preview' ? totals.totalTtc + (stampDutyEnabled ? stampDutyAmount : 0) : currentTTC}
-        />
-
-        <ScrollArea className="min-h-0">
+          <ScrollArea className="min-h-0">
           <AnimatePresence mode="wait">
             {step === 'config' && (
               <motion.div key="config" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="p-6 space-y-6">
@@ -853,5 +848,14 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Floating TTC Comparison Bubble - outside Dialog for free positioning */}
+    {open && (
+      <RequestTTCComparisonBubble
+        requestTTC={request.total_ttc}
+        currentTTC={step === 'preview' ? totals.totalTtc + (isForeignClient ? 0 : stampDutyEnabled ? stampDutyAmount : 0) : currentTTC}
+      />
+    )}
+    </>
   );
 };
