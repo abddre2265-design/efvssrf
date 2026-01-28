@@ -1423,6 +1423,7 @@ export const translations: Translations = {
   error_restoring_request: { fr: 'Erreur lors de la restauration', en: 'Error restoring request', ar: 'خطأ في استعادة الطلب' },
   
   // TTC Comparison Bubble
+  ttc_comparison: { fr: 'Comparaison TTC', en: 'TTC Comparison', ar: 'مقارنة الإجمالي' },
   request_ttc: { fr: 'TTC demande', en: 'Request TTC', ar: 'إجمالي الطلب' },
   current_invoice_ttc: { fr: 'TTC facture actuelle', en: 'Current invoice TTC', ar: 'إجمالي الفاتورة الحالية' },
   difference: { fr: 'Différence', en: 'Difference', ar: 'الفرق' },
