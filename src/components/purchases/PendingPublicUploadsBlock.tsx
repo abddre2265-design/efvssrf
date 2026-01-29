@@ -42,6 +42,7 @@ import {
 import { LocalPurchaseWorkflowDialog } from './local-purchase';
 import { ProcessingInitialDialog } from './local-purchase/ProcessingInitialDialog';
 import { CustomsReceiptWorkflowDialog } from './customs-receipt';
+import { OtherImportDocumentWorkflowDialog } from './other-import-document';
 
 interface ImportFolder {
   id: string;
@@ -114,6 +115,10 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
   // Customs receipt workflow
   const [customsReceiptUpload, setCustomsReceiptUpload] = useState<PendingUpload | null>(null);
   const [isCustomsReceiptDialogOpen, setIsCustomsReceiptDialogOpen] = useState(false);
+  
+  // Other import document workflow
+  const [otherDocumentUpload, setOtherDocumentUpload] = useState<PendingUpload | null>(null);
+  const [isOtherDocumentDialogOpen, setIsOtherDocumentDialogOpen] = useState(false);
   
   // Initial processing dialog
   const [initialDialogUpload, setInitialDialogUpload] = useState<PendingUpload | null>(null);
@@ -599,10 +604,14 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
               // Customs receipt workflow
               setCustomsReceiptUpload(updatedUpload);
               setIsCustomsReceiptDialogOpen(true);
-            } else {
+            } else if (docCategory === 'facture_locale' || docCategory === 'facture_commerciale_etrangere') {
               // Invoice workflow (local or import)
               setLocalPurchaseUpload(updatedUpload);
               setIsLocalPurchaseDialogOpen(true);
+            } else {
+              // Other document workflow (autre, etc.) - only requires family selection
+              setOtherDocumentUpload(updatedUpload);
+              setIsOtherDocumentDialogOpen(true);
             }
           }}
         />
@@ -638,6 +647,25 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
             fetchUploads();
             onRefresh();
             setCustomsReceiptUpload(null);
+            setInitialDialogUpload(null);
+          }}
+        />
+      )}
+
+      {/* Other Import Document Workflow Dialog */}
+      {otherDocumentUpload && organizationId && otherDocumentUpload.import_folder_id && (
+        <OtherImportDocumentWorkflowDialog
+          open={isOtherDocumentDialogOpen}
+          onOpenChange={setIsOtherDocumentDialogOpen}
+          pendingUpload={{
+            ...otherDocumentUpload,
+            import_folder_number: (otherDocumentUpload as any).import_folder_number || null,
+          }}
+          organizationId={organizationId}
+          onComplete={() => {
+            fetchUploads();
+            onRefresh();
+            setOtherDocumentUpload(null);
             setInitialDialogUpload(null);
           }}
         />

@@ -34,9 +34,11 @@ import {
   Lock,
   Trash2,
   Loader2,
-  Plus
+  Plus,
+  FileText
 } from 'lucide-react';
 import { ImportFolder, COUNTRIES, MONTHS } from './types';
+import { ImportFolderDocumentsDialog } from './ImportFolderDocumentsDialog';
 
 interface ImportFolderBlockProps {
   folders: ImportFolder[];
@@ -56,6 +58,7 @@ export const ImportFolderBlock: React.FC<ImportFolderBlockProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [folderLogs, setFolderLogs] = useState<any[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [documentsDialogFolder, setDocumentsDialogFolder] = useState<ImportFolder | null>(null);
 
   // Form state
   const [folderNumber, setFolderNumber] = useState('');
@@ -357,6 +360,10 @@ export const ImportFolderBlock: React.FC<ImportFolderBlockProps> = ({
                             <Eye className="mr-2 h-4 w-4" />
                             {t('view')}
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDocumentsDialogFolder(folder)}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            {t('documents') || 'Documents'}
+                          </DropdownMenuItem>
                           {folder.status === 'open' && (
                             <DropdownMenuItem onClick={() => handleClose(folder)}>
                               <Lock className="mr-2 h-4 w-4" />
@@ -459,6 +466,16 @@ export const ImportFolderBlock: React.FC<ImportFolderBlockProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Documents Dialog */}
+      {documentsDialogFolder && (
+        <ImportFolderDocumentsDialog
+          open={!!documentsDialogFolder}
+          onOpenChange={(open) => !open && setDocumentsDialogFolder(null)}
+          folderId={documentsDialogFolder.id}
+          folderNumber={documentsDialogFolder.folder_number}
+        />
+      )}
     </Card>
   );
 };
