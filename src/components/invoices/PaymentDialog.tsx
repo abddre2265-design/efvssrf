@@ -184,8 +184,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const invoiceCurrency = invoice?.currency || 'EUR';
   const invoiceExchangeRate = invoice?.exchange_rate || 1;
 
-  // Calculate the adjusted net payable based on withholding applied to HT
-  // Formula: Net à payer = (Total HT - Montant retenue) + TVA + Timbre fiscal
+  // Calculate the adjusted net payable based on withholding applied to TTC
+  // Formula: Net à payer = Total TTC + Timbre fiscal - Montant retenue (calculé sur TTC)
   const calculateAdjustedNetPayable = (inv: Invoice | null): number => {
     if (!inv) return 0;
     
@@ -194,14 +194,14 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
       return inv.subtotal_ht;
     }
     
-    // For local clients: Apply withholding formula
-    const withholdingOnHT = inv.withholding_applied 
-      ? inv.subtotal_ht * (inv.withholding_rate / 100)
+    // For local clients: Apply withholding on TTC
+    const withholdingOnTTC = inv.withholding_applied 
+      ? inv.total_ttc * (inv.withholding_rate / 100)
       : 0;
     
-    // Local clients: (HT - Retenue) + TVA + Timbre
-    const adjustedHT = inv.subtotal_ht - withholdingOnHT;
-    return adjustedHT + inv.total_vat + (inv.stamp_duty_enabled ? inv.stamp_duty_amount : 0);
+    // Local clients: TTC + Timbre - Retenue
+    const stampDuty = inv.stamp_duty_enabled ? inv.stamp_duty_amount : 0;
+    return inv.total_ttc + stampDuty - withholdingOnTTC;
   };
 
   const adjustedNetPayable = calculateAdjustedNetPayable(invoice);
@@ -529,12 +529,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
         if (!canSaveWithholding) return;
         
         const rate = parseFloat(selectedWithholdingRate) || 0;
-        const withholdingAmount = invoice.subtotal_ht * (rate / 100);
+        // Withholding is calculated on TTC
+        const withholdingAmount = invoice.total_ttc * (rate / 100);
         
-        // Calculate new net_payable based on the formula
-        const newNetPayable = rate > 0
-          ? (invoice.subtotal_ht - withholdingAmount) + invoice.total_vat + (invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0)
-          : invoice.total_ttc + (invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0);
+        // Calculate new net_payable: TTC + Timbre - Retenue
+        const stampDuty = invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0;
+        const newNetPayable = invoice.total_ttc + stampDuty - withholdingAmount;
 
         const { error } = await supabase
           .from('invoices')
@@ -717,13 +717,13 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
   if (!invoice) return null;
 
-  // Calculate preview of withholding impact (for local clients)
+  // Calculate preview of withholding impact (for local clients) - applied on TTC
   const previewWithholdingRate = parseFloat(selectedWithholdingRate) || 0;
-  const previewWithholdingAmount = invoice.subtotal_ht * (previewWithholdingRate / 100);
-  const previewAdjustedHT = invoice.subtotal_ht - previewWithholdingAmount;
+  const previewWithholdingAmount = invoice.total_ttc * (previewWithholdingRate / 100);
+  const previewStampDuty = invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0;
   const previewNetPayable = isForeign 
     ? invoice.subtotal_ht
-    : previewAdjustedHT + invoice.total_vat + (invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0);
+    : invoice.total_ttc + previewStampDuty - previewWithholdingAmount;
 
   // Preview for foreign currency
   const previewExchangeRate = parseFloat(exchangeRate) || 1;
@@ -1090,20 +1090,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                         </div>
                         <div className="text-sm space-y-1">
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">{t('subtotal_ht')}:</span>
-                            <span className="font-mono">{formatCurrency(invoice.subtotal_ht, 'TND')}</span>
-                          </div>
-                          <div className="flex justify-between text-amber-600">
-                            <span>- {t('withholding')} ({previewWithholdingRate}%):</span>
-                            <span className="font-mono">{formatCurrency(previewWithholdingAmount, 'TND')}</span>
-                          </div>
-                          <div className="flex justify-between border-t pt-1">
-                            <span className="text-muted-foreground">{t('adjusted_ht')}:</span>
-                            <span className="font-mono">{formatCurrency(previewAdjustedHT, 'TND')}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">+ {t('total_vat')}:</span>
-                            <span className="font-mono">{formatCurrency(invoice.total_vat, 'TND')}</span>
+                            <span className="text-muted-foreground">{t('total_ttc')}:</span>
+                            <span className="font-mono">{formatCurrency(invoice.total_ttc, 'TND')}</span>
                           </div>
                           {invoice.stamp_duty_enabled && (
                             <div className="flex justify-between">
@@ -1111,6 +1099,10 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                               <span className="font-mono">{formatCurrency(invoice.stamp_duty_amount, 'TND')}</span>
                             </div>
                           )}
+                          <div className="flex justify-between text-amber-600">
+                            <span>- {t('withholding')} ({previewWithholdingRate}% {t('on_ttc')}):</span>
+                            <span className="font-mono">{formatCurrency(previewWithholdingAmount, 'TND')}</span>
+                          </div>
                           <div className="flex justify-between border-t pt-1 font-medium text-primary">
                             <span>{t('new_net_payable')}:</span>
                             <span className="font-mono">{formatCurrency(previewNetPayable, 'TND')}</span>

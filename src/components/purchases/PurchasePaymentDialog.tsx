@@ -59,6 +59,7 @@ interface PurchaseDocument {
   supplier_id: string | null;
   subtotal_ht: number;
   total_vat: number;
+  total_ttc: number;
   stamp_duty_amount: number;
   net_payable: number;
   currency: string;
@@ -181,7 +182,7 @@ export const PurchasePaymentDialog: React.FC<PurchasePaymentDialogProps> = ({
   const documentCurrency = document?.currency || 'EUR';
   const documentExchangeRate = document?.exchange_rate || 1;
 
-  // Calculate the adjusted net payable
+  // Calculate the adjusted net payable - withholding applied on TTC
   const calculateAdjustedNetPayable = (doc: PurchaseDocument | null): number => {
     if (!doc) return 0;
     
@@ -190,13 +191,13 @@ export const PurchasePaymentDialog: React.FC<PurchasePaymentDialogProps> = ({
       return doc.subtotal_ht;
     }
     
-    // For local suppliers: Apply withholding formula
-    const withholdingOnHT = doc.withholding_applied 
-      ? doc.subtotal_ht * (doc.withholding_rate / 100)
+    // For local suppliers: Apply withholding on TTC
+    const withholdingOnTTC = doc.withholding_applied 
+      ? doc.total_ttc * (doc.withholding_rate / 100)
       : 0;
     
-    const adjustedHT = doc.subtotal_ht - withholdingOnHT;
-    return adjustedHT + doc.total_vat + doc.stamp_duty_amount;
+    // TTC + Timbre - Retenue
+    return doc.total_ttc + doc.stamp_duty_amount - withholdingOnTTC;
   };
 
   const adjustedNetPayable = calculateAdjustedNetPayable(document);
@@ -435,11 +436,11 @@ export const PurchasePaymentDialog: React.FC<PurchasePaymentDialogProps> = ({
         if (!canSaveWithholding) return;
         
         const rate = parseFloat(selectedWithholdingRate) || 0;
-        const withholdingAmount = document.subtotal_ht * (rate / 100);
+        // Withholding is calculated on TTC
+        const withholdingAmount = document.total_ttc * (rate / 100);
         
-        // Calculate new net_payable with withholding
-        const adjustedHT = document.subtotal_ht - withholdingAmount;
-        const newNetPayable = adjustedHT + document.total_vat + document.stamp_duty_amount;
+        // Calculate new net_payable: TTC + Timbre - Retenue
+        const newNetPayable = document.total_ttc + document.stamp_duty_amount - withholdingAmount;
 
         const { error } = await supabase
           .from('purchase_documents')
