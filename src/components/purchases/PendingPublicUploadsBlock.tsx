@@ -372,8 +372,8 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          {/* Show "Process" button for local purchases */}
-                          {upload.document_type !== 'import' && upload.status === 'pending' && (
+                          {/* Show "Process" button for all pending documents */}
+                          {upload.status === 'pending' && (
                             <Button
                               variant="default"
                               size="sm"
@@ -576,13 +576,16 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
           open={isInitialDialogOpen}
           onOpenChange={setIsInitialDialogOpen}
           pendingUpload={initialDialogUpload}
-          onStartProcessing={(docType, docCategory) => {
-            // Update the upload with the selected type/category if needed
+          onStartProcessing={(docType, docCategory, folderId, folderNumber) => {
+            // Update the upload with the selected type/category/folder
             const updatedUpload = {
               ...initialDialogUpload,
               document_type: docType,
               document_category: docCategory,
+              import_folder_id: folderId,
             };
+            // Store folder number for later use
+            (updatedUpload as any).import_folder_number = folderNumber;
             setLocalPurchaseUpload(updatedUpload);
             setIsInitialDialogOpen(false);
             setIsLocalPurchaseDialogOpen(true);

@@ -19,6 +19,12 @@ export interface LocalPurchaseWorkflowData {
   pdfUrl: string | null;
   pdfHash: string | null;
   
+  // Document classification
+  documentType: 'local_purchase' | 'import';
+  documentCategory: string | null;
+  importFolderId: string | null;
+  importFolderNumber: string | null;
+  
   // Extracted data
   extractedSupplier: ExtractedSupplier | null;
   extractedProducts: ExtractedProduct[];
@@ -66,5 +72,6 @@ export interface PendingUploadForProcessing {
   created_at: string;
   document_type: string | null;
   import_folder_id: string | null;
+  import_folder_number?: string | null;
   document_category: string | null;
 }
