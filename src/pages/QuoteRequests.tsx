@@ -69,7 +69,7 @@ const QuoteRequests: React.FC = () => {
       setRequests(data as QuoteRequest[] || []);
     } catch (error) {
       console.error('Error loading requests:', error);
-      toast.error('Erreur lors du chargement des demandes');
+      toast.error(t('error_loading_quote_requests'));
     } finally {
       setIsLoading(false);
     }
@@ -111,11 +111,11 @@ const QuoteRequests: React.FC = () => {
 
       if (error) throw error;
       
-      toast.success('Statut mis à jour');
+      toast.success(t('status_updated'));
       loadRequests();
     } catch (error) {
       console.error('Error updating status:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('error_updating_status'));
     }
   };
 
@@ -159,9 +159,9 @@ const QuoteRequests: React.FC = () => {
             <FileQuestion className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Demandes de devis</h1>
+            <h1 className="text-2xl font-bold">{t('quote_requests')}</h1>
             <p className="text-muted-foreground">
-              Gérez les demandes de devis de vos clients
+              {t('quote_requests_description')}
             </p>
           </div>
         </div>
