@@ -6,14 +6,13 @@ import { User } from '@supabase/supabase-js';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
-import { AnimatedLogo } from '@/components/auth/AnimatedLogo';
+import DashboardHome from '@/components/dashboard/DashboardHome';
 import Products from '@/pages/Products';
 import Clients from '@/pages/Clients';
 import Suppliers from '@/pages/Suppliers';
 import Invoices from '@/pages/Invoices';
 import Payments from '@/pages/Payments';
 import CreditNotes from '@/pages/CreditNotes';
-
 import PurchasePayments from '@/pages/PurchasePayments';
 import SupplierCreditNotes from '@/pages/SupplierCreditNotes';
 import QuoteRequests from '@/pages/QuoteRequests';
@@ -124,24 +123,7 @@ const Dashboard: React.FC = () => {
       case 'purchase-invoices':
         return <PurchaseInvoices />;
       default:
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex flex-col items-center justify-center min-h-[60vh]"
-          >
-            <AnimatedLogo size="md" />
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-muted-foreground text-lg mt-4"
-            >
-              {t('welcomeDashboard')}
-            </motion.p>
-          </motion.div>
-        );
+        return <DashboardHome />;
     }
   };
 
