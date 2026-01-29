@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { LocalPurchaseWorkflowDialog } from './local-purchase';
 import { ProcessingInitialDialog } from './local-purchase/ProcessingInitialDialog';
+import { CustomsReceiptWorkflowDialog } from './customs-receipt';
 
 interface ImportFolder {
   id: string;
@@ -109,6 +110,10 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
   // Local purchase workflow
   const [localPurchaseUpload, setLocalPurchaseUpload] = useState<PendingUpload | null>(null);
   const [isLocalPurchaseDialogOpen, setIsLocalPurchaseDialogOpen] = useState(false);
+  
+  // Customs receipt workflow
+  const [customsReceiptUpload, setCustomsReceiptUpload] = useState<PendingUpload | null>(null);
+  const [isCustomsReceiptDialogOpen, setIsCustomsReceiptDialogOpen] = useState(false);
   
   // Initial processing dialog
   const [initialDialogUpload, setInitialDialogUpload] = useState<PendingUpload | null>(null);
@@ -586,9 +591,19 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
             };
             // Store folder number for later use
             (updatedUpload as any).import_folder_number = folderNumber;
-            setLocalPurchaseUpload(updatedUpload);
+            
             setIsInitialDialogOpen(false);
-            setIsLocalPurchaseDialogOpen(true);
+            
+            // Branch based on document category
+            if (docCategory === 'quittance_douaniere') {
+              // Customs receipt workflow
+              setCustomsReceiptUpload(updatedUpload);
+              setIsCustomsReceiptDialogOpen(true);
+            } else {
+              // Invoice workflow (local or import)
+              setLocalPurchaseUpload(updatedUpload);
+              setIsLocalPurchaseDialogOpen(true);
+            }
           }}
         />
       )}
@@ -604,6 +619,25 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
             fetchUploads();
             onRefresh();
             setLocalPurchaseUpload(null);
+            setInitialDialogUpload(null);
+          }}
+        />
+      )}
+
+      {/* Customs Receipt Workflow Dialog */}
+      {customsReceiptUpload && organizationId && customsReceiptUpload.import_folder_id && (
+        <CustomsReceiptWorkflowDialog
+          open={isCustomsReceiptDialogOpen}
+          onOpenChange={setIsCustomsReceiptDialogOpen}
+          pendingUpload={{
+            ...customsReceiptUpload,
+            import_folder_number: (customsReceiptUpload as any).import_folder_number || null,
+          }}
+          organizationId={organizationId}
+          onComplete={() => {
+            fetchUploads();
+            onRefresh();
+            setCustomsReceiptUpload(null);
             setInitialDialogUpload(null);
           }}
         />
