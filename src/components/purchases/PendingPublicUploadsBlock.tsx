@@ -40,6 +40,7 @@ import {
   Play
 } from 'lucide-react';
 import { LocalPurchaseWorkflowDialog } from './local-purchase';
+import { ProcessingInitialDialog } from './local-purchase/ProcessingInitialDialog';
 
 interface ImportFolder {
   id: string;
@@ -108,6 +109,10 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
   // Local purchase workflow
   const [localPurchaseUpload, setLocalPurchaseUpload] = useState<PendingUpload | null>(null);
   const [isLocalPurchaseDialogOpen, setIsLocalPurchaseDialogOpen] = useState(false);
+  
+  // Initial processing dialog
+  const [initialDialogUpload, setInitialDialogUpload] = useState<PendingUpload | null>(null);
+  const [isInitialDialogOpen, setIsInitialDialogOpen] = useState(false);
 
   const fetchUploads = async () => {
     setIsLoading(true);
@@ -374,8 +379,8 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
                               size="sm"
                               className="h-7 gap-1 text-xs"
                               onClick={() => {
-                                setLocalPurchaseUpload(upload);
-                                setIsLocalPurchaseDialogOpen(true);
+                                setInitialDialogUpload(upload);
+                                setIsInitialDialogOpen(true);
                               }}
                             >
                               <Play className="h-3 w-3" />
@@ -565,6 +570,26 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
         </DialogContent>
       </Dialog>
 
+      {/* Initial Processing Dialog */}
+      {initialDialogUpload && (
+        <ProcessingInitialDialog
+          open={isInitialDialogOpen}
+          onOpenChange={setIsInitialDialogOpen}
+          pendingUpload={initialDialogUpload}
+          onStartProcessing={(docType, docCategory) => {
+            // Update the upload with the selected type/category if needed
+            const updatedUpload = {
+              ...initialDialogUpload,
+              document_type: docType,
+              document_category: docCategory,
+            };
+            setLocalPurchaseUpload(updatedUpload);
+            setIsInitialDialogOpen(false);
+            setIsLocalPurchaseDialogOpen(true);
+          }}
+        />
+      )}
+
       {/* Local Purchase Workflow Dialog */}
       {localPurchaseUpload && organizationId && (
         <LocalPurchaseWorkflowDialog
@@ -576,6 +601,7 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
             fetchUploads();
             onRefresh();
             setLocalPurchaseUpload(null);
+            setInitialDialogUpload(null);
           }}
         />
       )}

@@ -4,6 +4,7 @@ import { ExtractedProduct, ExtractedSupplier, ExtractedTotals } from '../supply/
 export type LocalPurchaseWorkflowStep = 
   | 'transfer' 
   | 'supplier' 
+  | 'currency'
   | 'products' 
   | 'product_details' 
   | 'totals' 
