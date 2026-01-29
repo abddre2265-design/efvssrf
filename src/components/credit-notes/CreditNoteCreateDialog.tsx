@@ -63,8 +63,8 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
   // Total existing credit notes for this invoice (for max amount calculation)
   const [totalExistingCredits, setTotalExistingCredits] = useState(0);
   
-  // Financial line (for financial type)
-  const [financialAmount, setFinancialAmount] = useState(0);
+  // Financial line (for financial type) - RÈGLE MÉTIER: Saisie uniquement en TTC
+  const [financialAmountTTC, setFinancialAmountTTC] = useState(0);
   const [financialDescription, setFinancialDescription] = useState('');
 
   const getDateLocale = () => {
@@ -84,7 +84,7 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
       setNotes('');
       setCreditNoteDate(format(new Date(), 'yyyy-MM-dd'));
       setSelectedLines(new Map());
-      setFinancialAmount(0);
+      setFinancialAmountTTC(0);
       setFinancialDescription('');
       if (invoice) {
         fetchInvoiceLines();
@@ -218,13 +218,13 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
   // Calculate totals
   const totals = useMemo(() => {
     if (creditNoteType === 'financial') {
-      const vatRate = invoice?.client_type === 'foreign' ? 0 : 19;
-      const vatAmount = financialAmount * vatRate / 100;
+      // RÈGLE MÉTIER: Avoir financier = TTC uniquement, pas de HT/TVA
+      // Le montant saisi EST le TTC, pas de calcul de TVA
       return {
-        subtotal_ht: financialAmount,
-        total_vat: vatAmount,
-        total_ttc: financialAmount + vatAmount,
-        net_amount: financialAmount + vatAmount,
+        subtotal_ht: financialAmountTTC, // On stocke le TTC comme montant de base
+        total_vat: 0, // Pas de TVA pour avoir financier
+        total_ttc: financialAmountTTC,
+        net_amount: financialAmountTTC,
       };
     }
 
@@ -249,21 +249,30 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
       total_ttc: subtotal_ht + total_vat,
       net_amount: subtotal_ht + total_vat,
     };
-  }, [creditNoteType, financialAmount, selectedLines, invoiceLines, invoice]);
+  }, [creditNoteType, financialAmountTTC, selectedLines, invoiceLines]);
 
-  // Validate that financial amount doesn't exceed max available
+  // RÈGLE MÉTIER: Pour avoir financier, montant_avoir ≤ montant_payé_facture
+  const invoicePaidAmount = invoice?.paid_amount || 0;
+  const maxFinancialCredit = Math.min(invoicePaidAmount, maxAvailableCredit);
+
+  // Validate that financial amount doesn't exceed max available AND paid amount
   const isFinancialAmountValid = creditNoteType === 'financial' 
-    ? financialAmount > 0 && totals.net_amount <= maxAvailableCredit
+    ? financialAmountTTC > 0 && financialAmountTTC <= maxFinancialCredit
     : true;
+
+  // RÈGLE MÉTIER: Interdit si facture non payée
+  const isInvoicePaidOrPartial = invoicePaidAmount > 0;
+  const canCreateFinancialCreditNote = isInvoicePaidOrPartial;
 
   // Validate that product return total doesn't exceed max available
   const isProductReturnAmountValid = creditNoteType === 'product_return'
     ? totals.net_amount <= maxAvailableCredit
     : true;
 
-  const canProceedToLines = creditNoteType !== null && !isInvoiceFullyCredited;
+  const canProceedToLines = creditNoteType !== null && !isInvoiceFullyCredited && 
+    (creditNoteType !== 'financial' || canCreateFinancialCreditNote);
   const canProceedToSummary = creditNoteType === 'financial' 
-    ? financialAmount > 0 && financialDescription.trim() !== '' && isFinancialAmountValid
+    ? financialAmountTTC > 0 && financialDescription.trim() !== '' && isFinancialAmountValid
     : selectedLines.size > 0 && isProductReturnAmountValid;
 
   const handleSave = async (immediateUnblock: boolean = false) => {
@@ -377,11 +386,11 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
             credit_note_id: creditNote.id,
             description: financialDescription,
             quantity: 1,
-            unit_price_ht: financialAmount,
-            vat_rate: invoice.client_type === 'foreign' ? 0 : 19,
-            line_total_ht: totals.subtotal_ht,
-            line_vat: totals.total_vat,
-            line_total_ttc: totals.total_ttc,
+            unit_price_ht: financialAmountTTC, // On stocke le TTC directement
+            vat_rate: 0, // Pas de TVA pour avoir financier
+            line_total_ht: financialAmountTTC,
+            line_vat: 0,
+            line_total_ttc: financialAmountTTC,
             line_order: 0,
           });
         if (lineError) throw lineError;
@@ -569,10 +578,14 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
+        {/* Financial Credit Note - blocked if invoice unpaid */}
         <button
-          onClick={() => setCreditNoteType('financial')}
+          onClick={() => canCreateFinancialCreditNote && setCreditNoteType('financial')}
+          disabled={!canCreateFinancialCreditNote}
           className={`p-6 rounded-lg border-2 transition-all text-start space-y-3 ${
-            creditNoteType === 'financial'
+            !canCreateFinancialCreditNote
+              ? 'border-muted bg-muted/30 opacity-60 cursor-not-allowed'
+              : creditNoteType === 'financial'
               ? 'border-primary bg-primary/5'
               : 'border-border hover:border-primary/50'
           }`}
@@ -588,20 +601,29 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
               <p className="text-xs text-muted-foreground">{t('no_stock_impact')}</p>
             </div>
           </div>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li className="flex items-center gap-2">
-              <Check className="h-3 w-3 text-primary" />
-              {t('commercial_gesture')}
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-3 w-3 text-primary" />
-              {t('price_adjustment')}
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-3 w-3 text-primary" />
-              {t('immediate_credit')}
-            </li>
-          </ul>
+          {!canCreateFinancialCreditNote ? (
+            <div className="p-2 rounded bg-destructive/10 border border-destructive/30">
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                {t('financial_credit_blocked_unpaid')}
+              </p>
+            </div>
+          ) : (
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li className="flex items-center gap-2">
+                <Check className="h-3 w-3 text-primary" />
+                {t('commercial_gesture')}
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-3 w-3 text-primary" />
+                {t('price_adjustment')}
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="h-3 w-3 text-primary" />
+                {t('immediate_credit')}
+              </li>
+            </ul>
+          )}
         </button>
 
         <button
@@ -671,11 +693,23 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
     >
       {creditNoteType === 'financial' ? (
         <div className="space-y-4">
-          {/* Max available credit info */}
-          <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
+          {/* Info: Avoir financier = TTC uniquement, limité au montant payé */}
+          <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+            <p className="text-sm text-blue-700 dark:text-blue-400 flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              {t('financial_credit_ttc_only_info')}
+            </p>
+          </div>
+          
+          {/* Max available credit info based on paid amount */}
+          <div className="p-3 rounded-lg bg-primary/10 border border-primary/30 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{t('max_available_credit_ttc')}:</span>
-              <span className="font-mono font-semibold text-primary">{formatCurrency(maxAvailableCredit, invoice?.currency || 'TND')}</span>
+              <span className="text-muted-foreground">{t('invoice_paid_amount')}:</span>
+              <span className="font-mono font-semibold text-green-600">{formatCurrency(invoicePaidAmount, invoice?.currency || 'TND')}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{t('max_credit_available')}:</span>
+              <span className="font-mono font-semibold text-primary">{formatCurrency(maxFinancialCredit, invoice?.currency || 'TND')}</span>
             </div>
           </div>
 
@@ -693,30 +727,30 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('amount_ht')} *</Label>
+              <Label>{t('amount_ttc')} *</Label>
               <Input
                 type="number"
                 min="0"
                 step="0.001"
-                value={financialAmount || ''}
-                onChange={(e) => setFinancialAmount(parseFloat(e.target.value) || 0)}
+                value={financialAmountTTC || ''}
+                onChange={(e) => setFinancialAmountTTC(parseFloat(e.target.value) || 0)}
                 placeholder="0.000"
-                className={!isFinancialAmountValid && financialAmount > 0 ? 'border-destructive' : ''}
+                className={!isFinancialAmountValid && financialAmountTTC > 0 ? 'border-destructive' : ''}
               />
-              {/* Show calculated TTC */}
-              {financialAmount > 0 && (
+              {/* Show info about max amount */}
+              {financialAmountTTC > 0 && (
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-muted-foreground">{t('total_ttc')}:</span>
-                  <span className={`font-mono ${totals.net_amount > maxAvailableCredit ? 'text-destructive' : 'text-primary'}`}>
-                    {formatCurrency(totals.net_amount, invoice?.currency || 'TND')}
+                  <span className="text-muted-foreground">{t('max_based_on_paid')}:</span>
+                  <span className="font-mono text-primary">
+                    {formatCurrency(maxFinancialCredit, invoice?.currency || 'TND')}
                   </span>
                 </div>
               )}
               {/* Error message if amount exceeds max */}
-              {!isFinancialAmountValid && financialAmount > 0 && (
+              {!isFinancialAmountValid && financialAmountTTC > 0 && (
                 <p className="text-xs text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
-                  {t('amount_exceeds_max_credit')} ({formatCurrency(maxAvailableCredit, invoice?.currency || 'TND')})
+                  {t('amount_exceeds_paid')} ({formatCurrency(maxFinancialCredit, invoice?.currency || 'TND')})
                 </p>
               )}
             </div>

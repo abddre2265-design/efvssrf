@@ -854,6 +854,21 @@ export const translations: Translations = {
   max_available_credit_ttc: { fr: 'Montant max. disponible TTC', en: 'Max available amount incl. tax', ar: 'الحد الأقصى للمبلغ المتاح شامل الضريبة' },
   amount_exceeds_max_credit: { fr: 'Le montant dépasse le maximum autorisé', en: 'Amount exceeds maximum allowed', ar: 'المبلغ يتجاوز الحد الأقصى المسموح' },
   credit_available: { fr: 'Crédit disponible', en: 'Credit available', ar: 'الرصيد المتاح' },
+  // Financial credit note business rules
+  financial_credit_blocked_unpaid: { fr: 'Avoir financier non disponible : la facture n\'a pas été payée', en: 'Financial credit not available: invoice has not been paid', ar: 'الإشعار المالي غير متاح: لم يتم دفع الفاتورة' },
+  amount_exceeds_paid: { fr: 'Le montant dépasse le montant payé de la facture', en: 'Amount exceeds invoice paid amount', ar: 'المبلغ يتجاوز المبلغ المدفوع للفاتورة' },
+  financial_credit_ttc_only_info: { fr: 'L\'avoir financier est saisi uniquement en TTC. Aucun calcul HT/TVA n\'est effectué.', en: 'Financial credit is entered in TTC only. No HT/VAT calculation is performed.', ar: 'يتم إدخال الإشعار المالي بالمبلغ الإجمالي فقط. لا يتم حساب ضريبة القيمة المضافة.' },
+  max_based_on_paid: { fr: 'Max. basé sur montant payé', en: 'Max. based on paid amount', ar: 'الحد الأقصى بناءً على المبلغ المدفوع' },
+  invoice_paid_amount: { fr: 'Montant payé facture', en: 'Invoice paid amount', ar: 'المبلغ المدفوع للفاتورة' },
+  max_credit_available: { fr: 'Crédit max. disponible', en: 'Max credit available', ar: 'الحد الأقصى للرصيد المتاح' },
+  amount_ttc: { fr: 'Montant TTC', en: 'Amount incl. tax', ar: 'المبلغ شامل الضريبة' },
+  // Credit note usage statuses
+  usage_available: { fr: 'Disponible', en: 'Available', ar: 'متاح' },
+  usage_partially_used: { fr: 'Partiellement utilisé', en: 'Partially used', ar: 'مستخدم جزئياً' },
+  usage_fully_used: { fr: 'Totalement utilisé', en: 'Fully used', ar: 'مستخدم بالكامل' },
+  usage_partially_refunded: { fr: 'Partiellement remboursé', en: 'Partially refunded', ar: 'مسترد جزئياً' },
+  usage_refunded: { fr: 'Remboursé', en: 'Refunded', ar: 'مسترد' },
+  credit_usage_status: { fr: 'Statut utilisation', en: 'Usage status', ar: 'حالة الاستخدام' },
   // Purchases
   purchases: { fr: 'Achats', en: 'Purchases', ar: 'المشتريات' },
   purchases_description: { fr: 'Gérez vos achats et approvisionnements', en: 'Manage your purchases and supplies', ar: 'إدارة المشتريات والتوريدات' },

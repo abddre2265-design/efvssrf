@@ -30,11 +30,14 @@ import {
   Clock,
   Package,
   PackageCheck,
-  RefreshCcw
+  RefreshCcw,
+  Wallet,
+  CircleDollarSign,
+  ArrowDownCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
-import { CreditNote, CreditNoteStatus, CreditNoteType } from './types';
+import { CreditNote, CreditNoteStatus, CreditNoteType, getCreditNoteUsageStatus, CreditNoteUsageStatus } from './types';
 import { formatCurrency } from '@/components/invoices/types';
 
 interface CreditNoteWithRelations extends CreditNote {
@@ -114,11 +117,13 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
   };
 
   const getReceptionStatusBadge = (creditNote: CreditNoteWithRelations) => {
-    // Only show for product returns
-    if (creditNote.credit_note_type !== 'product_return') {
-      return <span className="text-muted-foreground text-sm">—</span>;
+    // For financial credit notes, show usage status
+    if (creditNote.credit_note_type === 'financial') {
+      const usageStatus = getCreditNoteUsageStatus(creditNote as CreditNote);
+      return getUsageStatusBadge(usageStatus, creditNote);
     }
 
+    // For product returns, show reception status
     const hasBlockedCredit = creditNote.credit_blocked > 0;
     const hasAvailableCredit = creditNote.credit_available > 0;
     
@@ -146,6 +151,48 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
           {t('stock_restored')}
         </Badge>
       );
+    }
+  };
+
+  const getUsageStatusBadge = (status: CreditNoteUsageStatus, creditNote: CreditNoteWithRelations) => {
+    switch (status) {
+      case 'available':
+        return (
+          <Badge variant="secondary" className="bg-green-500/20 text-green-700 dark:text-green-400 flex items-center gap-1">
+            <Wallet className="h-3 w-3" />
+            {t('usage_available')}
+          </Badge>
+        );
+      case 'partially_used':
+        return (
+          <Badge variant="secondary" className="bg-blue-500/20 text-blue-700 dark:text-blue-400 flex items-center gap-1">
+            <CircleDollarSign className="h-3 w-3" />
+            {t('usage_partially_used')}
+          </Badge>
+        );
+      case 'fully_used':
+        return (
+          <Badge variant="secondary" className="bg-muted text-muted-foreground flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" />
+            {t('usage_fully_used')}
+          </Badge>
+        );
+      case 'partially_refunded':
+        return (
+          <Badge variant="secondary" className="bg-purple-500/20 text-purple-700 dark:text-purple-400 flex items-center gap-1">
+            <ArrowDownCircle className="h-3 w-3" />
+            {t('usage_partially_refunded')}
+          </Badge>
+        );
+      case 'refunded':
+        return (
+          <Badge variant="secondary" className="bg-gray-500/20 text-gray-700 dark:text-gray-400 flex items-center gap-1">
+            <ArrowDownCircle className="h-3 w-3" />
+            {t('usage_refunded')}
+          </Badge>
+        );
+      default:
+        return <span className="text-muted-foreground text-sm">—</span>;
     }
   };
 
