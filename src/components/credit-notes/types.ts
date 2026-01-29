@@ -2,6 +2,14 @@ export type CreditNoteType = 'financial' | 'product_return';
 export type CreditNoteStatus = 'draft' | 'validated' | 'cancelled';
 export type CreditNoteReceptionStatus = 'blocked' | 'partially_unblocked' | 'restored';
 
+// Financial credit note usage status (calculated from credit_used vs credit_generated)
+export type CreditNoteUsageStatus = 
+  | 'available'           // credit_used = 0
+  | 'partially_used'      // 0 < credit_used < credit_generated
+  | 'fully_used'          // credit_used = credit_generated
+  | 'partially_refunded'  // Has some refunds but not all
+  | 'refunded';           // Fully refunded
+
 export interface CreditNote {
   id: string;
   organization_id: string;
@@ -23,12 +31,42 @@ export interface CreditNote {
   credit_used: number;
   credit_available: number;
   credit_blocked: number;
+  credit_refunded?: number; // Optional: total amount refunded (may not exist in older records)
   status: CreditNoteStatus;
   currency: string;
   notes: string | null;
   created_at: string;
   updated_at: string;
 }
+
+// Helper function to calculate usage status for financial credit notes
+export const getCreditNoteUsageStatus = (creditNote: CreditNote): CreditNoteUsageStatus => {
+  if (creditNote.credit_note_type !== 'financial') {
+    return 'available'; // Not applicable for product returns
+  }
+  
+  const refunded = creditNote.credit_refunded || 0;
+  const used = creditNote.credit_used || 0;
+  const generated = creditNote.credit_generated || 0;
+  
+  if (refunded >= generated && generated > 0) {
+    return 'refunded';
+  }
+  
+  if (refunded > 0) {
+    return 'partially_refunded';
+  }
+  
+  if (used >= generated && generated > 0) {
+    return 'fully_used';
+  }
+  
+  if (used > 0) {
+    return 'partially_used';
+  }
+  
+  return 'available';
+};
 
 export interface CreditNoteLine {
   id: string;
