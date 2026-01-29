@@ -81,6 +81,10 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
 
   const getStatusBadge = (status: CreditNoteStatus) => {
     const variants: Record<CreditNoteStatus, { className: string; icon: React.ReactNode }> = {
+      created: { 
+        className: 'bg-gray-500/20 text-gray-700 dark:text-gray-400',
+        icon: null
+      },
       draft: { 
         className: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
         icon: null
