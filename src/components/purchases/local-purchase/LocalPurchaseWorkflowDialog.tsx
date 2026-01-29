@@ -259,10 +259,10 @@ export const LocalPurchaseWorkflowDialog: React.FC<LocalPurchaseWorkflowDialogPr
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-4xl max-h-[90vh] flex flex-col p-0"
+        className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden"
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        <DialogHeader className="px-6 pt-6 pb-2 flex flex-row items-center justify-between border-b">
+        <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0 flex flex-row items-center justify-between border-b">
           <DialogTitle className="text-xl">
             Traitement d'achat local
           </DialogTitle>
@@ -277,85 +277,89 @@ export const LocalPurchaseWorkflowDialog: React.FC<LocalPurchaseWorkflowDialogPr
         </DialogHeader>
 
         {/* Stepper */}
-        <div className="px-6 py-2 border-b bg-muted/30">
+        <div className="px-6 py-2 border-b bg-muted/30 flex-shrink-0">
           <LocalPurchaseWorkflowStepper currentStep={currentStep} />
         </div>
 
-        {/* Content */}
-        <ScrollArea className="flex-1 px-6 py-4">
-          {currentStep === 'transfer' && (
-            <TransferStep
-              pendingUpload={pendingUpload}
-              organizationId={organizationId}
-              onAnalysisComplete={handleAnalysisComplete}
-              onContinue={goToNextStep}
-            />
-          )}
+        {/* Content - Scrollable area */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="px-6 py-4">
+              {currentStep === 'transfer' && (
+                <TransferStep
+                  pendingUpload={pendingUpload}
+                  organizationId={organizationId}
+                  onAnalysisComplete={handleAnalysisComplete}
+                  onContinue={goToNextStep}
+                />
+              )}
 
-          {currentStep === 'supplier' && (
-            <SupplierIdentificationStep
-              extractedSupplier={workflowData.extractedSupplier}
-              organizationId={organizationId}
-              onSupplierConfirmed={handleSupplierConfirmed}
-            />
-          )}
+              {currentStep === 'supplier' && (
+                <SupplierIdentificationStep
+                  extractedSupplier={workflowData.extractedSupplier}
+                  organizationId={organizationId}
+                  onSupplierConfirmed={handleSupplierConfirmed}
+                />
+              )}
 
-          {currentStep === 'currency' && workflowData.supplierType === 'foreign' && (
-            <CurrencySelectionStep
-              organizationId={organizationId}
-              defaultCurrency={workflowData.currency}
-              onCurrencyConfirmed={handleCurrencyConfirmed}
-            />
-          )}
+              {currentStep === 'currency' && workflowData.supplierType === 'foreign' && (
+                <CurrencySelectionStep
+                  organizationId={organizationId}
+                  defaultCurrency={workflowData.currency}
+                  onCurrencyConfirmed={handleCurrencyConfirmed}
+                />
+              )}
 
-          {currentStep === 'products' && workflowData.supplierId && (
-            <ProductsAnalysisStep
-              extractedProducts={workflowData.extractedProducts || []}
-              extractedTotals={workflowData.extractedTotals || defaultExtractedTotals}
-              supplierId={workflowData.supplierId}
-              organizationId={organizationId}
-              onProductsConfirmed={handleProductsConfirmed}
-            />
-          )}
+              {currentStep === 'products' && workflowData.supplierId && (
+                <ProductsAnalysisStep
+                  extractedProducts={workflowData.extractedProducts || []}
+                  extractedTotals={workflowData.extractedTotals || defaultExtractedTotals}
+                  supplierId={workflowData.supplierId}
+                  organizationId={organizationId}
+                  onProductsConfirmed={handleProductsConfirmed}
+                />
+              )}
 
-          {currentStep === 'product_details' && (
-            <ProductDetailsStep
-              extractedProducts={workflowData.extractedProducts}
-              invoiceDate={workflowData.invoiceDate}
-              organizationId={organizationId}
-              currency={workflowData.currency}
-              exchangeRate={workflowData.exchangeRate}
-              isForeignSupplier={workflowData.supplierType === 'foreign'}
-              onProductsDetailsConfirmed={handleProductDetailsConfirmed}
-            />
-          )}
+              {currentStep === 'product_details' && (
+                <ProductDetailsStep
+                  extractedProducts={workflowData.extractedProducts}
+                  invoiceDate={workflowData.invoiceDate}
+                  organizationId={organizationId}
+                  currency={workflowData.currency}
+                  exchangeRate={workflowData.exchangeRate}
+                  isForeignSupplier={workflowData.supplierType === 'foreign'}
+                  onProductsDetailsConfirmed={handleProductDetailsConfirmed}
+                />
+              )}
 
-          {currentStep === 'totals' && (
-            <SimplifiedTotalsStep
-              workflowData={workflowData}
-              onConfirm={handleTotalsConfirmed}
-            />
-          )}
+              {currentStep === 'totals' && (
+                <SimplifiedTotalsStep
+                  workflowData={workflowData}
+                  onConfirm={handleTotalsConfirmed}
+                />
+              )}
 
-          {currentStep === 'family' && (
-            <FamilyAssignmentStep
-              organizationId={organizationId}
-              onFamilyConfirmed={handleFamilyConfirmed}
-            />
-          )}
+              {currentStep === 'family' && (
+                <FamilyAssignmentStep
+                  organizationId={organizationId}
+                  onFamilyConfirmed={handleFamilyConfirmed}
+                />
+              )}
 
-          {currentStep === 'complete' && (
-            <CompletionStep
-              workflowData={workflowData}
-              organizationId={organizationId}
-              pendingUploadId={pendingUpload.id}
-              onComplete={handleComplete}
-            />
-          )}
-        </ScrollArea>
+              {currentStep === 'complete' && (
+                <CompletionStep
+                  workflowData={workflowData}
+                  organizationId={organizationId}
+                  pendingUploadId={pendingUpload.id}
+                  onComplete={handleComplete}
+                />
+              )}
+            </div>
+          </ScrollArea>
+        </div>
 
         {/* Footer with navigation */}
-        <div className="px-6 py-4 border-t bg-background">
+        <div className="px-6 py-4 border-t bg-background flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               {currentStepIndex > 0 && currentStep !== 'complete' && (
