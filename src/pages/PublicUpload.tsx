@@ -771,13 +771,6 @@ const PublicUpload: React.FC = () => {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-2xl font-bold">Upload de documents</h1>
-        </div>
-
-        {/* New Blocks: Import Folders and Payment Requests */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PublicImportFoldersBlock organizationId={linkData?.organization_id} />
-          <PublicPaymentRequestsBlock organizationId={linkData?.organization_id} />
-        </div>
           {documentType === 'import' && selectedImportFolder && (
             <div className="flex items-center justify-center gap-2 mt-2">
               <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 border-purple-200">
@@ -798,6 +791,12 @@ const PublicUpload: React.FC = () => {
           {documentType === 'local' && (
             <p className="text-muted-foreground mt-1">Achat indépendant local</p>
           )}
+        </div>
+
+        {/* New Blocks: Import Folders and Payment Requests */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <PublicImportFoldersBlock organizationId={linkData?.organization_id} />
+          <PublicPaymentRequestsBlock organizationId={linkData?.organization_id} />
         </div>
 
         {/* Stepper - only show after document type selection */}
