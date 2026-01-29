@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { User, Building2, Mail, Phone, MapPin, MessageSquare, Package, Clock, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, ar } from 'date-fns/locale';
 
 interface QuoteRequestViewDialogProps {
   open: boolean;
@@ -30,20 +30,28 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
   items,
   messages,
 }) => {
-  const { isRTL } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
+
+  const getLocale = () => {
+    switch (language) {
+      case 'ar': return ar;
+      case 'en': return enUS;
+      default: return fr;
+    }
+  };
 
   if (!request) return null;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-200"><Clock className="mr-1 h-3 w-3" />En attente</Badge>;
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-200"><Clock className="mr-1 h-3 w-3" />{t('status_pending')}</Badge>;
       case 'processing':
-        return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200"><Clock className="mr-1 h-3 w-3" />En cours</Badge>;
+        return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200"><Clock className="mr-1 h-3 w-3" />{t('status_processing')}</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200"><Check className="mr-1 h-3 w-3" />Terminé</Badge>;
+        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200"><Check className="mr-1 h-3 w-3" />{t('status_completed')}</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200"><X className="mr-1 h-3 w-3" />Rejeté</Badge>;
+        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200"><X className="mr-1 h-3 w-3" />{t('status_rejected')}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -54,7 +62,7 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
     if (request.first_name || request.last_name) {
       return `${request.first_name || ''} ${request.last_name || ''}`.trim();
     }
-    return 'Client inconnu';
+    return t('unknown_client');
   };
 
   return (
@@ -63,7 +71,7 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-3">
-              <span>Demande {request.request_number}</span>
+              <span>{t('request')} {request.request_number}</span>
               {getStatusBadge(request.status)}
             </DialogTitle>
           </div>
@@ -80,17 +88,17 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
                   ) : (
                     <User className="h-4 w-4" />
                   )}
-                  Informations client
+                  {t('client_information')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Nom</p>
+                    <p className="text-sm text-muted-foreground">{t('name')}</p>
                     <p className="font-medium">{getClientName()}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Type</p>
+                    <p className="text-sm text-muted-foreground">{t('type')}</p>
                     <p className="font-medium">{request.client_type}</p>
                   </div>
                   {request.email && (
@@ -125,7 +133,7 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <Package className="h-4 w-4" />
-                    Produits/Services demandés
+                    {t('requested_products_services')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -138,7 +146,7 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
                         <div className="flex-1">
                           <p className="font-medium">{item.description}</p>
                           {item.quantity && (
-                            <p className="text-sm text-muted-foreground">Quantité: {item.quantity}</p>
+                            <p className="text-sm text-muted-foreground">{t('quantity')}: {item.quantity}</p>
                           )}
                           {item.notes && (
                             <p className="text-sm text-muted-foreground mt-1">{item.notes}</p>
@@ -155,7 +163,7 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
             {request.ai_extracted_needs && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Résumé de la demande</CardTitle>
+                  <CardTitle className="text-base">{t('request_summary')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm">{request.ai_extracted_needs}</p>
@@ -169,7 +177,7 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
-                    Historique de la conversation
+                    {t('conversation_history')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -185,10 +193,10 @@ export const QuoteRequestViewDialog: React.FC<QuoteRequestViewDialogProps> = ({
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-medium">
-                            {message.role === 'user' ? 'Client' : 'Assistant IA'}
+                            {message.role === 'user' ? t('client') : t('ai_assistant')}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {format(new Date(message.created_at), 'HH:mm', { locale: fr })}
+                            {format(new Date(message.created_at), 'HH:mm', { locale: getLocale() })}
                           </span>
                         </div>
                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>

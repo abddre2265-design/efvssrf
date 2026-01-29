@@ -116,12 +116,12 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
 
       if (error) throw error;
 
-      toast.success('Demande de paiement créée avec succès');
+      toast.success(t('payment_request_created_success'));
       onOpenChange(false);
       onRequestCreated();
     } catch (error) {
       console.error('Error creating payment request:', error);
-      toast.error('Erreur lors de la création de la demande');
+      toast.error(t('error_creating_request'));
     } finally {
       setIsSubmitting(false);
     }
@@ -133,10 +133,10 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5" />
-            Demande de paiement
+            {t('payment_request')}
           </DialogTitle>
           <DialogDescription>
-            Créez une demande de paiement pour cette facture
+            {t('create_payment_request_for_invoice')}
           </DialogDescription>
         </DialogHeader>
 
@@ -144,11 +144,11 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
           {/* Document info */}
           <div className="p-3 bg-muted/50 rounded-lg space-y-1">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Facture</span>
+              <span className="text-muted-foreground">{t('invoice')}</span>
               <span className="font-mono font-medium">{document.invoice_number || 'N/A'}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Fournisseur</span>
+              <span className="text-muted-foreground">{t('supplier')}</span>
               <span className="font-medium">{getSupplierName()}</span>
             </div>
           </div>
@@ -159,11 +159,11 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Percent className="h-4 w-4" />
-              Taux de retenue à la source
+              {t('withholding_rate')}
             </Label>
             <Select value={selectedWithholdingRate} onValueChange={setSelectedWithholdingRate}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner le taux" />
+                <SelectValue placeholder={t('select_rate')} />
               </SelectTrigger>
               <SelectContent>
                 {withholdingRates.map((rate) => (
@@ -178,12 +178,12 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
           {/* Calculation summary */}
           <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Montant à payer</span>
+              <span className="text-muted-foreground">{t('amount_to_pay')}</span>
               <span className="font-medium">{formatCurrency(remainingAmount, document.currency)}</span>
             </div>
             {withholdingRate > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Retenue ({withholdingRate}%)</span>
+                <span className="text-muted-foreground">{t('withholding')} ({withholdingRate}%)</span>
                 <span className="font-medium text-orange-600">
                   -{formatCurrency(withholdingAmount, document.currency)}
                 </span>
@@ -191,7 +191,7 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
             )}
             <Separator />
             <div className="flex justify-between">
-              <span className="font-semibold">Net à payer</span>
+              <span className="font-semibold">{t('net_to_pay')}</span>
               <span className="font-bold text-lg text-primary">
                 {formatCurrency(netRequestedAmount, document.currency)}
               </span>
@@ -199,24 +199,24 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
           </div>
 
           <p className="text-xs text-muted-foreground">
-            La demande sera envoyée vers le lien public où le paiement pourra être traité.
+            {t('payment_request_will_be_sent')}
           </p>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuler
+            {t('cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting || netRequestedAmount <= 0}>
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Envoi...
+                {t('sending')}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Demander
+                {t('request')}
               </>
             )}
           </Button>

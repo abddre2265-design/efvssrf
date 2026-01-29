@@ -49,7 +49,7 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
       setLink(data as QuoteRequestLink | null);
     } catch (error) {
       console.error('Error loading quote request link:', error);
-      toast.error('Erreur lors du chargement du lien');
+      toast.error(t('error_loading_link'));
     } finally {
       setIsLoading(false);
     }
@@ -73,10 +73,10 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
 
       if (error) throw error;
       setLink(data as QuoteRequestLink);
-      toast.success('Lien créé avec succès');
+      toast.success(t('link_created_success'));
     } catch (error) {
       console.error('Error creating link:', error);
-      toast.error('Erreur lors de la création du lien');
+      toast.error(t('error_creating_link'));
     } finally {
       setIsSaving(false);
     }
@@ -96,10 +96,10 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
 
       if (error) throw error;
       await loadLink();
-      toast.success('Lien régénéré avec succès');
+      toast.success(t('link_regenerated_success'));
     } catch (error) {
       console.error('Error regenerating link:', error);
-      toast.error('Erreur lors de la régénération du lien');
+      toast.error(t('error_regenerating_link'));
     } finally {
       setIsSaving(false);
     }
@@ -116,10 +116,10 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
 
       if (error) throw error;
       setLink({ ...link, is_active: !link.is_active });
-      toast.success(link.is_active ? 'Lien désactivé' : 'Lien activé');
+      toast.success(link.is_active ? t('link_deactivated') : t('link_activated'));
     } catch (error) {
       console.error('Error toggling link:', error);
-      toast.error('Erreur lors de la modification du lien');
+      toast.error(t('error_modifying_link'));
     } finally {
       setIsSaving(false);
     }
@@ -129,10 +129,10 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      toast.success('Copié dans le presse-papier');
+      toast.success(t('copied_to_clipboard'));
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      toast.error('Erreur lors de la copie');
+      toast.error(t('error_copying'));
     }
   };
 
@@ -160,9 +160,9 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
             <FileQuestion className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-lg">Lien public de demande de devis</CardTitle>
+            <CardTitle className="text-lg">{t('public_quote_request_link')}</CardTitle>
             <CardDescription>
-              Partagez ce lien avec vos clients pour qu'ils puissent soumettre des demandes de devis
+              {t('public_quote_request_link_description')}
             </CardDescription>
           </div>
         </div>
@@ -171,13 +171,13 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
         {!link ? (
           <Button onClick={createLink} disabled={isSaving}>
             <Link className="mr-2 h-4 w-4" />
-            Créer le lien public
+            {t('create_public_link')}
           </Button>
         ) : (
           <>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Label htmlFor="link-active">Lien actif</Label>
+                <Label htmlFor="link-active">{t('link_active')}</Label>
                 <Switch
                   id="link-active"
                   checked={link.is_active}
@@ -186,12 +186,12 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
                 />
               </div>
               <Badge variant={link.is_active ? 'default' : 'secondary'}>
-                {link.is_active ? 'Actif' : 'Inactif'}
+                {link.is_active ? t('active') : t('inactive')}
               </Badge>
             </div>
 
             <div className="space-y-2">
-              <Label>URL du lien public</Label>
+              <Label>{t('public_link_url')}</Label>
               <div className="flex gap-2">
                 <Input 
                   value={getPublicUrl()} 
@@ -216,7 +216,7 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
             </div>
 
             <div className="space-y-2">
-              <Label>Code d'accès</Label>
+              <Label>{t('access_code')}</Label>
               <div className="flex gap-2">
                 <Input 
                   value={link.access_code} 
@@ -232,7 +232,7 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Les clients devront entrer ce code pour accéder au formulaire
+                {t('access_code_description')}
               </p>
             </div>
 
@@ -243,7 +243,7 @@ export const PublicQuoteRequestLinkBlock: React.FC<PublicQuoteRequestLinkBlockPr
               className="w-full"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Régénérer le lien et le code
+              {t('regenerate_link_and_code')}
             </Button>
           </>
         )}
