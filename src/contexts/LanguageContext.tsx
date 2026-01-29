@@ -1684,6 +1684,33 @@ export const translations: Translations = {
   // Public Import Folders Block (unique keys only)
   no_family: { fr: 'Aucune famille', en: 'No family', ar: 'لا توجد فئة' },
   no_document_families_created: { fr: 'Aucune famille de document créée', en: 'No document families created', ar: 'لم يتم إنشاء فئات مستندات' },
+
+  // Dashboard Home
+  total_invoices: { fr: 'Total Factures', en: 'Total Invoices', ar: 'إجمالي الفواتير' },
+  sales_this_month: { fr: 'Ventes ce mois', en: 'Sales this month', ar: 'مبيعات هذا الشهر' },
+  unpaid_amount: { fr: 'Montant impayé', en: 'Unpaid amount', ar: 'المبلغ غير المدفوع' },
+  purchases_this_month: { fr: 'Achats ce mois', en: 'Purchases this month', ar: 'مشتريات هذا الشهر' },
+  unpaid_purchases: { fr: 'Achats impayés', en: 'Unpaid purchases', ar: 'مشتريات غير مدفوعة' },
+  sales_purchases_evolution: { fr: 'Évolution Ventes / Achats', en: 'Sales / Purchases Evolution', ar: 'تطور المبيعات / المشتريات' },
+  notifications: { fr: 'Notifications', en: 'Notifications', ar: 'الإشعارات' },
+  no_alerts: { fr: 'Aucune alerte', en: 'No alerts', ar: 'لا توجد تنبيهات' },
+  all_good: { fr: 'Tout est en ordre !', en: 'All good!', ar: 'كل شيء على ما يرام!' },
+  quick_actions: { fr: 'Actions rapides', en: 'Quick Actions', ar: 'إجراءات سريعة' },
+  recent_activity: { fr: 'Activité récente', en: 'Recent Activity', ar: 'النشاط الأخير' },
+  recent_invoices: { fr: 'Factures récentes', en: 'Recent invoices', ar: 'الفواتير الأخيرة' },
+  recent_payments: { fr: 'Paiements récents', en: 'Recent payments', ar: 'المدفوعات الأخيرة' },
+  last_7_days: { fr: '7 derniers jours', en: 'Last 7 days', ar: 'آخر 7 أيام' },
+  financial_overview: { fr: 'Aperçu financier', en: 'Financial Overview', ar: 'نظرة مالية' },
+  net_position: { fr: 'Position nette', en: 'Net Position', ar: 'الوضع الصافي' },
+  sales_minus_purchases: { fr: 'Ventes - Achats ce mois', en: 'Sales - Purchases this month', ar: 'المبيعات - المشتريات هذا الشهر' },
+  collection_rate: { fr: "Taux d'encaissement", en: 'Collection rate', ar: 'معدل التحصيل' },
+  paid_this_month: { fr: 'Payé ce mois', en: 'Paid this month', ar: 'مدفوع هذا الشهر' },
+  payment_rate: { fr: 'Taux de paiement', en: 'Payment rate', ar: 'معدل الدفع' },
+  purchases_paid: { fr: 'Achats réglés', en: 'Purchases paid', ar: 'مشتريات مدفوعة' },
+  to_collect: { fr: 'À encaisser', en: 'To collect', ar: 'للتحصيل' },
+  to_pay: { fr: 'À payer', en: 'To pay', ar: 'للدفع' },
+  pending_requests_dashboard: { fr: 'Demandes en attente', en: 'Pending requests', ar: 'طلبات قيد الانتظار' },
+  low_stock_products: { fr: 'Produits stock faible', en: 'Low stock products', ar: 'منتجات منخفضة المخزون' },
 };
 
 
