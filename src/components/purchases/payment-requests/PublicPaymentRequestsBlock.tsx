@@ -339,7 +339,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
 
       {/* Process Payment Dialog */}
       <Dialog open={isProcessDialogOpen} onOpenChange={setIsProcessDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Traiter le paiement</DialogTitle>
           </DialogHeader>
