@@ -349,6 +349,12 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
       }
 
       // Insert credit note
+      // RÈGLE MÉTIER: 
+      // - Avoir financier → validé immédiatement (crédit client direct)
+      // - Avoir produit → créé en état 'draft' (brouillon) si pas d'unblock immédiat
+      // - Avoir produit avec immediateUnblock → validé
+      const initialStatus = creditNoteType === 'financial' || immediateUnblock ? 'validated' : 'draft';
+      
       const { data: creditNote, error: cnError } = await supabase
         .from('credit_notes')
         .insert({
@@ -369,7 +375,7 @@ export const CreditNoteCreateDialog: React.FC<CreditNoteCreateDialogProps> = ({
           credit_generated: creditGenerated,
           credit_available: creditAvailable,
           credit_blocked: creditBlocked,
-          status: 'validated',
+          status: initialStatus,
           currency: invoice.currency,
           notes,
         })

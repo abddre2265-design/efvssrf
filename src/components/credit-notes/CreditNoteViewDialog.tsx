@@ -30,6 +30,8 @@ import { CreditNote, CreditNoteLine, CreditNoteStatus, CreditNoteType } from './
 import { formatCurrency } from '@/components/invoices/types';
 import { CreditUnblockDialog } from './CreditUnblockDialog';
 import { CreditNotePrintDialog } from './CreditNotePrintDialog';
+import { ProductReturnRestoreDialog } from './ProductReturnRestoreDialog';
+import { getCreditNoteUsageStatus, getProductReturnReceptionStatus } from './types';
 
 interface HistoryEntry {
   id: string;
@@ -81,6 +83,7 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [unblockDialogOpen, setUnblockDialogOpen] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [activeTab, setActiveTab] = useState<string>('details');
 
@@ -373,22 +376,22 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
         </div>
       </div>
 
-      {/* Credit Status */}
-      {creditNote && creditNote.credit_generated > 0 && (
-        <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+      {/* Credit Status - Financial Credit Notes */}
+      {creditNote && creditNote.credit_note_type === 'financial' && creditNote.credit_generated > 0 && (
+        <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
           <div className="flex items-center justify-between mb-3">
-            <div className="font-medium">{t('client_credit_status')}</div>
-            {creditNote.credit_blocked > 0 && creditNote.credit_note_type === 'product_return' && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2 border-orange-500/50 text-orange-600 hover:bg-orange-500/10"
-                onClick={() => setUnblockDialogOpen(true)}
-              >
-                <Unlock className="h-4 w-4" />
-                {t('receive_products')}
-              </Button>
-            )}
+            <div className="font-medium flex items-center gap-2">
+              <Banknote className="h-4 w-4 text-blue-600" />
+              {t('client_credit_status')}
+            </div>
+            <Badge variant="outline" className={`
+              ${getCreditNoteUsageStatus(creditNote) === 'available' ? 'bg-green-500/10 text-green-600 border-green-500/30' : ''}
+              ${getCreditNoteUsageStatus(creditNote) === 'partially_used' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' : ''}
+              ${getCreditNoteUsageStatus(creditNote) === 'fully_used' ? 'bg-gray-500/10 text-gray-600 border-gray-500/30' : ''}
+              ${getCreditNoteUsageStatus(creditNote) === 'refunded' ? 'bg-purple-500/10 text-purple-600 border-purple-500/30' : ''}
+            `}>
+              {t(`status_${getCreditNoteUsageStatus(creditNote)}`)}
+            </Badge>
           </div>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
@@ -396,18 +399,82 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
               <p className="font-mono font-semibold">{formatCurrency(creditNote.credit_generated, creditNote.currency)}</p>
             </div>
             <div>
+              <span className="text-muted-foreground">{t('credit_used')}:</span>
+              <p className="font-mono font-semibold text-orange-600">{formatCurrency(creditNote.credit_used || 0, creditNote.currency)}</p>
+            </div>
+            <div>
               <span className="text-muted-foreground">{t('credit_available')}:</span>
               <p className="font-mono font-semibold text-green-600">{formatCurrency(creditNote.credit_available, creditNote.currency)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Status - Product Return Credit Notes */}
+      {creditNote && creditNote.credit_note_type === 'product_return' && creditNote.status === 'validated' && (
+        <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-medium flex items-center gap-2">
+              <RotateCcw className="h-4 w-4 text-purple-600" />
+              {t('product_return_status')}
+            </div>
+            <Badge variant="outline" className={`
+              ${getProductReturnReceptionStatus(creditNote) === 'blocked' ? 'bg-orange-500/10 text-orange-600 border-orange-500/30' : ''}
+              ${getProductReturnReceptionStatus(creditNote) === 'partially_restored' ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' : ''}
+              ${getProductReturnReceptionStatus(creditNote) === 'restored' ? 'bg-green-500/10 text-green-600 border-green-500/30' : ''}
+            `}>
+              {t(`status_${getProductReturnReceptionStatus(creditNote)}`)}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">{t('total_credit_note')}:</span>
+              <p className="font-mono font-semibold">{formatCurrency(creditNote.net_amount, creditNote.currency)}</p>
             </div>
             {creditNote.credit_blocked > 0 && (
               <div>
                 <span className="text-muted-foreground flex items-center gap-1">
                   <AlertCircle className="h-3 w-3 text-orange-500" />
-                  {t('credit_blocked')}:
+                  {t('awaiting_reception')}:
                 </span>
                 <p className="font-mono font-semibold text-orange-600">{formatCurrency(creditNote.credit_blocked, creditNote.currency)}</p>
               </div>
             )}
+            {creditNote.credit_available > 0 && (
+              <div>
+                <span className="text-muted-foreground">{t('restored_credit')}:</span>
+                <p className="font-mono font-semibold text-green-600">{formatCurrency(creditNote.credit_available, creditNote.currency)}</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Restore Button */}
+          {creditNote.credit_blocked > 0 && (
+            <div className="mt-4 pt-4 border-t border-purple-500/20">
+              <Button
+                onClick={() => setRestoreDialogOpen(true)}
+                className="w-full gap-2 bg-purple-600 hover:bg-purple-700"
+              >
+                <Package className="h-4 w-4" />
+                {t('receive_and_restore_products')}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                {t('restore_products_warning')}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Draft Status Warning */}
+      {creditNote && creditNote.status === 'created' && (
+        <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-yellow-700 dark:text-yellow-400">{t('draft_credit_note')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('draft_credit_note_description')}</p>
+            </div>
           </div>
         </div>
       )}
@@ -549,8 +616,24 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
         </ScrollArea>
       </DialogContent>
 
-      {/* Credit Unblock Dialog */}
-      {creditNote && creditNote.credit_blocked > 0 && (
+      {/* Product Return Restore Dialog */}
+      {creditNote && creditNote.credit_note_type === 'product_return' && creditNote.credit_blocked > 0 && (
+        <ProductReturnRestoreDialog
+          open={restoreDialogOpen}
+          onOpenChange={setRestoreDialogOpen}
+          creditNoteId={creditNote.id}
+          creditNoteNumber={creditNote.credit_note_number}
+          creditBlocked={creditNote.credit_blocked}
+          currency={creditNote.currency}
+          clientId={creditNote.client_id}
+          organizationId={creditNote.organization_id}
+          invoiceId={creditNote.invoice_id}
+          onSuccess={handleUnblockSuccess}
+        />
+      )}
+
+      {/* Legacy Credit Unblock Dialog (for financial) */}
+      {creditNote && creditNote.credit_note_type === 'financial' && creditNote.credit_blocked > 0 && (
         <CreditUnblockDialog
           open={unblockDialogOpen}
           onOpenChange={setUnblockDialogOpen}
