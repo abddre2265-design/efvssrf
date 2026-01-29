@@ -177,7 +177,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   // Withholding status from invoice (only for local)
   const isWithholdingConfigured = !isForeign && (invoice?.withholding_applied || false);
   const invoiceWithholdingRate = invoice?.withholding_rate || 0;
-  const invoiceWithholdingAmount = invoice?.withholding_amount || 0;
+  // Calculate withholding amount based on TTC (recalculate to ensure consistency)
+  const invoiceWithholdingAmount = invoice ? invoice.total_ttc * (invoiceWithholdingRate / 100) : 0;
 
   // Currency configuration status (for foreign)
   const isCurrencyConfigured = isForeign && invoice?.exchange_rate && invoice.exchange_rate > 0;
@@ -1093,16 +1094,16 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                             <span className="text-muted-foreground">{t('total_ttc')}:</span>
                             <span className="font-mono">{formatCurrency(invoice.total_ttc, 'TND')}</span>
                           </div>
+                          <div className="flex justify-between text-amber-600">
+                            <span>- {t('withholding')} ({previewWithholdingRate}% {t('on_ttc')}):</span>
+                            <span className="font-mono">{formatCurrency(previewWithholdingAmount, 'TND')}</span>
+                          </div>
                           {invoice.stamp_duty_enabled && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">+ {t('stamp_duty')}:</span>
                               <span className="font-mono">{formatCurrency(invoice.stamp_duty_amount, 'TND')}</span>
                             </div>
                           )}
-                          <div className="flex justify-between text-amber-600">
-                            <span>- {t('withholding')} ({previewWithholdingRate}% {t('on_ttc')}):</span>
-                            <span className="font-mono">{formatCurrency(previewWithholdingAmount, 'TND')}</span>
-                          </div>
                           <div className="flex justify-between border-t pt-1 font-medium text-primary">
                             <span>{t('new_net_payable')}:</span>
                             <span className="font-mono">{formatCurrency(previewNetPayable, 'TND')}</span>

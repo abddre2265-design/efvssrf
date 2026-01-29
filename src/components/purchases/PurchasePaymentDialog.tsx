@@ -175,7 +175,8 @@ export const PurchasePaymentDialog: React.FC<PurchasePaymentDialogProps> = ({
   // Withholding status from document (only for local)
   const isWithholdingConfigured = !isForeign && (document?.withholding_applied || false);
   const documentWithholdingRate = document?.withholding_rate || 0;
-  const documentWithholdingAmount = document?.withholding_amount || 0;
+  // Calculate withholding amount based on TTC (recalculate to ensure consistency)
+  const documentWithholdingAmount = document ? document.total_ttc * (documentWithholdingRate / 100) : 0;
 
   // Currency configuration status (for foreign)
   const isCurrencyConfigured = isForeign && document?.exchange_rate && document.exchange_rate > 0;
