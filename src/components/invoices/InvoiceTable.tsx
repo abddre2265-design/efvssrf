@@ -79,16 +79,38 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (invoice: Invoice) => {
     const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
       created: { variant: 'secondary', className: 'bg-blue-500/20 text-blue-700 dark:text-blue-400' },
       draft: { variant: 'secondary', className: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400' },
       validated: { variant: 'default', className: 'bg-green-500/20 text-green-700 dark:text-green-400' },
+      cancelled: { variant: 'destructive', className: 'bg-red-500/20 text-red-700 dark:text-red-400' },
     };
-    const config = variants[status] || variants.created;
+    const config = variants[invoice.status] || variants.created;
     return (
       <Badge variant={config.variant} className={config.className}>
-        {t(`status_${status}`)}
+        {t(`status_${invoice.status}`)}
+      </Badge>
+    );
+  };
+
+  // Check if invoice is fully or partially credited (product returns restored)
+  const getCreditedBadge = (invoice: Invoice) => {
+    if (!invoice.total_credited || invoice.total_credited <= 0) return null;
+    
+    const isFullyCredited = invoice.total_credited >= invoice.total_ttc;
+    
+    if (isFullyCredited) {
+      return (
+        <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30">
+          {t('invoice_fully_credited_badge')}
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge variant="outline" className="bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-500/30">
+        {t('invoice_partially_credited_badge')}
       </Badge>
     );
   };
@@ -196,7 +218,10 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
                 {formatCurrency(invoice.net_payable, invoice.currency)}
               </TableCell>
               <TableCell>
-                {getStatusBadge(invoice.status)}
+                <div className="flex flex-col gap-1">
+                  {getStatusBadge(invoice)}
+                  {getCreditedBadge(invoice)}
+                </div>
               </TableCell>
               <TableCell>
                 {getPaymentBadge(invoice.payment_status)}
@@ -261,10 +286,13 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
                             {t('deliver_invoice')}
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => onCreateCreditNote(invoice)}>
-                          <ReceiptText className="mr-2 h-4 w-4" />
-                          {t('create_credit_note')}
-                        </DropdownMenuItem>
+                        {/* Block credit note creation if fully credited */}
+                        {(!invoice.total_credited || invoice.total_credited < invoice.total_ttc) && (
+                          <DropdownMenuItem onClick={() => onCreateCreditNote(invoice)}>
+                            <ReceiptText className="mr-2 h-4 w-4" />
+                            {t('create_credit_note')}
+                          </DropdownMenuItem>
+                        )}
                       </>
                     )}
                   </DropdownMenuContent>

@@ -1546,6 +1546,38 @@ export const translations: Translations = {
   step_restore_lines: { fr: 'Sélection', en: 'Selection', ar: 'اختيار' },
   step_restore_preview: { fr: 'Aperçu', en: 'Preview', ar: 'معاينة' },
   step_restore_withholding: { fr: 'Retenue', en: 'Withholding', ar: 'الحجز' },
+  
+  // Invoice credited badges (for table display)
+  invoice_fully_credited_badge: { fr: 'Totalement avoirée', en: 'Fully credited', ar: 'مسترد بالكامل' },
+  invoice_partially_credited_badge: { fr: 'Partiellement avoirée', en: 'Partially credited', ar: 'مسترد جزئياً' },
+  
+  // Exchange rate at payment
+  exchange_rate_at_payment: { fr: 'Le taux de change sera défini lors du paiement', en: 'Exchange rate will be set at payment time', ar: 'سيتم تحديد سعر الصرف عند الدفع' },
+  
+  // Convert product return to financial credit
+  convert_to_financial_credit: { fr: 'Convertir en avoir financier', en: 'Convert to financial credit', ar: 'تحويل إلى رصيد مالي' },
+  product_return_source: { fr: 'Avoir produit source', en: 'Source product return', ar: 'مذكرة إرجاع المنتج المصدر' },
+  value_ttc: { fr: 'Valeur TTC', en: 'Value TTC', ar: 'القيمة الإجمالية' },
+  payment_verification_convert: { fr: 'Vérification des paiements', en: 'Payment verification', ar: 'التحقق من المدفوعات' },
+  invoice_paid_total: { fr: 'Montant payé sur la facture', en: 'Invoice paid amount', ar: 'المبلغ المدفوع على الفاتورة' },
+  existing_financial_credits: { fr: 'Avoirs financiers existants', en: 'Existing financial credits', ar: 'الأرصدة المالية الموجودة' },
+  conversion_possible: { fr: 'Conversion possible', en: 'Conversion possible', ar: 'التحويل ممكن' },
+  conversion_not_possible: { fr: 'Conversion impossible', en: 'Conversion not possible', ar: 'التحويل غير ممكن' },
+  invoice_not_paid_conversion_blocked: { fr: 'La facture n\'a pas de paiement. La conversion est bloquée.', en: 'Invoice has no payment. Conversion is blocked.', ar: 'الفاتورة ليس لها دفعة. التحويل محظور.' },
+  no_available_payment_for_conversion: { fr: 'Aucun montant disponible pour la conversion', en: 'No amount available for conversion', ar: 'لا يوجد مبلغ متاح للتحويل' },
+  partial_conversion_warning: { fr: 'Conversion partielle:', en: 'Partial conversion:', ar: 'تحويل جزئي:' },
+  not_convertible_until_payment: { fr: 'non convertibles tant qu\'un paiement supplémentaire n\'est pas effectué', en: 'not convertible until additional payment is made', ar: 'غير قابلة للتحويل حتى يتم الدفع الإضافي' },
+  conversion_reason: { fr: 'Raison de la conversion', en: 'Conversion reason', ar: 'سبب التحويل' },
+  enter_reason: { fr: 'Entrer une raison...', en: 'Enter a reason...', ar: 'أدخل سبباً...' },
+  converted_from_product_return: { fr: 'Converti depuis avoir produit', en: 'Converted from product return', ar: 'تم التحويل من إرجاع المنتج' },
+  auto_converted_from: { fr: 'Converti automatiquement depuis', en: 'Auto converted from', ar: 'تم التحويل تلقائياً من' },
+  conversion_product_return_to_financial: { fr: 'Conversion avoir produit en avoir financier', en: 'Product return to financial credit conversion', ar: 'تحويل إرجاع المنتج إلى رصيد مالي' },
+  financial_credit_from_product_return: { fr: 'Avoir financier depuis avoir produit', en: 'Financial credit from product return', ar: 'رصيد مالي من إرجاع المنتج' },
+  conversion_successful: { fr: 'Conversion réussie', en: 'Conversion successful', ar: 'تم التحويل بنجاح' },
+  error_converting: { fr: 'Erreur lors de la conversion', en: 'Error converting', ar: 'خطأ في التحويل' },
+  convert_action: { fr: 'Convertir', en: 'Convert', ar: 'تحويل' },
+  product_return_type: { fr: 'Avoir produit', en: 'Product return', ar: 'إرجاع المنتج' },
+  client_credit_balance: { fr: 'Crédit client', en: 'Client credit', ar: 'رصيد العميل' },
 };
 
 // Tunisian Governorates
