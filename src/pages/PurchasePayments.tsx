@@ -116,6 +116,7 @@ interface PurchaseDocument {
   supplier_id: string | null;
   subtotal_ht: number;
   total_vat: number;
+  total_ttc: number;
   stamp_duty_amount: number;
   net_payable: number;
   currency: string;
@@ -222,6 +223,7 @@ const PurchasePayments: React.FC = () => {
           supplier_id,
           subtotal_ht,
           total_vat,
+          total_ttc,
           stamp_duty_amount,
           net_payable,
           currency,
