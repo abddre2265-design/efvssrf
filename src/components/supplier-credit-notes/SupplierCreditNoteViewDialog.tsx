@@ -18,7 +18,10 @@ import {
   XCircle,
   AlertCircle,
   Unlock,
-  Printer
+  Printer,
+  Coins,
+  ArrowDownCircle,
+  ArrowRightCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
@@ -26,6 +29,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { SupplierCreditNote, SupplierCreditNoteLine, SupplierCreditNoteStatus, SupplierCreditNoteType } from './types';
 import { formatCurrency } from '@/components/invoices/types';
 import { SupplierCreditNoteReturnStockDialog } from './SupplierCreditNoteReturnStockDialog';
+import { SupplierCreditRefundDialog } from './SupplierCreditRefundDialog';
+import { SupplierCreditUseDialog } from './SupplierCreditUseDialog';
+import { SupplierConvertToFinancialDialog } from './SupplierConvertToFinancialDialog';
 
 interface SupplierCreditNoteViewDialogProps {
   open: boolean;
@@ -67,6 +73,9 @@ export const SupplierCreditNoteViewDialog: React.FC<SupplierCreditNoteViewDialog
   const [creditNote, setCreditNote] = useState<SupplierCreditNoteDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [returnStockDialogOpen, setReturnStockDialogOpen] = useState(false);
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [useDialogOpen, setUseDialogOpen] = useState(false);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
 
   const fetchCreditNote = async () => {
     if (!creditNoteId) return;
@@ -344,17 +353,19 @@ export const SupplierCreditNoteViewDialog: React.FC<SupplierCreditNoteViewDialog
                 <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <div className="flex items-center justify-between mb-3">
                     <div className="font-medium">{t('supplier_credit_status')}</div>
-                    {creditNote.credit_blocked > 0 && creditNote.credit_note_type === 'product_return' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-2 border-orange-500/50 text-orange-600 hover:bg-orange-500/10"
-                        onClick={() => setReturnStockDialogOpen(true)}
-                      >
-                        <Unlock className="h-4 w-4" />
-                        {t('return_stock')}
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {creditNote.credit_blocked > 0 && creditNote.credit_note_type === 'product_return' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2 border-orange-500/50 text-orange-600 hover:bg-orange-500/10"
+                          onClick={() => setReturnStockDialogOpen(true)}
+                        >
+                          <Unlock className="h-4 w-4" />
+                          {t('return_stock')}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
@@ -374,7 +385,48 @@ export const SupplierCreditNoteViewDialog: React.FC<SupplierCreditNoteViewDialog
                         <p className="font-mono font-semibold text-orange-600">{formatCurrency(creditNote.credit_blocked, creditNote.currency)}</p>
                       </div>
                     )}
+                    {(creditNote.credit_used || 0) > 0 && (
+                      <div>
+                        <span className="text-muted-foreground">{t('credit_used')}:</span>
+                        <p className="font-mono font-semibold text-purple-600">{formatCurrency(creditNote.credit_used || 0, creditNote.currency)}</p>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Action buttons for available credit */}
+                  {creditNote.credit_available > 0 && creditNote.status === 'validated' && (
+                    <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-primary/20">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => setUseDialogOpen(true)}
+                      >
+                        <Coins className="h-4 w-4" />
+                        {t('use_credit')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2 text-green-600 border-green-500/50 hover:bg-green-500/10"
+                        onClick={() => setRefundDialogOpen(true)}
+                      >
+                        <ArrowDownCircle className="h-4 w-4" />
+                        {t('receive_refund')}
+                      </Button>
+                      {creditNote.credit_note_type === 'product_return' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2 text-blue-600 border-blue-500/50 hover:bg-blue-500/10"
+                          onClick={() => setConvertDialogOpen(true)}
+                        >
+                          <ArrowRightCircle className="h-4 w-4" />
+                          {t('convert_to_financial')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -402,6 +454,53 @@ export const SupplierCreditNoteViewDialog: React.FC<SupplierCreditNoteViewDialog
           creditNoteNumber={creditNote.credit_note_number}
           creditBlocked={creditNote.credit_blocked}
           currency={creditNote.currency}
+          onSuccess={handleReturnStockSuccess}
+        />
+      )}
+
+      {/* Refund Dialog */}
+      {creditNote && (
+        <SupplierCreditRefundDialog
+          open={refundDialogOpen}
+          onOpenChange={setRefundDialogOpen}
+          creditNoteId={creditNote.id}
+          creditNoteNumber={creditNote.credit_note_number}
+          creditAvailable={creditNote.credit_available}
+          purchaseDocumentId={creditNote.purchase_document_id}
+          supplierId={creditNote.supplier_id}
+          organizationId={creditNote.organization_id}
+          currency={creditNote.currency}
+          exchangeRate={creditNote.exchange_rate}
+          onSuccess={handleReturnStockSuccess}
+        />
+      )}
+
+      {/* Use Credit Dialog */}
+      {creditNote && (
+        <SupplierCreditUseDialog
+          open={useDialogOpen}
+          onOpenChange={setUseDialogOpen}
+          creditNoteId={creditNote.id}
+          creditNoteNumber={creditNote.credit_note_number}
+          creditAvailable={creditNote.credit_available}
+          supplierId={creditNote.supplier_id}
+          currency={creditNote.currency}
+          onSuccess={handleReturnStockSuccess}
+        />
+      )}
+
+      {/* Convert to Financial Dialog */}
+      {creditNote && (
+        <SupplierConvertToFinancialDialog
+          open={convertDialogOpen}
+          onOpenChange={setConvertDialogOpen}
+          creditNoteId={creditNote.id}
+          creditNoteNumber={creditNote.credit_note_number}
+          creditNoteNetAmount={creditNote.net_amount}
+          currency={creditNote.currency}
+          purchaseDocumentId={creditNote.purchase_document_id}
+          supplierId={creditNote.supplier_id}
+          organizationId={creditNote.organization_id}
           onSuccess={handleReturnStockSuccess}
         />
       )}
