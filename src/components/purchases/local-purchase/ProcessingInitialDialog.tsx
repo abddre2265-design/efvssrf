@@ -74,6 +74,7 @@ const DOCUMENT_TYPES = [
 const DOCUMENT_CATEGORIES = [
   { value: 'facture_locale', labelFr: 'Facture locale', labelEn: 'Local Invoice' },
   { value: 'facture_commerciale_etrangere', labelFr: 'Facture commerciale étrangère', labelEn: 'Foreign Commercial Invoice' },
+  { value: 'quittance_douaniere', labelFr: 'Quittance douanière', labelEn: 'Customs Receipt' },
 ];
 
 export const ProcessingInitialDialog: React.FC<ProcessingInitialDialogProps> = ({
@@ -392,7 +393,7 @@ export const ProcessingInitialDialog: React.FC<ProcessingInitialDialogProps> = (
           <Button 
             onClick={handleStart} 
             className="gap-2"
-            disabled={documentType === 'import' && !importFolderId}
+            disabled={documentType === 'import' && (!importFolderId || !documentCategory)}
           >
             <Play className="h-4 w-4" />
             {t('start_processing') || 'Démarrer le traitement'}

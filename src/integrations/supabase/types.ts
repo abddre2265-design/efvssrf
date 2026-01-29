@@ -413,6 +413,131 @@ export type Database = {
           },
         ]
       }
+      customs_receipt_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          customs_receipt_id: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          reference_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customs_receipt_id: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customs_receipt_id?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          reference_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customs_receipt_payments_customs_receipt_id_fkey"
+            columns: ["customs_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "customs_receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customs_receipts: {
+        Row: {
+          created_at: string
+          customs_declaration_number: string | null
+          customs_office: string | null
+          document_date: string | null
+          document_number: string | null
+          id: string
+          import_folder_id: string
+          importer_name: string | null
+          notes: string | null
+          organization_id: string
+          paid_amount: number
+          payment_status: string
+          pdf_url: string | null
+          pending_upload_id: string | null
+          quittance_type: string
+          status: string
+          storage_path: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customs_declaration_number?: string | null
+          customs_office?: string | null
+          document_date?: string | null
+          document_number?: string | null
+          id?: string
+          import_folder_id: string
+          importer_name?: string | null
+          notes?: string | null
+          organization_id: string
+          paid_amount?: number
+          payment_status?: string
+          pdf_url?: string | null
+          pending_upload_id?: string | null
+          quittance_type?: string
+          status?: string
+          storage_path?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customs_declaration_number?: string | null
+          customs_office?: string | null
+          document_date?: string | null
+          document_number?: string | null
+          id?: string
+          import_folder_id?: string
+          importer_name?: string | null
+          notes?: string | null
+          organization_id?: string
+          paid_amount?: number
+          payment_status?: string
+          pdf_url?: string | null
+          pending_upload_id?: string | null
+          quittance_type?: string
+          status?: string
+          storage_path?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customs_receipts_import_folder_id_fkey"
+            columns: ["import_folder_id"]
+            isOneToOne: false
+            referencedRelation: "import_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customs_receipts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_note_lines: {
         Row: {
           created_at: string
@@ -2422,6 +2547,10 @@ export type Database = {
       }
       is_custom_tax_value_in_use: {
         Args: { value_id: string }
+        Returns: boolean
+      }
+      is_customs_receipt_owner: {
+        Args: { receipt_id: string }
         Returns: boolean
       }
       is_delivery_note_owner: { Args: { dn_id: string }; Returns: boolean }
