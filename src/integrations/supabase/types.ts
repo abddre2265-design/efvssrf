@@ -746,6 +746,86 @@ export type Database = {
         }
         Relationships: []
       }
+      import_folder_documents: {
+        Row: {
+          created_at: string
+          document_category: string
+          document_family_id: string | null
+          document_type: string
+          id: string
+          import_folder_id: string
+          notes: string | null
+          organization_id: string
+          original_filename: string
+          pdf_url: string | null
+          pending_upload_id: string | null
+          status: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_category: string
+          document_family_id?: string | null
+          document_type?: string
+          id?: string
+          import_folder_id: string
+          notes?: string | null
+          organization_id: string
+          original_filename: string
+          pdf_url?: string | null
+          pending_upload_id?: string | null
+          status?: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_category?: string
+          document_family_id?: string | null
+          document_type?: string
+          id?: string
+          import_folder_id?: string
+          notes?: string | null
+          organization_id?: string
+          original_filename?: string
+          pdf_url?: string | null
+          pending_upload_id?: string | null
+          status?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_folder_documents_document_family_id_fkey"
+            columns: ["document_family_id"]
+            isOneToOne: false
+            referencedRelation: "document_families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_folder_documents_import_folder_id_fkey"
+            columns: ["import_folder_id"]
+            isOneToOne: false
+            referencedRelation: "import_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_folder_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_folder_documents_pending_upload_id_fkey"
+            columns: ["pending_upload_id"]
+            isOneToOne: false
+            referencedRelation: "pending_public_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_folder_logs: {
         Row: {
           action: string
