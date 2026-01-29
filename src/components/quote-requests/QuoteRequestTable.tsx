@@ -50,13 +50,13 @@ export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-200"><Clock className="mr-1 h-3 w-3" />En attente</Badge>;
+        return <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-200"><Clock className="mr-1 h-3 w-3" />{t('status_pending')}</Badge>;
       case 'processing':
-        return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200"><Clock className="mr-1 h-3 w-3" />En cours</Badge>;
+        return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200"><Clock className="mr-1 h-3 w-3" />{t('status_processing')}</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200"><Check className="mr-1 h-3 w-3" />Terminé</Badge>;
+        return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200"><Check className="mr-1 h-3 w-3" />{t('status_completed')}</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200"><X className="mr-1 h-3 w-3" />Rejeté</Badge>;
+        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200"><X className="mr-1 h-3 w-3" />{t('status_rejected')}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -67,7 +67,7 @@ export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
     if (request.first_name || request.last_name) {
       return `${request.first_name || ''} ${request.last_name || ''}`.trim();
     }
-    return 'Client inconnu';
+    return t('unknown_client');
   };
 
   const filteredRequests = requests.filter(request => {
@@ -96,7 +96,7 @@ export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher..."
+            placeholder={t('search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -108,19 +108,19 @@ export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>N° Demande</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('request_number')}</TableHead>
+              <TableHead>{t('date')}</TableHead>
+              <TableHead>{t('client')}</TableHead>
+              <TableHead>{t('contact')}</TableHead>
+              <TableHead>{t('status')}</TableHead>
+              <TableHead className="text-right">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredRequests.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                  Aucune demande de devis trouvée
+                  {t('no_quote_requests_found')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -159,23 +159,23 @@ export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onView(request)}>
                           <Eye className="mr-2 h-4 w-4" />
-                          Voir détails
+                          {t('view_details')}
                         </DropdownMenuItem>
                         {request.status === 'pending' && (
                           <DropdownMenuItem onClick={() => onStatusChange(request, 'processing')}>
                             <Clock className="mr-2 h-4 w-4" />
-                            Marquer en cours
+                            {t('mark_processing')}
                           </DropdownMenuItem>
                         )}
                         {(request.status === 'pending' || request.status === 'processing') && (
                           <>
                             <DropdownMenuItem onClick={() => onStatusChange(request, 'completed')}>
                               <Check className="mr-2 h-4 w-4" />
-                              Marquer terminé
+                              {t('mark_completed')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => onStatusChange(request, 'rejected')} className="text-destructive">
                               <X className="mr-2 h-4 w-4" />
-                              Rejeter
+                              {t('reject')}
                             </DropdownMenuItem>
                           </>
                         )}

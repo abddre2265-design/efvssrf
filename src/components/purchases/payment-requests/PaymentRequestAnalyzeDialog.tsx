@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, ar } from 'date-fns/locale';
 import {
   Dialog,
   DialogContent,
@@ -51,27 +51,38 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   mixed: <Layers className="h-4 w-4" />,
 };
 
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  cash: 'Espèces',
-  card: 'Carte',
-  check: 'Chèque',
-  draft: 'Traite',
-  iban_transfer: 'Virement IBAN',
-  swift_transfer: 'Virement SWIFT',
-  bank_deposit: 'Versement',
-  mixed: 'Mixte',
-};
-
 export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogProps> = ({
   open,
   onOpenChange,
   request,
   onActionComplete,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+
+  const getLocale = () => {
+    switch (language) {
+      case 'ar': return ar;
+      case 'en': return enUS;
+      default: return fr;
+    }
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    const labels: Record<string, string> = {
+      cash: t('payment_method_cash'),
+      card: t('payment_method_card'),
+      check: t('payment_method_check'),
+      draft: t('payment_method_draft'),
+      iban_transfer: t('payment_method_iban_transfer'),
+      swift_transfer: t('payment_method_swift_transfer'),
+      bank_deposit: t('payment_method_bank_deposit'),
+      mixed: t('payment_method_mixed'),
+    };
+    return labels[method] || method;
+  };
 
   if (!request) return null;
 
@@ -136,12 +147,12 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
         if (docError) throw docError;
       }
 
-      toast.success('Paiement validé avec succès');
+      toast.success(t('payment_validated_success'));
       onOpenChange(false);
       onActionComplete();
     } catch (error) {
       console.error('Error approving payment:', error);
-      toast.error('Erreur lors de la validation');
+      toast.error(t('error_validating'));
     } finally {
       setIsProcessing(false);
       setAction(null);
@@ -150,7 +161,7 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
 
   const handleReject = async () => {
     if (!request || !rejectionReason.trim()) {
-      toast.error('Le motif de refus est obligatoire');
+      toast.error(t('rejection_reason_required'));
       return;
     }
     
@@ -169,12 +180,12 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
 
       if (error) throw error;
 
-      toast.success('Demande de paiement refusée');
+      toast.success(t('payment_request_rejected'));
       onOpenChange(false);
       onActionComplete();
     } catch (error) {
       console.error('Error rejecting payment:', error);
-      toast.error('Erreur lors du refus');
+      toast.error(t('error_rejecting'));
     } finally {
       setIsProcessing(false);
       setAction(null);
@@ -189,7 +200,7 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
           {methods.map((line, idx) => (
             <div key={idx} className="flex items-center gap-2 text-sm">
               {PAYMENT_METHOD_ICONS[line.method]}
-              <span>{PAYMENT_METHOD_LABELS[line.method]}</span>
+              <span>{getPaymentMethodLabel(line.method)}</span>
               <span className="font-mono">{formatCurrency(line.amount, 'TND')}</span>
               {line.referenceNumber && (
                 <span className="text-muted-foreground">({line.referenceNumber})</span>
@@ -203,7 +214,7 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
     return (
       <div className="flex items-center gap-2">
         {PAYMENT_METHOD_ICONS[request.payment_method || 'cash']}
-        <span>{PAYMENT_METHOD_LABELS[request.payment_method || 'cash']}</span>
+        <span>{getPaymentMethodLabel(request.payment_method || 'cash')}</span>
         {request.reference_number && (
           <span className="text-muted-foreground font-mono">({request.reference_number})</span>
         )}
@@ -219,10 +230,10 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Analyser le paiement
+            {t('analyze_payment')}
           </DialogTitle>
           <DialogDescription>
-            Vérifiez et validez ou refusez cette demande de paiement
+            {t('verify_and_validate_payment_request')}
           </DialogDescription>
         </DialogHeader>
 
@@ -238,13 +249,13 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
           {/* Document info */}
           <div className="p-3 bg-muted/50 rounded-lg space-y-1">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Facture</span>
+              <span className="text-muted-foreground">{t('invoice')}</span>
               <span className="font-mono font-medium">
                 {request.purchase_document?.invoice_number || 'N/A'}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Fournisseur</span>
+              <span className="text-muted-foreground">{t('supplier')}</span>
               <span className="font-medium">{getSupplierName()}</span>
             </div>
           </div>
@@ -253,19 +264,19 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
 
           {/* Payment details (from public) */}
           <div className="space-y-3">
-            <h4 className="font-medium">Détails du paiement reçu</h4>
+            <h4 className="font-medium">{t('received_payment_details')}</h4>
             
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-muted-foreground">Date de paiement</span>
+                <span className="text-muted-foreground">{t('payment_date')}</span>
                 <p className="font-medium">
                   {request.payment_date 
-                    ? format(new Date(request.payment_date), 'dd MMMM yyyy', { locale: fr })
-                    : 'Non spécifiée'}
+                    ? format(new Date(request.payment_date), 'dd MMMM yyyy', { locale: getLocale() })
+                    : t('not_specified')}
                 </p>
               </div>
               <div>
-                <span className="text-muted-foreground">Montant payé</span>
+                <span className="text-muted-foreground">{t('paid_amount')}</span>
                 <p className="font-medium text-lg">
                   {formatCurrency(request.paid_amount || 0, 'TND')}
                 </p>
@@ -273,13 +284,13 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
             </div>
 
             <div>
-              <span className="text-muted-foreground text-sm">Mode de paiement</span>
+              <span className="text-muted-foreground text-sm">{t('payment_method')}</span>
               <div className="mt-1">{renderPaymentMethods()}</div>
             </div>
 
             {request.payment_notes && (
               <div>
-                <span className="text-muted-foreground text-sm">Notes</span>
+                <span className="text-muted-foreground text-sm">{t('notes')}</span>
                 <p className="text-sm mt-1">{request.payment_notes}</p>
               </div>
             )}
@@ -290,12 +301,12 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
           {/* Amount summary */}
           <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Montant demandé</span>
+              <span className="text-muted-foreground">{t('requested_amount')}</span>
               <span className="font-medium">{formatCurrency(request.requested_amount, 'TND')}</span>
             </div>
             {request.withholding_rate > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Retenue ({request.withholding_rate}%)</span>
+                <span className="text-muted-foreground">{t('withholding')} ({request.withholding_rate}%)</span>
                 <span className="font-medium text-orange-600">
                   -{formatCurrency(request.withholding_amount, 'TND')}
                 </span>
@@ -303,7 +314,7 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
             )}
             <Separator />
             <div className="flex justify-between">
-              <span className="font-semibold">Montant reçu</span>
+              <span className="font-semibold">{t('received_amount')}</span>
               <span className="font-bold text-lg text-primary">
                 {formatCurrency(request.paid_amount || 0, 'TND')}
               </span>
@@ -313,9 +324,9 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
           {/* Rejection reason input (if rejecting) */}
           {isAwaitingApproval && (
             <div className="space-y-2">
-              <Label>Motif de refus (si applicable)</Label>
+              <Label>{t('rejection_reason_if_applicable')}</Label>
               <Textarea
-                placeholder="Indiquez le motif en cas de refus..."
+                placeholder={t('enter_rejection_reason')}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 rows={2}
@@ -326,7 +337,7 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
 
         <DialogFooter className="flex gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fermer
+            {t('close')}
           </Button>
           
           {isAwaitingApproval && (
@@ -341,7 +352,7 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
                 ) : (
                   <XCircle className="h-4 w-4 mr-2" />
                 )}
-                Refuser
+                {t('reject')}
               </Button>
               <Button onClick={handleApprove} disabled={isProcessing}>
                 {isProcessing && action === 'approve' ? (
@@ -349,7 +360,7 @@ export const PaymentRequestAnalyzeDialog: React.FC<PaymentRequestAnalyzeDialogPr
                 ) : (
                   <CheckCircle2 className="h-4 w-4 mr-2" />
                 )}
-                Valider
+                {t('validate')}
               </Button>
             </>
           )}

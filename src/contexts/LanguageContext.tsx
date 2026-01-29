@@ -1686,6 +1686,7 @@ export const translations: Translations = {
   no_document_families_created: { fr: 'Aucune famille de document créée', en: 'No document families created', ar: 'لم يتم إنشاء فئات مستندات' },
 };
 
+
 // Tunisian Governorates
 export const governorates = [
   { value: 'tunis', fr: 'Tunis', en: 'Tunis', ar: 'تونس' },

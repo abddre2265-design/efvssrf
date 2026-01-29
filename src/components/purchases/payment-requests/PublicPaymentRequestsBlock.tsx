@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, ar } from 'date-fns/locale';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,7 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
 export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProps> = ({
   organizationId,
 }) => {
+  const { t, language, isRTL } = useLanguage();
   const [requests, setRequests] = useState<PurchasePaymentRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<PurchasePaymentRequest | null>(null);
@@ -85,6 +87,28 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
   const [paymentNotes, setPaymentNotes] = useState('');
   const [mixedLines, setMixedLines] = useState<PaymentMethodLine[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const getLocale = () => {
+    switch (language) {
+      case 'ar': return ar;
+      case 'en': return enUS;
+      default: return fr;
+    }
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    const labels: Record<string, string> = {
+      cash: t('payment_method_cash'),
+      card: t('payment_method_card'),
+      check: t('payment_method_check'),
+      draft: t('payment_method_draft'),
+      iban_transfer: t('payment_method_iban_transfer'),
+      swift_transfer: t('payment_method_swift_transfer'),
+      bank_deposit: t('payment_method_bank_deposit'),
+      mixed: t('payment_method_mixed'),
+    };
+    return labels[method] || method;
+  };
 
   const fetchRequests = async () => {
     setIsLoading(true);
@@ -207,12 +231,12 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
 
       if (error) throw error;
 
-      toast.success('Paiement enregistré - En attente d\'approbation');
+      toast.success(t('payment_registered_awaiting'));
       setIsProcessDialogOpen(false);
       fetchRequests();
     } catch (error) {
       console.error('Error submitting payment:', error);
-      toast.error('Erreur lors de l\'enregistrement du paiement');
+      toast.error(t('error_registering_payment'));
     } finally {
       setIsSubmitting(false);
     }
@@ -245,11 +269,11 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
 
   return (
     <>
-      <Card>
+      <Card dir={isRTL ? 'rtl' : 'ltr'}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Demandes de paiement
+            {t('payment_requests')}
             {pendingRequests.length > 0 && (
               <Badge variant="destructive" className="ml-2">{pendingRequests.length}</Badge>
             )}
@@ -263,7 +287,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
           ) : requests.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Aucune demande de paiement</p>
+              <p>{t('no_payment_requests')}</p>
             </div>
           ) : (
             <ScrollArea className="h-[400px]">
@@ -280,22 +304,22 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Facture: </span>
+                        <span className="text-muted-foreground">{t('invoice')}: </span>
                         <span className="font-mono">{request.purchase_document?.invoice_number || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Fournisseur: </span>
+                        <span className="text-muted-foreground">{t('supplier')}: </span>
                         <span>{getSupplierName(request)}</span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-muted-foreground text-sm">Net à payer: </span>
+                        <span className="text-muted-foreground text-sm">{t('net_to_pay')}: </span>
                         <span className="font-bold text-lg">{formatCurrency(request.net_requested_amount)}</span>
                       </div>
                       <Button size="sm" onClick={() => handleOpenProcess(request)}>
                         <CreditCard className="h-4 w-4 mr-2" />
-                        Traiter
+                        {t('process_payment')}
                       </Button>
                     </div>
                   </div>
@@ -320,13 +344,13 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                       {request.purchase_document?.invoice_number} - {getSupplierName(request)}
                     </div>
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Montant: </span>
+                      <span className="text-muted-foreground">{t('amount')}: </span>
                       <span className="font-medium">{formatCurrency(request.net_requested_amount)}</span>
                     </div>
                     {request.status === 'rejected' && request.rejection_reason && (
                       <div className="p-2 bg-red-500/10 rounded text-sm text-red-700">
                         <AlertCircle className="h-4 w-4 inline mr-1" />
-                        Motif: {request.rejection_reason}
+                        {t('rejection_reason_short')}: {request.rejection_reason}
                       </div>
                     )}
                   </div>
@@ -341,7 +365,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
       <Dialog open={isProcessDialogOpen} onOpenChange={setIsProcessDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Traiter le paiement</DialogTitle>
+            <DialogTitle>{t('process_payment_title')}</DialogTitle>
           </DialogHeader>
 
           {selectedRequest && (
@@ -349,15 +373,15 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
               {/* Request info */}
               <div className="p-3 bg-muted/50 rounded-lg space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Demande</span>
+                  <span className="text-muted-foreground">{t('request')}</span>
                   <span className="font-mono">{selectedRequest.request_number}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Facture</span>
+                  <span className="text-muted-foreground">{t('invoice')}</span>
                   <span className="font-mono">{selectedRequest.purchase_document?.invoice_number}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Net demandé</span>
+                  <span className="text-muted-foreground">{t('net_requested')}</span>
                   <span className="font-bold">{formatCurrency(selectedRequest.net_requested_amount)}</span>
                 </div>
               </div>
@@ -366,7 +390,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
 
               {/* Payment amount */}
               <div className="space-y-2">
-                <Label>Montant payé</Label>
+                <Label>{t('paid_amount')}</Label>
                 <Input
                   type="number"
                   step="0.001"
@@ -377,19 +401,19 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                 />
                 {parsedAmount > selectedRequest.net_requested_amount && (
                   <p className="text-xs text-red-600">
-                    Le montant ne peut pas dépasser {formatCurrency(selectedRequest.net_requested_amount)}
+                    {t('amount_cannot_exceed')} {formatCurrency(selectedRequest.net_requested_amount)}
                   </p>
                 )}
               </div>
 
               {/* Payment date */}
               <div className="space-y-2">
-                <Label>Date de paiement</Label>
+                <Label>{t('payment_date')}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start text-left">
                       <CalendarIcon className="h-4 w-4 mr-2" />
-                      {format(paymentDate, 'dd/MM/yyyy', { locale: fr })}
+                      {format(paymentDate, 'dd/MM/yyyy', { locale: getLocale() })}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -397,7 +421,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                       mode="single"
                       selected={paymentDate}
                       onSelect={(date) => date && setPaymentDate(date)}
-                      locale={fr}
+                      locale={getLocale()}
                     />
                   </PopoverContent>
                 </Popover>
@@ -405,17 +429,17 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
 
               {/* Payment method */}
               <div className="space-y-2">
-                <Label>Mode de paiement</Label>
+                <Label>{t('payment_method')}</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
+                    <SelectValue placeholder={t('select')} />
                   </SelectTrigger>
                   <SelectContent>
                     {PAYMENT_METHODS.map((method) => (
                       <SelectItem key={method.value} value={method.value}>
                         <div className="flex items-center gap-2">
                           {PAYMENT_METHOD_ICONS[method.value]}
-                          {method.label}
+                          {getPaymentMethodLabel(method.value)}
                         </div>
                       </SelectItem>
                     ))}
@@ -426,11 +450,11 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
               {/* Reference number (for non-mixed, non-cash/card) */}
               {!isMixed && requiresReference && (
                 <div className="space-y-2">
-                  <Label>Référence / Numéro *</Label>
+                  <Label>{t('reference_required')}</Label>
                   <Input
                     value={referenceNumber}
                     onChange={(e) => setReferenceNumber(e.target.value)}
-                    placeholder="N° de chèque, virement, etc."
+                    placeholder={t('reference_placeholder')}
                   />
                 </div>
               )}
@@ -439,10 +463,10 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
               {isMixed && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label>Détails paiement mixte</Label>
+                    <Label>{t('mixed_payment_details')}</Label>
                     <Button variant="outline" size="sm" onClick={addMixedLine}>
                       <Plus className="h-4 w-4 mr-1" />
-                      Ajouter
+                      {t('add_line')}
                     </Button>
                   </div>
                   {mixedLines.map((line, idx) => {
@@ -450,7 +474,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                     return (
                       <div key={line.id} className="p-3 border rounded-lg space-y-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">Ligne {idx + 1}</span>
+                          <span className="text-sm font-medium">{t('line_number')} {idx + 1}</span>
                           {mixedLines.length > 1 && (
                             <Button
                               variant="ghost"
@@ -468,12 +492,12 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                             onValueChange={(v) => updateMixedLine(line.id, 'method', v)}
                           >
                             <SelectTrigger className="h-9">
-                              <SelectValue placeholder="Mode" />
+                              <SelectValue placeholder={t('mode_label')} />
                             </SelectTrigger>
                             <SelectContent>
                               {PAYMENT_METHODS.filter(m => m.value !== 'mixed').map((method) => (
                                 <SelectItem key={method.value} value={method.value}>
-                                  {method.label}
+                                  {getPaymentMethodLabel(method.value)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -483,7 +507,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                             step="0.001"
                             value={line.amount || ''}
                             onChange={(e) => updateMixedLine(line.id, 'amount', parseFloat(e.target.value) || 0)}
-                            placeholder="Montant"
+                            placeholder={t('amount')}
                             className="h-9"
                           />
                         </div>
@@ -491,7 +515,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                           <Input
                             value={line.referenceNumber}
                             onChange={(e) => updateMixedLine(line.id, 'referenceNumber', e.target.value)}
-                            placeholder="Référence *"
+                            placeholder={t('reference_required')}
                             className="h-9"
                           />
                         )}
@@ -503,19 +527,19 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
                     "p-2 rounded text-sm",
                     isMixedValid ? "bg-green-500/10 text-green-700" : "bg-red-500/10 text-red-700"
                   )}>
-                    Total: {formatCurrency(mixedTotal)}
-                    {!isMixedValid && ` (différence: ${formatCurrency(mixedDiff)})`}
+                    {t('total')}: {formatCurrency(mixedTotal)}
+                    {!isMixedValid && ` (${t('difference_label')}: ${formatCurrency(mixedDiff)})`}
                   </div>
                 </div>
               )}
 
               {/* Notes */}
               <div className="space-y-2">
-                <Label>Notes (optionnel)</Label>
+                <Label>{t('optional_notes_label')}</Label>
                 <Textarea
                   value={paymentNotes}
                   onChange={(e) => setPaymentNotes(e.target.value)}
-                  placeholder="Informations complémentaires..."
+                  placeholder={t('additional_info')}
                   rows={2}
                 />
               </div>
@@ -524,7 +548,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsProcessDialogOpen(false)}>
-              Annuler
+              {t('cancel')}
             </Button>
             <Button onClick={handleSubmitPayment} disabled={!canSubmit || isSubmitting}>
               {isSubmitting ? (
@@ -532,7 +556,7 @@ export const PublicPaymentRequestsBlock: React.FC<PublicPaymentRequestsBlockProp
               ) : (
                 <Send className="h-4 w-4 mr-2" />
               )}
-              Soumettre
+              {t('submit_button')}
             </Button>
           </DialogFooter>
         </DialogContent>

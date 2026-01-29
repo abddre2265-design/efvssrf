@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ interface PublicImportFoldersBlockProps {
 export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> = ({
   organizationId,
 }) => {
+  const { t, language, isRTL } = useLanguage();
   const [folders, setFolders] = useState<ImportFolder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -84,7 +86,7 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
 
   const handleCreate = async () => {
     if (!folderNumber.trim()) {
-      toast.error('Le numéro de dossier est obligatoire');
+      toast.error(t('folder_number_required'));
       return;
     }
 
@@ -103,13 +105,13 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
 
       if (error) throw error;
 
-      toast.success('Dossier d\'importation créé');
+      toast.success(t('import_folder_created'));
       setIsCreateDialogOpen(false);
       setFolderNumber('');
       fetchFolders();
     } catch (error) {
       console.error('Error creating folder:', error);
-      toast.error('Erreur lors de la création du dossier');
+      toast.error(t('error_creating_folder'));
     } finally {
       setIsCreating(false);
     }
@@ -117,28 +119,38 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
 
   const getCountryName = (code: string) => {
     const countryObj = COUNTRIES.find(c => c.code === code);
-    return countryObj?.name.fr || code;
+    if (!countryObj) return code;
+    switch (language) {
+      case 'en': return countryObj.name.en;
+      case 'ar': return countryObj.name.ar;
+      default: return countryObj.name.fr;
+    }
   };
 
   const getMonthName = (month: number) => {
     const monthObj = MONTHS.find(m => m.value === month);
-    return monthObj?.fr || month;
+    if (!monthObj) return month;
+    switch (language) {
+      case 'en': return monthObj.en;
+      case 'ar': return monthObj.ar;
+      default: return monthObj.fr;
+    }
   };
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
   return (
     <>
-      <Card>
+      <Card dir={isRTL ? 'rtl' : 'ltr'}>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <FolderOpen className="h-5 w-5" />
-              Dossiers d'importation
+              {t('import_folders')}
             </span>
             <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-1" />
-              Nouveau
+              {t('new')}
             </Button>
           </CardTitle>
         </CardHeader>
@@ -150,7 +162,7 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
           ) : folders.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Aucun dossier d'importation</p>
+              <p>{t('no_import_folders')}</p>
             </div>
           ) : (
             <ScrollArea className="h-[300px]">
@@ -180,12 +192,12 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
                       {folder.status === 'open' ? (
                         <>
                           <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Ouvert
+                          {t('open')}
                         </>
                       ) : (
                         <>
                           <Lock className="h-3 w-3 mr-1" />
-                          Fermé
+                          {t('closed')}
                         </>
                       )}
                     </Badge>
@@ -203,23 +215,23 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FolderOpen className="h-5 w-5" />
-              Nouveau dossier d'importation
+              {t('new_import_folder')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Numéro de dossier *</Label>
+              <Label>{t('folder_number')} *</Label>
               <Input
                 value={folderNumber}
                 onChange={(e) => setFolderNumber(e.target.value)}
-                placeholder="Ex: 2024-001"
+                placeholder={t('folder_number_placeholder')}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Mois</Label>
+                <Label>{t('month')}</Label>
                 <Select value={folderMonth} onValueChange={setFolderMonth}>
                   <SelectTrigger>
                     <SelectValue />
@@ -227,7 +239,7 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
                   <SelectContent>
                     {MONTHS.map((month) => (
                       <SelectItem key={month.value} value={String(month.value)}>
-                        {month.fr}
+                        {language === 'en' ? month.en : language === 'ar' ? month.ar : month.fr}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -235,7 +247,7 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
               </div>
 
               <div className="space-y-2">
-                <Label>Année</Label>
+                <Label>{t('year')}</Label>
                 <Select value={folderYear} onValueChange={setFolderYear}>
                   <SelectTrigger>
                     <SelectValue />
@@ -252,7 +264,7 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
             </div>
 
             <div className="space-y-2">
-              <Label>Pays d'origine</Label>
+              <Label>{t('origin_country')}</Label>
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger>
                   <SelectValue />
@@ -260,7 +272,7 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
                 <SelectContent>
                   {COUNTRIES.map((c) => (
                     <SelectItem key={c.code} value={c.code}>
-                      {c.name.fr}
+                      {language === 'en' ? c.name.en : language === 'ar' ? c.name.ar : c.name.fr}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -270,7 +282,7 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Annuler
+              {t('cancel')}
             </Button>
             <Button onClick={handleCreate} disabled={isCreating || !folderNumber.trim()}>
               {isCreating ? (
@@ -278,7 +290,7 @@ export const PublicImportFoldersBlock: React.FC<PublicImportFoldersBlockProps> =
               ) : (
                 <Plus className="h-4 w-4 mr-2" />
               )}
-              Créer
+              {t('create')}
             </Button>
           </DialogFooter>
         </DialogContent>
