@@ -31,6 +31,7 @@ import { formatCurrency } from '@/components/invoices/types';
 import { CreditUnblockDialog } from './CreditUnblockDialog';
 import { CreditNotePrintDialog } from './CreditNotePrintDialog';
 import { ProductReturnRestoreDialog } from './ProductReturnRestoreDialog';
+import { ConvertToFinancialDialog } from './ConvertToFinancialDialog';
 import { getCreditNoteUsageStatus, getProductReturnReceptionStatus } from './types';
 
 interface HistoryEntry {

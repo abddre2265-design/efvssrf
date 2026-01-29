@@ -386,7 +386,7 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
           due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
           client_type: selectedClient?.client_type || 'individual_local',
           currency: isForeignClient ? currency : 'TND',
-          exchange_rate: isForeignClient ? exchangeRate : 1,
+          exchange_rate: null, // Exchange rate set at payment time
           subtotal_ht: totals.subtotalHt,
           total_vat: totals.totalVat,
           total_discount: totals.totalDiscount,
@@ -641,33 +641,25 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
                 )}
               </div>
 
-              {/* Currency (for foreign clients) */}
+              {/* Currency (for foreign clients) - exchange rate set at payment time */}
               {isForeignClient && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t('currency')}</Label>
-                    <Select value={currency} onValueChange={setCurrency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CURRENCIES.map((curr) => (
-                          <SelectItem key={curr.code} value={curr.code}>
-                            {curr.code} - {curr.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('exchange_rate')} (TND → {currency})</Label>
-                    <Input
-                      type="number"
-                      value={exchangeRate}
-                      onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 1)}
-                      step="0.0001"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label>{t('currency')}</Label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((curr) => (
+                        <SelectItem key={curr.code} value={curr.code}>
+                          {curr.code} - {curr.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {t('exchange_rate_at_payment')}
+                  </p>
                 </div>
               )}
 
