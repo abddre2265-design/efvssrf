@@ -143,10 +143,10 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background cyber-grid">
+    <div className="min-h-screen bg-background cyber-grid flex flex-col">
       <DashboardHeader email={user.email || ''} sidebarCollapsed={sidebarCollapsed} />
       
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         <DashboardSidebar 
           collapsed={sidebarCollapsed} 
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}

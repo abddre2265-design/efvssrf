@@ -499,14 +499,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         animate={{ x: 0, opacity: 1, width: collapsed ? 64 : 256 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className={cn(
-          "sidebar-futuristic h-[calc(100vh-4rem)] flex flex-col relative",
+          "sidebar-futuristic h-full flex flex-col relative flex-shrink-0 overflow-hidden",
           isRTL && "rtl"
         )}
       >
         {/* Animated scan line */}
         <div className="sidebar-scan-line" />
 
-        {/* Menu Items */}
+        {/* Menu Items - Independent scrollable area */}
         <div className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
           {/* Single items at top */}
           {singleItems.map(item => renderMenuItem(item))}
