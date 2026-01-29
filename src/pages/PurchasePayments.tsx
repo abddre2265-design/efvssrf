@@ -7,6 +7,12 @@ import { fr, enUS, arSA } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/components/invoices/types';
 import { PurchasePaymentDialog } from '@/components/purchases/PurchasePaymentDialog';
+import { 
+  PaymentRequestCreateDialog, 
+  PaymentRequestAnalyzeDialog,
+  PurchasePaymentRequest,
+  PAYMENT_REQUEST_STATUSES,
+} from '@/components/purchases/payment-requests';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +81,8 @@ import {
   AlertCircle,
   TrendingUp,
   ArrowUpDown,
+  Send,
+  FileSearch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -173,6 +181,15 @@ const PurchasePayments: React.FC = () => {
   // Payment dialog
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<PurchaseDocument | null>(null);
+  
+  // Payment request dialogs
+  const [paymentRequestDialogOpen, setPaymentRequestDialogOpen] = useState(false);
+  const [paymentRequestDoc, setPaymentRequestDoc] = useState<PurchaseDocument | null>(null);
+  const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<PurchasePaymentRequest | null>(null);
+  
+  // Payment requests state
+  const [paymentRequests, setPaymentRequests] = useState<PurchasePaymentRequest[]>([]);
 
   const getDateLocale = () => {
     switch (language) {
@@ -247,9 +264,34 @@ const PurchasePayments: React.FC = () => {
     }
   };
 
+  const fetchPaymentRequests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('purchase_payment_requests')
+        .select(`
+          *,
+          purchase_document:purchase_documents(
+            id,
+            invoice_number,
+            invoice_date,
+            net_payable,
+            currency,
+            supplier:suppliers(id, first_name, last_name, company_name, supplier_type)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPaymentRequests((data || []) as unknown as PurchasePaymentRequest[]);
+    } catch (error) {
+      console.error('Error fetching payment requests:', error);
+    }
+  };
+
   const fetchAll = () => {
     fetchPayments();
     fetchUnpaidDocuments();
+    fetchPaymentRequests();
   };
 
   useEffect(() => {
@@ -438,6 +480,33 @@ const PurchasePayments: React.FC = () => {
     setPaymentDialogOpen(true);
   };
 
+  const handleRequestPayment = (doc: PurchaseDocument) => {
+    // Check if there's already a pending request for this document
+    const existingRequest = paymentRequests.find(
+      r => r.purchase_document_id === doc.id && r.status === 'pending'
+    );
+    if (existingRequest) {
+      toast.error('Une demande de paiement est déjà en cours pour cette facture');
+      return;
+    }
+    setPaymentRequestDoc(doc);
+    setPaymentRequestDialogOpen(true);
+  };
+
+  const handleAnalyzeRequest = (request: PurchasePaymentRequest) => {
+    setSelectedRequest(request);
+    setAnalyzeDialogOpen(true);
+  };
+
+  // Get pending requests that need action (awaiting approval)
+  const awaitingApprovalRequests = paymentRequests.filter(r => r.status === 'awaiting_approval');
+
+  // Get document's request status
+  const getDocumentRequestStatus = (docId: string) => {
+    return paymentRequests.find(r => r.purchase_document_id === docId && 
+      ['pending', 'awaiting_approval'].includes(r.status));
+  };
+
   const clearFilters = () => {
     setSearchQuery('');
     setMethodFilter('all');
@@ -551,11 +620,18 @@ const PurchasePayments: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="unpaid" className="gap-2">
             <Clock className="h-4 w-4" />
-            Factures à payer
+            Lignes des factures à payer
             {stats.unpaidCount > 0 && (
               <Badge variant="destructive" className="ml-1">
                 {stats.unpaidCount}
               </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="gap-2">
+            <Send className="h-4 w-4" />
+            Demandes de paiement
+            {awaitingApprovalRequests.length > 0 && (
+              <Badge className="ml-1 bg-blue-500">{awaitingApprovalRequests.length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
@@ -801,14 +877,123 @@ const PurchasePayments: React.FC = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button 
-                              size="sm" 
-                              onClick={() => handlePayDocument(doc)}
-                              className="gap-2"
-                            >
-                              <Wallet className="h-4 w-4" />
-                              Payer
-                            </Button>
+                            {(() => {
+                              const existingReq = getDocumentRequestStatus(doc.id);
+                              if (existingReq) {
+                                if (existingReq.status === 'awaiting_approval') {
+                                  return (
+                                    <Button 
+                                      size="sm" 
+                                      variant="secondary"
+                                      onClick={() => handleAnalyzeRequest(existingReq)}
+                                      className="gap-2"
+                                    >
+                                      <FileSearch className="h-4 w-4" />
+                                      Analyser
+                                    </Button>
+                                  );
+                                }
+                                return (
+                                  <Badge className="bg-yellow-100 text-yellow-800">
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    En attente
+                                  </Badge>
+                                );
+                              }
+                              return (
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleRequestPayment(doc)}
+                                  className="gap-2"
+                                >
+                                  <Send className="h-4 w-4" />
+                                  Demande de paiement
+                                </Button>
+                              );
+                            })()}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </Card>
+        </TabsContent>
+
+        {/* Payment Requests Tab */}
+        <TabsContent value="requests" className="space-y-4">
+          <Card>
+            <ScrollArea className="h-[500px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>N° Demande</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Facture</TableHead>
+                    <TableHead>Fournisseur</TableHead>
+                    <TableHead className="text-right">Montant demandé</TableHead>
+                    <TableHead className="text-right">Montant payé</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paymentRequests.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        <Send className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        Aucune demande de paiement
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paymentRequests.map((request) => {
+                      const statusConfig = PAYMENT_REQUEST_STATUSES[request.status];
+                      const supplier = request.purchase_document?.supplier;
+                      const supplierName = supplier 
+                        ? (supplier.supplier_type === 'business_local' 
+                          ? supplier.company_name 
+                          : [supplier.first_name, supplier.last_name].filter(Boolean).join(' '))
+                        : 'N/A';
+
+                      return (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-mono">
+                            {request.request_number}
+                          </TableCell>
+                          <TableCell>
+                            {format(new Date(request.request_date), 'dd/MM/yyyy')}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {request.purchase_document?.invoice_number || 'N/A'}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {supplierName}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(request.net_requested_amount, 'TND')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {request.paid_amount ? formatCurrency(request.paid_amount, 'TND') : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={statusConfig?.color || 'bg-muted'}>
+                              {statusConfig?.label || request.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {request.status === 'awaiting_approval' && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => handleAnalyzeRequest(request)}
+                                className="gap-2"
+                              >
+                                <FileSearch className="h-4 w-4" />
+                                Analyser
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
@@ -924,6 +1109,22 @@ const PurchasePayments: React.FC = () => {
           setPaymentDialogOpen(false);
           fetchAll();
         }}
+      />
+
+      {/* Payment Request Create Dialog */}
+      <PaymentRequestCreateDialog
+        open={paymentRequestDialogOpen}
+        onOpenChange={setPaymentRequestDialogOpen}
+        document={paymentRequestDoc}
+        onRequestCreated={fetchAll}
+      />
+
+      {/* Payment Request Analyze Dialog */}
+      <PaymentRequestAnalyzeDialog
+        open={analyzeDialogOpen}
+        onOpenChange={setAnalyzeDialogOpen}
+        request={selectedRequest}
+        onActionComplete={fetchAll}
       />
     </motion.div>
   );

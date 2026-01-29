@@ -1902,6 +1902,86 @@ export type Database = {
           },
         ]
       }
+      purchase_payment_requests: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          id: string
+          net_requested_amount: number
+          organization_id: string
+          paid_amount: number | null
+          payment_date: string | null
+          payment_method: string | null
+          payment_methods: Json | null
+          payment_notes: string | null
+          purchase_document_id: string
+          reference_number: string | null
+          rejected_at: string | null
+          rejection_reason: string | null
+          request_date: string
+          request_number: string
+          requested_amount: number
+          status: string
+          updated_at: string
+          withholding_amount: number
+          withholding_rate: number
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          net_requested_amount: number
+          organization_id: string
+          paid_amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_methods?: Json | null
+          payment_notes?: string | null
+          purchase_document_id: string
+          reference_number?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          request_date?: string
+          request_number: string
+          requested_amount: number
+          status?: string
+          updated_at?: string
+          withholding_amount?: number
+          withholding_rate?: number
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          net_requested_amount?: number
+          organization_id?: string
+          paid_amount?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_methods?: Json | null
+          payment_notes?: string | null
+          purchase_document_id?: string
+          reference_number?: string | null
+          rejected_at?: string | null
+          rejection_reason?: string | null
+          request_date?: string
+          request_number?: string
+          requested_amount?: number
+          status?: string
+          updated_at?: string
+          withholding_amount?: number
+          withholding_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_payment_requests_purchase_document_id_fkey"
+            columns: ["purchase_document_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_payments: {
         Row: {
           amount: number
@@ -2619,6 +2699,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_payment_request_number: {
+        Args: { org_id: string }
+        Returns: string
+      }
       get_client_balance: { Args: { p_client_id: string }; Returns: number }
       has_organization: { Args: never; Returns: boolean }
       is_credit_note_owner: {
