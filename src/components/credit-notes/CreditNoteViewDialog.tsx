@@ -208,6 +208,7 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
 
   const getStatusBadge = (status: CreditNoteStatus) => {
     const variants: Record<CreditNoteStatus, { className: string; icon: React.ReactNode }> = {
+      created: { className: 'bg-gray-500/10 text-gray-600 border-gray-500/30', icon: null },
       draft: { className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30', icon: null },
       validated: { className: 'bg-green-500/10 text-green-600 border-green-500/30', icon: <CheckCircle className="h-3 w-3 mr-1" /> },
       cancelled: { className: 'bg-red-500/10 text-red-600 border-red-500/30', icon: <XCircle className="h-3 w-3 mr-1" /> },

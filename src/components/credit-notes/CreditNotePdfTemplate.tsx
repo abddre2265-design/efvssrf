@@ -44,12 +44,13 @@ interface Invoice {
   invoice_date: string;
 }
 
-interface CreditNoteLineWithProduct extends CreditNoteLine {
+interface CreditNoteLineWithProduct extends Omit<CreditNoteLine, 'quantity_restored'> {
   product: {
     id: string;
     name: string;
     reference: string | null;
   } | null;
+  quantity_restored?: number;
 }
 
 interface CreditNotePdfTemplateProps {
