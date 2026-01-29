@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   FileText, 
   ExternalLink, 
@@ -26,8 +27,18 @@ import {
   ShoppingCart,
   Globe,
   Loader2,
-  Tags
+  Tags,
+  FolderOpen
 } from 'lucide-react';
+
+interface ImportFolder {
+  id: string;
+  folder_number: string;
+  folder_month: number;
+  folder_year: number;
+  country: string;
+  status: string;
+}
 
 interface PendingUpload {
   id: string;
@@ -40,13 +51,19 @@ interface PendingUpload {
   status: string;
   document_type: string | null;
   document_category: string | null;
+  import_folder_id: string | null;
 }
 
 interface ProcessingInitialDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pendingUpload: PendingUpload;
-  onStartProcessing: (documentType: string, documentCategory: string | null) => void;
+  onStartProcessing: (
+    documentType: string, 
+    documentCategory: string | null,
+    importFolderId: string | null,
+    importFolderNumber: string | null
+  ) => void;
 }
 
 const DOCUMENT_TYPES = [
@@ -55,10 +72,8 @@ const DOCUMENT_TYPES = [
 ];
 
 const DOCUMENT_CATEGORIES = [
-  { value: 'facture_commerciale_etrangere', labelFr: 'Facture commerciale étrangère', labelEn: 'Foreign Commercial Invoice' },
   { value: 'facture_locale', labelFr: 'Facture locale', labelEn: 'Local Invoice' },
-  { value: 'quittance_douaniere', labelFr: 'Quittance douanière', labelEn: 'Customs Receipt' },
-  { value: 'autre', labelFr: 'Autre document', labelEn: 'Other Document' },
+  { value: 'facture_commerciale_etrangere', labelFr: 'Facture commerciale étrangère', labelEn: 'Foreign Commercial Invoice' },
 ];
 
 export const ProcessingInitialDialog: React.FC<ProcessingInitialDialogProps> = ({
@@ -74,9 +89,15 @@ export const ProcessingInitialDialog: React.FC<ProcessingInitialDialogProps> = (
   const [documentCategory, setDocumentCategory] = useState<string | null>(
     pendingUpload.document_category
   );
+  const [importFolderId, setImportFolderId] = useState<string | null>(
+    pendingUpload.import_folder_id
+  );
+  const [importFolders, setImportFolders] = useState<ImportFolder[]>([]);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(true);
+  const [isLoadingFolders, setIsLoadingFolders] = useState(false);
 
+  // Load PDF URL
   useEffect(() => {
     const loadPdfUrl = async () => {
       setIsLoadingPdf(true);
@@ -100,6 +121,40 @@ export const ProcessingInitialDialog: React.FC<ProcessingInitialDialogProps> = (
     }
   }, [open, pendingUpload.storage_path]);
 
+  // Load import folders when type is 'import'
+  useEffect(() => {
+    const loadImportFolders = async () => {
+      if (documentType !== 'import') return;
+      
+      setIsLoadingFolders(true);
+      try {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('id')
+          .single();
+
+        if (!org) return;
+
+        const { data, error } = await supabase
+          .from('import_folders')
+          .select('id, folder_number, folder_month, folder_year, country, status')
+          .eq('organization_id', org.id)
+          .eq('status', 'open')
+          .order('folder_year', { ascending: false })
+          .order('folder_month', { ascending: false });
+
+        if (error) throw error;
+        setImportFolders(data || []);
+      } catch (error) {
+        console.error('Error loading import folders:', error);
+      } finally {
+        setIsLoadingFolders(false);
+      }
+    };
+
+    loadImportFolders();
+  }, [documentType, open]);
+
   const handleOpenPdf = () => {
     if (pdfUrl) {
       window.open(pdfUrl, '_blank');
@@ -107,182 +162,238 @@ export const ProcessingInitialDialog: React.FC<ProcessingInitialDialogProps> = (
   };
 
   const handleStart = () => {
-    onStartProcessing(documentType, documentCategory);
+    const selectedFolder = importFolders.find(f => f.id === importFolderId);
+    onStartProcessing(
+      documentType, 
+      documentCategory,
+      importFolderId,
+      selectedFolder?.folder_number || null
+    );
   };
 
   const isFr = language === 'fr';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+        <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0 border-b">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             {t('process_document') || 'Traitement du document'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden">
-          {/* Left side - PDF Preview */}
-          <div className="flex flex-col border rounded-lg overflow-hidden">
-            <div className="p-3 bg-muted/50 border-b flex items-center justify-between">
-              <span className="font-medium text-sm">{t('document_preview') || 'Aperçu du document'}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleOpenPdf}
-                disabled={!pdfUrl}
-                className="gap-1"
-              >
-                <ExternalLink className="h-4 w-4" />
-                {t('open_in_new_tab') || 'Ouvrir'}
-              </Button>
-            </div>
-            <div className="flex-1 bg-muted/20 min-h-[400px]">
-              {isLoadingPdf ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : pdfUrl ? (
-                <iframe
-                  src={pdfUrl}
-                  className="w-full h-full min-h-[400px]"
-                  title="PDF Preview"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  {t('pdf_load_error') || 'Impossible de charger le PDF'}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right side - Document info and type selection */}
-          <div className="space-y-6 overflow-y-auto">
-            {/* File info */}
-            <div className="p-4 border rounded-lg bg-muted/30">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded-full bg-primary/10">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{pendingUpload.original_filename}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(pendingUpload.storage_path.split('/')[1]?.split('-')[0] || Date.now()).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-
-              {/* Detected info */}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {pendingUpload.supplier_detected && (
-                  <div>
-                    <span className="text-muted-foreground">{t('supplier_detected') || 'Fournisseur détecté'}:</span>
-                    <p className="font-medium">{pendingUpload.supplier_detected}</p>
-                  </div>
-                )}
-                {pendingUpload.document_number && (
-                  <div>
-                    <span className="text-muted-foreground">{t('document_number') || 'N° Document'}:</span>
-                    <p className="font-mono font-medium">{pendingUpload.document_number}</p>
-                  </div>
-                )}
-                {pendingUpload.document_date && (
-                  <div>
-                    <span className="text-muted-foreground">{t('document_date') || 'Date'}:</span>
-                    <p className="font-medium">{pendingUpload.document_date}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Document Type Selection */}
-            <div className="space-y-4">
-              <Label className="text-base font-medium">
-                {t('document_type') || 'Type de document'}
-              </Label>
-              
-              <div className="grid grid-cols-1 gap-3">
-                {DOCUMENT_TYPES.map((type) => {
-                  const Icon = type.icon;
-                  const isSelected = documentType === type.value;
-                  return (
-                    <button
-                      key={type.value}
-                      type="button"
-                      onClick={() => {
-                        setDocumentType(type.value);
-                        // Reset category when changing type
-                        if (type.value === 'local_purchase') {
-                          setDocumentCategory(null);
-                        }
-                      }}
-                      className={`flex items-center gap-3 p-4 border rounded-lg transition-all text-left ${
-                        isSelected 
-                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
-                          : 'hover:border-muted-foreground/50'
-                      }`}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="px-6 py-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left side - PDF Preview */}
+                <div className="flex flex-col border rounded-lg overflow-hidden">
+                  <div className="p-3 bg-muted/50 border-b flex items-center justify-between">
+                    <span className="font-medium text-sm">{t('document_preview') || 'Aperçu du document'}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleOpenPdf}
+                      disabled={!pdfUrl}
+                      className="gap-1"
                     >
-                      <div className={`p-2 rounded-full ${isSelected ? 'bg-primary/20' : 'bg-muted'}`}>
-                        <Icon className={`h-5 w-5 ${isSelected ? 'text-primary' : ''}`} />
+                      <ExternalLink className="h-4 w-4" />
+                      {t('open_in_new_tab') || 'Ouvrir'}
+                    </Button>
+                  </div>
+                  <div className="flex-1 bg-muted/20 min-h-[400px]">
+                    {isLoadingPdf ? (
+                      <div className="flex items-center justify-center h-full">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{isFr ? type.labelFr : type.labelEn}</p>
+                    ) : pdfUrl ? (
+                      <iframe
+                        src={pdfUrl}
+                        className="w-full h-full min-h-[400px]"
+                        title="PDF Preview"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        {t('pdf_load_error') || 'Impossible de charger le PDF'}
                       </div>
-                      {isSelected && (
-                        <Badge className="bg-primary/20 text-primary border-0">
-                          {t('selected') || 'Sélectionné'}
-                        </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right side - Document info and type selection */}
+                <div className="space-y-6">
+                  {/* File info */}
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="p-2 rounded-full bg-primary/10">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{pendingUpload.original_filename}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(pendingUpload.storage_path.split('/')[1]?.split('-')[0] || Date.now()).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Detected info */}
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {pendingUpload.supplier_detected && (
+                        <div>
+                          <span className="text-muted-foreground">{t('supplier_detected') || 'Fournisseur détecté'}:</span>
+                          <p className="font-medium">{pendingUpload.supplier_detected}</p>
+                        </div>
                       )}
-                    </button>
-                  );
-                })}
+                      {pendingUpload.document_number && (
+                        <div>
+                          <span className="text-muted-foreground">{t('document_number') || 'N° Document'}:</span>
+                          <p className="font-mono font-medium">{pendingUpload.document_number}</p>
+                        </div>
+                      )}
+                      {pendingUpload.document_date && (
+                        <div>
+                          <span className="text-muted-foreground">{t('document_date') || 'Date'}:</span>
+                          <p className="font-medium">{pendingUpload.document_date}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Document Type Selection */}
+                  <div className="space-y-4">
+                    <Label className="text-base font-medium">
+                      {t('document_type') || 'Type de document'}
+                    </Label>
+                    
+                    <div className="grid grid-cols-1 gap-3">
+                      {DOCUMENT_TYPES.map((type) => {
+                        const Icon = type.icon;
+                        const isSelected = documentType === type.value;
+                        return (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => {
+                              setDocumentType(type.value);
+                              // Reset category and folder when changing type
+                              if (type.value === 'local_purchase') {
+                                setDocumentCategory(null);
+                                setImportFolderId(null);
+                              }
+                            }}
+                            className={`flex items-center gap-3 p-4 border rounded-lg transition-all text-left ${
+                              isSelected 
+                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
+                                : 'hover:border-muted-foreground/50'
+                            }`}
+                          >
+                            <div className={`p-2 rounded-full ${isSelected ? 'bg-primary/20' : 'bg-muted'}`}>
+                              <Icon className={`h-5 w-5 ${isSelected ? 'text-primary' : ''}`} />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{isFr ? type.labelFr : type.labelEn}</p>
+                            </div>
+                            {isSelected && (
+                              <Badge className="bg-primary/20 text-primary border-0">
+                                {t('selected') || 'Sélectionné'}
+                              </Badge>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Import folder selection (only for import type) */}
+                  {documentType === 'import' && (
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2">
+                        <FolderOpen className="h-4 w-4" />
+                        {t('import_folder') || 'Dossier d\'importation'}
+                      </Label>
+                      <Select
+                        value={importFolderId || ''}
+                        onValueChange={(value) => setImportFolderId(value || null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={
+                            isLoadingFolders 
+                              ? (t('loading') || 'Chargement...') 
+                              : (t('select_import_folder') || 'Sélectionner un dossier')
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {importFolders.map((folder) => (
+                            <SelectItem key={folder.id} value={folder.id}>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono">#{folder.folder_number}</span>
+                                <span className="text-muted-foreground">
+                                  ({folder.folder_month}/{folder.folder_year} - {folder.country})
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                          {importFolders.length === 0 && !isLoadingFolders && (
+                            <SelectItem value="" disabled>
+                              {t('no_open_folders') || 'Aucun dossier ouvert'}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Document Category (only for import type) */}
+                  {documentType === 'import' && (
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2">
+                        <Tags className="h-4 w-4" />
+                        {t('document_category') || 'Catégorie du document'}
+                      </Label>
+                      <Select
+                        value={documentCategory || ''}
+                        onValueChange={(value) => setDocumentCategory(value || null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('select_category') || 'Sélectionner une catégorie'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DOCUMENT_CATEGORIES.map((cat) => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              {isFr ? cat.labelFr : cat.labelEn}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Info box */}
+                  <div className="p-4 border rounded-lg bg-primary/5 border-primary/20">
+                    <p className="text-sm text-primary">
+                      {documentType === 'local_purchase' 
+                        ? (t('local_purchase_info') || 'Le système analysera le document pour extraire les informations du fournisseur et les lignes de facture.')
+                        : (t('import_info') || 'Le document sera lié au dossier d\'importation sélectionné. Le même processus d\'analyse sera appliqué.')}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Document Category (only for import type) */}
-            {documentType === 'import' && (
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Tags className="h-4 w-4" />
-                  {t('document_category') || 'Catégorie du document'}
-                </Label>
-                <Select
-                  value={documentCategory || ''}
-                  onValueChange={(value) => setDocumentCategory(value || null)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('select_category') || 'Sélectionner une catégorie'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DOCUMENT_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {isFr ? cat.labelFr : cat.labelEn}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Info box */}
-            <div className="p-4 border rounded-lg bg-primary/5 border-primary/20">
-              <p className="text-sm text-primary">
-                {documentType === 'local_purchase' 
-                  ? (t('local_purchase_info') || 'Le système analysera le document pour extraire les informations du fournisseur et les lignes de facture.')
-                  : (t('import_info') || 'Pour les importations, vous devrez également sélectionner un dossier d\'import.')}
-              </p>
-            </div>
-          </div>
+          </ScrollArea>
         </div>
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="px-6 py-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('cancel') || 'Annuler'}
           </Button>
-          <Button onClick={handleStart} className="gap-2">
+          <Button 
+            onClick={handleStart} 
+            className="gap-2"
+            disabled={documentType === 'import' && !importFolderId}
+          >
             <Play className="h-4 w-4" />
             {t('start_processing') || 'Démarrer le traitement'}
           </Button>

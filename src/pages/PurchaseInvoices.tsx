@@ -41,8 +41,8 @@ import {
 } from 'lucide-react';
 import { PurchaseDocument } from '@/components/purchases/types';
 
-// Extended type with supplier info
-interface PurchaseDocumentWithSupplier extends PurchaseDocument {
+// Extended type with supplier, folder, and family info
+interface PurchaseDocumentWithRelations extends PurchaseDocument {
   supplier?: {
     id: string;
     company_name: string | null;
@@ -50,11 +50,19 @@ interface PurchaseDocumentWithSupplier extends PurchaseDocument {
     last_name: string | null;
     supplier_type: string;
   } | null;
+  import_folder?: {
+    id: string;
+    folder_number: string;
+  } | null;
+  document_family?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 const PurchaseInvoices: React.FC = () => {
   const { t, isRTL, language } = useLanguage();
-  const [documents, setDocuments] = useState<PurchaseDocumentWithSupplier[]>([]);
+  const [documents, setDocuments] = useState<PurchaseDocumentWithRelations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -75,7 +83,9 @@ const PurchaseInvoices: React.FC = () => {
         .from('purchase_documents')
         .select(`
           *,
-          supplier:suppliers(id, company_name, first_name, last_name, supplier_type)
+          supplier:suppliers(id, company_name, first_name, last_name, supplier_type),
+          import_folder:import_folders(id, folder_number),
+          document_family:document_families(id, name)
         `)
         .eq('organization_id', org.id)
         .order('created_at', { ascending: false });
@@ -98,11 +108,28 @@ const PurchaseInvoices: React.FC = () => {
     fetchDocuments();
   };
 
-  const getSupplierName = (doc: PurchaseDocumentWithSupplier): string => {
+  const getSupplierName = (doc: PurchaseDocumentWithRelations): string => {
     if (!doc.supplier) return '—';
     return doc.supplier.company_name || 
       `${doc.supplier.first_name || ''} ${doc.supplier.last_name || ''}`.trim() || 
       '—';
+  };
+
+  const getDocumentType = (doc: PurchaseDocumentWithRelations): { label: string; variant: 'local' | 'import' } => {
+    if (doc.import_folder_id && doc.import_folder) {
+      return {
+        label: `Importation – #${doc.import_folder.folder_number}`,
+        variant: 'import',
+      };
+    }
+    return {
+      label: t('local_purchase') || 'Achat local',
+      variant: 'local',
+    };
+  };
+
+  const getDocumentFamily = (doc: PurchaseDocumentWithRelations): string => {
+    return doc.document_family?.name || '—';
   };
 
   const getStatusBadge = (status: string) => {
@@ -227,6 +254,8 @@ const PurchaseInvoices: React.FC = () => {
                   <TableHead>{t('invoice_number') || 'N° Facture'}</TableHead>
                   <TableHead>{t('invoice_date') || 'Date'}</TableHead>
                   <TableHead>{t('supplier') || 'Fournisseur'}</TableHead>
+                  <TableHead>{t('type') || 'Type'}</TableHead>
+                  <TableHead>{t('family') || 'Famille'}</TableHead>
                   <TableHead className="text-right">{t('total') || 'Total'}</TableHead>
                   <TableHead className="text-right">{t('net_payable') || 'Net à payer'}</TableHead>
                   <TableHead>{t('status') || 'Statut'}</TableHead>
@@ -239,46 +268,67 @@ const PurchaseInvoices: React.FC = () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8">
+                    <TableCell colSpan={12} className="text-center py-8">
                       <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : filteredDocuments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                       {t('no_purchase_invoices') || 'Aucune facture d\'achat'}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredDocuments.map((doc) => (
-                    <TableRow key={doc.id} className="hover:bg-muted/30">
-                      <TableCell className="font-mono font-medium">
-                        {doc.invoice_number || '—'}
-                      </TableCell>
-                      <TableCell>
-                        {doc.invoice_date 
-                          ? new Date(doc.invoice_date).toLocaleDateString(language === 'ar' ? 'ar-TN' : 'fr-TN')
-                          : '—'}
-                      </TableCell>
-                      <TableCell>{getSupplierName(doc)}</TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatAmount(doc.total_ttc, doc.currency)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium text-primary">
-                        {formatAmount(doc.net_payable, doc.currency)}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(doc.status)}</TableCell>
-                      <TableCell>{getPaymentStatusBadge(doc.payment_status)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {t('not_received') || 'Non reçu'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {t('no') || 'Non'}
-                        </Badge>
-                      </TableCell>
+                  filteredDocuments.map((doc) => {
+                    const docType = getDocumentType(doc);
+                    return (
+                      <TableRow key={doc.id} className="hover:bg-muted/30">
+                        <TableCell className="font-mono font-medium">
+                          {doc.invoice_number || '—'}
+                        </TableCell>
+                        <TableCell>
+                          {doc.invoice_date 
+                            ? new Date(doc.invoice_date).toLocaleDateString(language === 'ar' ? 'ar-TN' : 'fr-TN')
+                            : '—'}
+                        </TableCell>
+                        <TableCell>{getSupplierName(doc)}</TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant="secondary" 
+                            className={docType.variant === 'import' 
+                              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-400' 
+                              : 'bg-primary/10 text-primary'}
+                          >
+                            {docType.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {getDocumentFamily(doc) !== '—' ? (
+                            <Badge variant="outline" className="text-xs">
+                              {getDocumentFamily(doc)}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatAmount(doc.total_ttc, doc.currency)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-primary">
+                          {formatAmount(doc.net_payable, doc.currency)}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(doc.status)}</TableCell>
+                        <TableCell>{getPaymentStatusBadge(doc.payment_status)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {t('not_received') || 'Non reçu'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {t('no') || 'Non'}
+                          </Badge>
+                        </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -328,9 +378,10 @@ const PurchaseInvoices: React.FC = () => {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

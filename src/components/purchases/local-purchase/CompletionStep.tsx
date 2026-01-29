@@ -55,6 +55,8 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         .insert({
           organization_id: organizationId,
           supplier_id: workflowData.supplierId,
+          import_folder_id: workflowData.importFolderId,
+          document_family_id: workflowData.documentFamilyId,
           invoice_number: workflowData.invoiceNumber,
           invoice_date: workflowData.invoiceDate,
           currency: workflowData.currency,
@@ -67,7 +69,6 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
           net_payable: workflowData.netPayable,
           pdf_url: workflowData.pdfUrl,
           pdf_hash: workflowData.pdfHash,
-          document_family_id: workflowData.documentFamilyId,
           // Status: 'pending' means created without supply validation
           status: mode === 'without_supply' ? 'pending' : 'pending',
           payment_status: 'unpaid',
