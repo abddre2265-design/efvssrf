@@ -21,7 +21,8 @@ import {
   Unlock,
   History,
   ArrowUpRight,
-  Printer
+  Printer,
+  ArrowRightCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
@@ -85,6 +86,7 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
   const [unblockDialogOpen, setUnblockDialogOpen] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [activeTab, setActiveTab] = useState<string>('details');
 
@@ -464,6 +466,23 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
               </p>
             </div>
           )}
+
+          {/* Convert to Financial Credit Note Button */}
+          {creditNote.credit_available > 0 && (
+            <div className="mt-4 pt-4 border-t border-purple-500/20">
+              <Button
+                onClick={() => setConvertDialogOpen(true)}
+                variant="outline"
+                className="w-full gap-2 border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
+              >
+                <ArrowRightCircle className="h-4 w-4" />
+                {t('convert_to_financial_credit')}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                {t('convert_to_financial_description')}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -654,6 +673,22 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
         onOpenChange={setPrintDialogOpen}
         creditNoteId={creditNoteId}
       />
+
+      {/* Convert to Financial Credit Dialog */}
+      {creditNote && creditNote.credit_note_type === 'product_return' && creditNote.credit_available > 0 && (
+        <ConvertToFinancialDialog
+          open={convertDialogOpen}
+          onOpenChange={setConvertDialogOpen}
+          creditNoteId={creditNote.id}
+          creditNoteNumber={creditNote.credit_note_number}
+          creditNoteNetAmount={creditNote.credit_available}
+          currency={creditNote.currency}
+          clientId={creditNote.client_id}
+          organizationId={creditNote.organization_id}
+          invoiceId={creditNote.invoice_id}
+          onSuccess={handleUnblockSuccess}
+        />
+      )}
     </Dialog>
   );
 };

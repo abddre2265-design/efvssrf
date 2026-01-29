@@ -44,6 +44,7 @@ interface CreditRefundDialogProps {
   clientId: string;
   organizationId: string;
   currency: string;
+  exchangeRate?: number | null; // Original exchange rate from payment
   onSuccess: () => void;
 }
 
@@ -62,6 +63,12 @@ const REFUND_METHODS = [
   { value: 'check', label: 'check' },
 ];
 
+const REFUND_CURRENCIES = [
+  { value: 'TND', label: 'TND - Dinar Tunisien' },
+  { value: 'EUR', label: 'EUR - Euro' },
+  { value: 'USD', label: 'USD - Dollar US' },
+];
+
 export const CreditRefundDialog: React.FC<CreditRefundDialogProps> = ({
   open,
   onOpenChange,
@@ -72,6 +79,7 @@ export const CreditRefundDialog: React.FC<CreditRefundDialogProps> = ({
   clientId,
   organizationId,
   currency,
+  exchangeRate,
   onSuccess,
 }) => {
   const { t } = useLanguage();
@@ -80,8 +88,14 @@ export const CreditRefundDialog: React.FC<CreditRefundDialogProps> = ({
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
   const [refundAmount, setRefundAmount] = useState<string>('');
   const [refundMethod, setRefundMethod] = useState<string>('bank_transfer');
+  const [refundCurrency, setRefundCurrency] = useState<string>(currency); // Default to credit note currency
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Display values
+  const isForeignCurrency = currency !== 'TND';
+  const displayExchangeRate = exchangeRate || 1;
+  const amountInTND = creditAvailable * displayExchangeRate;
 
   // Fetch invoice data to calculate max refundable
   useEffect(() => {
@@ -322,8 +336,13 @@ export const CreditRefundDialog: React.FC<CreditRefundDialogProps> = ({
               <Alert>
                 <Calculator className="h-4 w-4" />
                 <AlertTitle>{t('max_refundable')}</AlertTitle>
-                <AlertDescription>
-                  {formatCurrency(maxRefundable, currency)}
+                <AlertDescription className="space-y-1">
+                  <div>{formatCurrency(maxRefundable, currency)}</div>
+                  {isForeignCurrency && (
+                    <div className="text-xs text-muted-foreground">
+                      ≈ {formatCurrency(amountInTND, 'TND')} ({t('exchange_rate')}: {displayExchangeRate.toFixed(4)})
+                    </div>
+                  )}
                 </AlertDescription>
               </Alert>
             )}
@@ -354,6 +373,25 @@ export const CreditRefundDialog: React.FC<CreditRefundDialogProps> = ({
                     placeholder="0.000"
                   />
                 </div>
+
+                {/* Refund Currency */}
+                {isForeignCurrency && (
+                  <div className="space-y-2">
+                    <Label>{t('refund_currency')} *</Label>
+                    <Select value={refundCurrency} onValueChange={setRefundCurrency}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TND">TND - Dinar Tunisien</SelectItem>
+                        <SelectItem value={currency}>{currency}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {t('refund_currency_note')}
+                    </p>
+                  </div>
+                )}
 
                 {/* Refund Method */}
                 <div className="space-y-2">

@@ -1578,6 +1578,18 @@ export const translations: Translations = {
   convert_action: { fr: 'Convertir', en: 'Convert', ar: 'تحويل' },
   product_return_type: { fr: 'Avoir produit', en: 'Product return', ar: 'إرجاع المنتج' },
   client_credit_balance: { fr: 'Crédit client', en: 'Client credit', ar: 'رصيد العميل' },
+  
+  // Convert to financial description
+  convert_to_financial_description: { fr: 'Convertir le trop-perçu en crédit client utilisable', en: 'Convert overpayment to usable client credit', ar: 'تحويل المبلغ الزائد إلى رصيد عميل قابل للاستخدام' },
+  
+  // Refund currency handling
+  refund_currency: { fr: 'Devise du remboursement', en: 'Refund currency', ar: 'عملة الاسترداد' },
+  refund_currency_note: { fr: 'Le taux de change original sera conservé. Choisissez uniquement la devise de sortie.', en: 'The original exchange rate will be preserved. Only choose the output currency.', ar: 'سيتم الحفاظ على سعر الصرف الأصلي. اختر فقط عملة الإخراج.' },
+  
+  // Credit display in multiple currencies
+  credit_value_tnd: { fr: 'Valeur en TND', en: 'Value in TND', ar: 'القيمة بالدينار التونسي' },
+  credit_value_foreign: { fr: 'Valeur en devise', en: 'Value in currency', ar: 'القيمة بالعملة الأجنبية' },
+  original_exchange_rate: { fr: 'Taux de change original', en: 'Original exchange rate', ar: 'سعر الصرف الأصلي' },
 };
 
 // Tunisian Governorates
