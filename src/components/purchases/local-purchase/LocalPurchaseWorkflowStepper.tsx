@@ -8,7 +8,8 @@ import {
   Calculator, 
   Tags,
   CheckCircle2,
-  Check
+  Check,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LocalPurchaseWorkflowStep } from './types';
@@ -22,6 +23,7 @@ interface StepConfig {
 const STEPS: StepConfig[] = [
   { key: 'transfer', label: 'Transfert', icon: Upload },
   { key: 'supplier', label: 'Fournisseur', icon: Users },
+  { key: 'currency', label: 'Devise', icon: Globe },
   { key: 'products', label: 'Analyse', icon: Search },
   { key: 'product_details', label: 'Détails', icon: Package },
   { key: 'totals', label: 'Totaux', icon: Calculator },

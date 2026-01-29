@@ -21,6 +21,7 @@ import { CompletionStep } from './CompletionStep';
 import { SupplierIdentificationStep } from '../supply/SupplierIdentificationStep';
 import { ProductsAnalysisStep } from '../supply/ProductsAnalysisStep';
 import { ProductDetailsStep, ProductDetailData } from '../supply/ProductDetailsStep';
+import { CurrencySelectionStep } from './CurrencySelectionStep';
 
 interface LocalPurchaseWorkflowDialogProps {
   open: boolean;
@@ -84,16 +85,20 @@ export const LocalPurchaseWorkflowDialog: React.FC<LocalPurchaseWorkflowDialogPr
     purchaseDocumentId: null,
   });
 
-  // Step order for navigation
-  const stepOrder: LocalPurchaseWorkflowStep[] = [
-    'transfer',
-    'supplier', 
-    'products',
-    'product_details',
-    'totals',
-    'family',
-    'complete'
-  ];
+  // Dynamic step order based on supplier type
+  const getStepOrder = (): LocalPurchaseWorkflowStep[] => {
+    const baseSteps: LocalPurchaseWorkflowStep[] = ['transfer', 'supplier'];
+    
+    // Add currency step only for foreign suppliers
+    if (workflowData.supplierType === 'foreign') {
+      baseSteps.push('currency' as LocalPurchaseWorkflowStep);
+    }
+    
+    baseSteps.push('products', 'product_details', 'totals', 'family', 'complete');
+    return baseSteps;
+  };
+
+  const stepOrder = getStepOrder();
 
   const currentStepIndex = stepOrder.indexOf(currentStep);
 
@@ -142,6 +147,17 @@ export const LocalPurchaseWorkflowDialog: React.FC<LocalPurchaseWorkflowDialogPr
     }));
     goToNextStep();
     toast.success(isNew ? 'Fournisseur créé et assigné' : 'Fournisseur assigné');
+  };
+
+  // Handle currency confirmed (for foreign suppliers)
+  const handleCurrencyConfirmed = (currency: string, exchangeRate: number) => {
+    setWorkflowData(prev => ({
+      ...prev,
+      currency,
+      exchangeRate,
+    }));
+    goToNextStep();
+    toast.success('Devise et taux de change confirmés');
   };
 
   // Handle products confirmed
@@ -225,6 +241,8 @@ export const LocalPurchaseWorkflowDialog: React.FC<LocalPurchaseWorkflowDialogPr
         return true; // Always allow - user can skip analysis
       case 'supplier':
         return !!workflowData.supplierId;
+      case 'currency':
+        return true; // Currency has default values
       case 'products':
         return true; // Products are optional
       case 'product_details':
@@ -279,6 +297,14 @@ export const LocalPurchaseWorkflowDialog: React.FC<LocalPurchaseWorkflowDialogPr
               extractedSupplier={workflowData.extractedSupplier}
               organizationId={organizationId}
               onSupplierConfirmed={handleSupplierConfirmed}
+            />
+          )}
+
+          {currentStep === 'currency' && workflowData.supplierType === 'foreign' && (
+            <CurrencySelectionStep
+              organizationId={organizationId}
+              defaultCurrency={workflowData.currency}
+              onCurrencyConfirmed={handleCurrencyConfirmed}
             />
           )}
 
