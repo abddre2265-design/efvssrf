@@ -12,9 +12,7 @@ import Clients from '@/pages/Clients';
 import Suppliers from '@/pages/Suppliers';
 import Invoices from '@/pages/Invoices';
 import Payments from '@/pages/Payments';
-import CreditNotes from '@/pages/CreditNotes';
 import PurchasePayments from '@/pages/PurchasePayments';
-import SupplierCreditNotes from '@/pages/SupplierCreditNotes';
 import QuoteRequests from '@/pages/QuoteRequests';
 import ImportFolders from '@/pages/ImportFolders';
 import DocumentFamilies from '@/pages/DocumentFamilies';
@@ -94,12 +92,8 @@ const Dashboard: React.FC = () => {
         return <Invoices />;
       case 'payments':
         return <Payments />;
-      case 'credit-notes':
-        return <CreditNotes />;
       case 'purchase-payments':
         return <PurchasePayments />;
-      case 'supplier-credit-notes':
-        return <SupplierCreditNotes />;
       case 'quote-requests':
         return <QuoteRequests />;
       case 'import-folders':

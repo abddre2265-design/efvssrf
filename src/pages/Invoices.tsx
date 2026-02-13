@@ -12,7 +12,6 @@ import { InvoiceEditDialog } from '@/components/invoices/InvoiceEditDialog';
 import { PaymentDialog } from '@/components/invoices/PaymentDialog';
 import { InvoiceAISearch } from '@/components/invoices/InvoiceAISearch';
 import { AIInvoiceGeneratorDialog } from '@/components/invoices/AIInvoiceGeneratorDialog';
-import { CreditNoteCreateDialog } from '@/components/credit-notes/CreditNoteCreateDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,10 +49,6 @@ const Invoices: React.FC = () => {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [invoiceToPay, setInvoiceToPay] = useState<Invoice | null>(null);
 
-  // Credit note dialog state
-  const [creditNoteDialogOpen, setCreditNoteDialogOpen] = useState(false);
-  const [invoiceForCreditNote, setInvoiceForCreditNote] = useState<Invoice | null>(null);
-  
   // AI Generator dialog state
   const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
 
@@ -231,11 +226,6 @@ const Invoices: React.FC = () => {
     setPaymentDialogOpen(true);
   };
 
-  const handleCreateCreditNote = (invoice: Invoice) => {
-    setInvoiceForCreditNote(invoice);
-    setCreditNoteDialogOpen(true);
-  };
-
   const handleDeliver = async (invoice: Invoice) => {
     try {
       // 1. Get current year and next counter for delivery note
@@ -359,7 +349,6 @@ const Invoices: React.FC = () => {
         onDelete={handleDeleteRequest}
         onUse={handleUse}
         onPay={handlePay}
-        onCreateCreditNote={handleCreateCreditNote}
         onDeliver={handleDeliver}
       />
 
@@ -427,14 +416,6 @@ const Invoices: React.FC = () => {
         onOpenChange={setPaymentDialogOpen}
         invoice={invoiceToPay}
         onPaymentComplete={fetchInvoices}
-      />
-
-      {/* Credit Note Dialog */}
-      <CreditNoteCreateDialog
-        open={creditNoteDialogOpen}
-        onOpenChange={setCreditNoteDialogOpen}
-        invoice={invoiceForCreditNote}
-        onCreated={fetchInvoices}
       />
 
       {/* AI Invoice Generator Dialog */}

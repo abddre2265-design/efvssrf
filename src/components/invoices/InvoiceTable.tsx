@@ -52,7 +52,6 @@ interface InvoiceTableProps {
   onDelete: (invoice: Invoice) => void;
   onUse: (invoice: Invoice) => void;
   onPay: (invoice: Invoice) => void;
-  onCreateCreditNote: (invoice: Invoice) => void;
   onDeliver?: (invoice: Invoice) => void;
 }
 
@@ -66,7 +65,6 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
   onDelete,
   onUse,
   onPay,
-  onCreateCreditNote,
   onDeliver,
 }) => {
   const { t, language, isRTL } = useLanguage();
@@ -90,27 +88,6 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
     return (
       <Badge variant={config.variant} className={config.className}>
         {t(`status_${invoice.status}`)}
-      </Badge>
-    );
-  };
-
-  // Check if invoice is fully or partially credited (product returns restored)
-  const getCreditedBadge = (invoice: Invoice) => {
-    if (!invoice.total_credited || invoice.total_credited <= 0) return null;
-    
-    const isFullyCredited = invoice.total_credited >= invoice.total_ttc;
-    
-    if (isFullyCredited) {
-      return (
-        <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/30">
-          {t('invoice_fully_credited_badge')}
-        </Badge>
-      );
-    }
-    
-    return (
-      <Badge variant="outline" className="bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-500/30">
-        {t('invoice_partially_credited_badge')}
       </Badge>
     );
   };
@@ -220,7 +197,6 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
               <TableCell>
                 <div className="flex flex-col gap-1">
                   {getStatusBadge(invoice)}
-                  {getCreditedBadge(invoice)}
                 </div>
               </TableCell>
               <TableCell>
@@ -284,13 +260,6 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
                           <DropdownMenuItem onClick={() => onDeliver(invoice)}>
                             <Truck className="mr-2 h-4 w-4" />
                             {t('deliver_invoice')}
-                          </DropdownMenuItem>
-                        )}
-                        {/* Block credit note creation if fully credited */}
-                        {(!invoice.total_credited || invoice.total_credited < invoice.total_ttc) && (
-                          <DropdownMenuItem onClick={() => onCreateCreditNote(invoice)}>
-                            <ReceiptText className="mr-2 h-4 w-4" />
-                            {t('create_credit_note')}
                           </DropdownMenuItem>
                         )}
                       </>

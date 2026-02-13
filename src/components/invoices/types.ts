@@ -32,9 +32,6 @@ export interface Invoice {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  // Credit note tracking
-  total_credited: number;
-  credit_note_count: number;
   // Joined data
   client?: {
     id: string;

@@ -36,7 +36,7 @@ interface ClientHistoryDialogProps {
 
 interface HistoryEvent {
   id: string;
-  type: 'invoice' | 'credit_note' | 'payment' | 'deposit' | 'credit_used' | 'creation' | 'update';
+  type: 'invoice' | 'payment' | 'deposit' | 'credit_used' | 'creation' | 'update';
   date: string;
   description: string;
   amount?: number;
@@ -92,25 +92,6 @@ export const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
           reference: inv.invoice_number,
           status: inv.status,
           details: `${t('payment_status')}: ${t(inv.payment_status)}`,
-        });
-      });
-
-      // Fetch credit notes
-      const { data: creditNotes } = await supabase
-        .from('credit_notes')
-        .select('id, credit_note_number, credit_note_date, total_ttc, status, credit_note_type, created_at')
-        .eq('client_id', client.id)
-        .order('credit_note_date', { ascending: false });
-
-      creditNotes?.forEach(cn => {
-        events.push({
-          id: `cn-${cn.id}`,
-          type: 'credit_note',
-          date: cn.created_at,
-          description: cn.credit_note_type === 'product_return' ? t('product_return') : t('financial_credit_note'),
-          amount: cn.total_ttc,
-          reference: cn.credit_note_number,
-          status: cn.status,
         });
       });
 
@@ -186,8 +167,6 @@ export const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
     switch (type) {
       case 'invoice':
         return <FileText className="h-4 w-4" />;
-      case 'credit_note':
-        return <Receipt className="h-4 w-4" />;
       case 'payment':
         return <CreditCard className="h-4 w-4" />;
       case 'deposit':
@@ -207,8 +186,6 @@ export const ClientHistoryDialog: React.FC<ClientHistoryDialogProps> = ({
     switch (type) {
       case 'invoice':
         return 'bg-blue-500/10 text-blue-500 border-blue-500/30';
-      case 'credit_note':
-        return 'bg-orange-500/10 text-orange-500 border-orange-500/30';
       case 'payment':
         return 'bg-green-500/10 text-green-500 border-green-500/30';
       case 'deposit':

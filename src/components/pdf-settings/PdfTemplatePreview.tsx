@@ -87,32 +87,19 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             </div>
 
             <div style={{ textAlign: 'right' }}>
-              {(isEnabled('invoice_title') || isEnabled('credit_note_title')) && (
+              {(isEnabled('invoice_title') || isEnabled('delivery_note_title')) && (
                 <div style={{ fontSize: 18, fontWeight: 700, color: accentColor, marginBottom: 3 }}>{title}</div>
               )}
-              {(isEnabled('invoice_number') || isEnabled('credit_note_number')) && (
+              {(isEnabled('invoice_number') || isEnabled('delivery_note_number')) && (
                 <div style={{ fontSize: 9, fontWeight: 700, marginBottom: 3 }}>
-                  {documentType === 'invoice' ? 'FAC-2025-00001' : 'AV-2025-00001'}
+                  {documentType === 'invoice' ? 'FAC-2025-00001' : 'BL-2025-00001'}
                 </div>
               )}
-              {(isEnabled('invoice_date') || isEnabled('credit_note_date')) && (
+              {(isEnabled('invoice_date') || isEnabled('delivery_note_date')) && (
                 <div style={{ marginBottom: 3 }}>Date : 21/01/2025</div>
               )}
               {isEnabled('due_date') && documentType === 'invoice' && (
                 <div style={{ marginBottom: 3 }}>Échéance : 21/02/2025</div>
-              )}
-              {isEnabled('credit_note_type') && documentType === 'credit-note' && (
-                <span style={{ 
-                  display: 'inline-block',
-                  background: 'linear-gradient(90deg, #1565c0, #42a5f5)',
-                  color: '#fff',
-                  padding: '3px 8px',
-                  borderRadius: 15,
-                  fontSize: 7,
-                  marginRight: 3
-                }}>
-                  AVOIR ARGENT
-                </span>
               )}
               {isEnabled('status_badge') && (
                 <span style={{ 
@@ -193,30 +180,6 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
               </div>
             )}
 
-            {isEnabled('invoice_reference') && documentType === 'credit-note' && (
-              <div style={{ 
-                width: '48%', 
-                border: `1px solid ${accentColor}`, 
-                padding: 8, 
-                position: 'relative',
-                fontSize: 7
-              }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  top: -6, 
-                  left: 6, 
-                  background: '#fff', 
-                  padding: '0 4px',
-                  fontSize: 7,
-                  color: accentColor,
-                  fontWeight: 600
-                }}>
-                  FACTURE ORIGINALE
-                </div>
-                <div style={{ fontWeight: 700 }}>FAC-2025-00001</div>
-                <div>Date : 15/01/2025</div>
-              </div>
-            )}
           </div>
 
           {/* Products Table */}
@@ -230,7 +193,6 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'right' }}>P.U HT</th>
                   {isEnabled('vat_column') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>TVA</th>}
                   {isEnabled('discount_column') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>Rem</th>}
-                  {isEnabled('return_reason') && documentType === 'credit-note' && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'left' }}>Motif</th>}
                   <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'right' }}>Total HT</th>
                 </tr>
               </thead>
@@ -245,7 +207,6 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'right' }}>100.000 DT</td>
                   {isEnabled('vat_column') && <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'center' }}>19%</td>}
                   {isEnabled('discount_column') && <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'center' }}>-</td>}
-                  {isEnabled('return_reason') && documentType === 'credit-note' && <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7 }}>Défectueux</td>}
                   <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'right' }}>200.000 DT</td>
                 </tr>
               </tbody>
@@ -339,31 +300,6 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             </div>
           )}
 
-          {/* Credit status section */}
-          {isEnabled('credit_status_section') && documentType === 'credit-note' && (
-            <div style={{ 
-              marginBottom: 15, 
-              padding: 8, 
-              border: `2px dashed ${accentColor}`,
-              background: '#fff5f5'
-            }}>
-              <div style={{ fontSize: 8, color: accentColor, fontWeight: 600, marginBottom: 5 }}>STATUT DU CRÉDIT</div>
-              <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: 7 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#666' }}>Total</div>
-                  <div style={{ fontWeight: 700 }}>238.000 DT</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#666' }}>Utilisé</div>
-                  <div style={{ fontWeight: 700, color: '#2e7d32' }}>0.000 DT</div>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#666' }}>Disponible</div>
-                  <div style={{ fontWeight: 700, color: '#2e7d32' }}>238.000 DT</div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Legal mentions */}
           {isEnabled('legal_mentions') && (
