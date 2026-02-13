@@ -83,17 +83,12 @@ export const ClientAISearch: React.FC<ClientAISearchProps> = ({
       }));
 
       // Fetch related data for AI context
-      const [invoicesRes, creditNotesRes, movementsRes] = await Promise.all([
+      const [invoicesRes, movementsRes] = await Promise.all([
         supabase
           .from('invoices')
           .select('client_id, total_ttc, payment_status, status, invoice_date')
           .in('client_id', clients.map(c => c.id))
           .limit(200),
-        supabase
-          .from('credit_notes')
-          .select('client_id, total_ttc, status, credit_note_date')
-          .in('client_id', clients.map(c => c.id))
-          .limit(100),
         supabase
           .from('client_account_movements')
           .select('client_id, movement_type, amount, source_type, created_at')
@@ -104,7 +99,6 @@ export const ClientAISearch: React.FC<ClientAISearchProps> = ({
 
       // Build context for AI
       const invoicesByClient: Record<string, { count: number; total: number; unpaid: number }> = {};
-      const creditNotesByClient: Record<string, { count: number; total: number }> = {};
       const movementsByClient: Record<string, { deposits: number; payments: number }> = {};
 
       invoicesRes.data?.forEach(inv => {
@@ -116,14 +110,6 @@ export const ClientAISearch: React.FC<ClientAISearchProps> = ({
         if (inv.payment_status !== 'paid') {
           invoicesByClient[inv.client_id].unpaid++;
         }
-      });
-
-      creditNotesRes.data?.forEach(cn => {
-        if (!creditNotesByClient[cn.client_id]) {
-          creditNotesByClient[cn.client_id] = { count: 0, total: 0 };
-        }
-        creditNotesByClient[cn.client_id].count++;
-        creditNotesByClient[cn.client_id].total += cn.total_ttc || 0;
       });
 
       movementsRes.data?.forEach(mv => {
@@ -141,11 +127,9 @@ export const ClientAISearch: React.FC<ClientAISearchProps> = ({
       const enhancedClients = clientData.map(c => ({
         ...c,
         invoices: invoicesByClient[c.id] || { count: 0, total: 0, unpaid: 0 },
-        credit_notes: creditNotesByClient[c.id] || { count: 0, total: 0 },
         movements: movementsByClient[c.id] || { deposits: 0, payments: 0 },
         has_invoices: (invoicesByClient[c.id]?.count || 0) > 0,
         has_unpaid_invoices: (invoicesByClient[c.id]?.unpaid || 0) > 0,
-        has_credit_notes: (creditNotesByClient[c.id]?.count || 0) > 0,
         has_deposits: (movementsByClient[c.id]?.deposits || 0) > 0,
       }));
 

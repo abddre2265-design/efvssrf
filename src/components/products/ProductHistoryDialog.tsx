@@ -18,7 +18,7 @@ interface ProductHistoryDialogProps {
 
 interface HistoryEntry {
   id: string;
-  type: 'stock_movement' | 'invoice' | 'credit_note' | 'purchase' | 'reservation';
+  type: 'stock_movement' | 'invoice' | 'purchase' | 'reservation';
   date: string;
   description: string;
   details: string;
@@ -116,40 +116,6 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
           movement_type: 'remove',
           document_number: invoice?.invoice_number,
           amount: il.line_total_ttc,
-        });
-      });
-
-      // Fetch credit note lines with credit note info
-      const { data: creditNoteLines } = await supabase
-        .from('credit_note_lines')
-        .select(`
-          id,
-          quantity,
-          line_total_ttc,
-          stock_restored,
-          created_at,
-          credit_note:credit_notes (
-            credit_note_number,
-            credit_note_date,
-            status,
-            credit_note_type
-          )
-        `)
-        .eq('product_id', product.id)
-        .order('created_at', { ascending: false });
-
-      creditNoteLines?.forEach(cnl => {
-        const creditNote = cnl.credit_note as any;
-        entries.push({
-          id: `cn-${cnl.id}`,
-          type: 'credit_note',
-          date: cnl.created_at,
-          description: cnl.stock_restored ? t('returnedFromCreditNote') : t('creditNoteCreated'),
-          details: creditNote?.credit_note_number || '',
-          quantity: cnl.quantity,
-          movement_type: cnl.stock_restored ? 'add' : undefined,
-          document_number: creditNote?.credit_note_number,
-          amount: cnl.line_total_ttc,
         });
       });
 
@@ -281,7 +247,6 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
     switch (type) {
       case 'stock_movement': return <Package className="h-4 w-4" />;
       case 'invoice': return <FileText className="h-4 w-4" />;
-      case 'credit_note': return <RotateCcw className="h-4 w-4" />;
       case 'purchase': return <ShoppingCart className="h-4 w-4" />;
       case 'reservation': return <Bookmark className="h-4 w-4" />;
     }
@@ -293,8 +258,6 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
         return <Badge variant="outline" className="text-primary border-primary">{t('stockMovement')}</Badge>;
       case 'invoice':
         return <Badge variant="outline" className="text-accent-foreground border-accent">{t('invoice')}</Badge>;
-      case 'credit_note':
-        return <Badge variant="outline" className="text-destructive border-destructive">{t('creditNote')}</Badge>;
       case 'purchase':
         return <Badge variant="secondary">{t('purchase')}</Badge>;
       case 'reservation':

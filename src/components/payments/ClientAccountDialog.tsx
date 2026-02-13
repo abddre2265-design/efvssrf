@@ -133,10 +133,6 @@ export const ClientAccountDialog: React.FC<ClientAccountDialogProps> = ({
         return t('invoice_payment');
       case 'refund':
         return t('refund');
-      case 'credit_note':
-        return t('credit_note');
-      case 'credit_note_unblock':
-        return t('credit_note_unblock');
       default:
         return sourceType;
     }
@@ -148,11 +144,6 @@ export const ClientAccountDialog: React.FC<ClientAccountDialogProps> = ({
     return <Icon className="h-4 w-4" />;
   };
 
-  // Calculate totals - separate credit notes from deposits
-  const totalFromCreditNotes = movements
-    .filter(m => m.movement_type === 'credit' && (m.source_type === 'credit_note' || m.source_type === 'credit_note_unblock'))
-    .reduce((sum, m) => sum + m.amount, 0);
-  
   const totalFromDeposits = movements
     .filter(m => m.movement_type === 'credit' && m.source_type === 'direct_deposit')
     .reduce((sum, m) => sum + m.amount, 0);
@@ -206,20 +197,6 @@ export const ClientAccountDialog: React.FC<ClientAccountDialogProps> = ({
 
             {/* Credit Sources Breakdown */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg border-2 border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-blue-500/10 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{t('credit_from_avoirs')}</p>
-                    <p className="text-lg font-bold text-blue-600">
-                      {formatCurrency(totalFromCreditNotes, 'TND')}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">{t('credit_notes_description')}</p>
-              </div>
               <div className="rounded-lg border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">

@@ -21,7 +21,6 @@ const PdfSettings: React.FC = () => {
   const { t, isRTL } = useLanguage();
   const { 
     invoiceComponents, 
-    creditNoteComponents,
     deliveryNoteComponents,
     toggleComponent, 
     resetToDefault 
@@ -33,9 +32,7 @@ const PdfSettings: React.FC = () => {
 
   const currentComponents = activeTab === 'invoice' 
     ? invoiceComponents 
-    : activeTab === 'credit-note' 
-      ? creditNoteComponents 
-      : deliveryNoteComponents;
+    : deliveryNoteComponents;
 
   const handleToggleComponent = (componentId: string, enabled: boolean) => {
     toggleComponent(activeTab, componentId, enabled);
@@ -78,14 +75,10 @@ const PdfSettings: React.FC = () => {
 
       {/* Tabs for document types */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as DocumentType)} className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-3 glass">
+        <TabsList className="grid w-full max-w-lg grid-cols-2 glass">
           <TabsTrigger value="invoice" className="gap-2">
             <FileText className="w-4 h-4" />
             {t('sales_invoice')}
-          </TabsTrigger>
-          <TabsTrigger value="credit-note" className="gap-2">
-            <FileX2 className="w-4 h-4" />
-            {t('sales_credit_note')}
           </TabsTrigger>
           <TabsTrigger value="delivery-note" className="gap-2">
             <FileText className="w-4 h-4" />
@@ -97,21 +90,6 @@ const PdfSettings: React.FC = () => {
           <PdfSettingsContent
             documentType="invoice"
             components={invoiceComponents}
-            onToggleComponent={handleToggleComponent}
-            showAIAgent={showAIAgent}
-            setShowAIAgent={setShowAIAgent}
-            previewKey={previewKey}
-            enabledCount={enabledCount}
-            totalCount={totalCount}
-            t={t}
-            isRTL={isRTL}
-          />
-        </TabsContent>
-
-        <TabsContent value="credit-note" className="mt-6">
-          <PdfSettingsContent
-            documentType="credit-note"
-            components={creditNoteComponents}
             onToggleComponent={handleToggleComponent}
             showAIAgent={showAIAgent}
             setShowAIAgent={setShowAIAgent}

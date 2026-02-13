@@ -28,19 +28,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Invoice, InvoiceLine, formatCurrency } from './types';
 import { InvoicePrintDialog } from './InvoicePrintDialog';
 
-interface CreditNote {
-  id: string;
-  credit_note_number: string;
-  credit_note_date: string;
-  credit_note_type: 'financial' | 'product_return';
-  status: 'draft' | 'validated' | 'cancelled';
-  net_amount: number;
-  credit_generated: number;
-  credit_available: number;
-  credit_blocked: number;
-  currency: string;
-}
-
 interface InvoiceViewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -79,7 +66,6 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
 }) => {
   const { t, language, isRTL } = useLanguage();
   const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
-  const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const getDateLocale = () => {
@@ -138,20 +124,10 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
 
         if (linesError) throw linesError;
 
-        // Fetch credit notes for this invoice
-        const { data: creditNotesData, error: creditNotesError } = await supabase
-          .from('credit_notes')
-          .select('id, credit_note_number, credit_note_date, credit_note_type, status, net_amount, credit_generated, credit_available, credit_blocked, currency')
-          .eq('invoice_id', invoiceId)
-          .order('credit_note_date', { ascending: false });
-
-        if (creditNotesError) throw creditNotesError;
-
         setInvoice({
           ...invoiceData,
           lines: linesData || [],
         } as InvoiceDetails);
-        setCreditNotes(creditNotesData || []);
       } catch (error) {
         console.error('Error fetching invoice:', error);
       } finally {
@@ -430,105 +406,6 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Credit Notes History */}
-              {creditNotes.length > 0 && (
-                <>
-                  <Separator />
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-primary font-medium">
-                      <FileWarning className="h-4 w-4" />
-                      {t('credit_notes_history')} ({creditNotes.length})
-                    </div>
-                    
-                    <div className="rounded-lg border overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-muted/50">
-                          <tr>
-                            <th className="text-start p-3 font-medium">{t('credit_note_number')}</th>
-                            <th className="text-center p-3 font-medium">{t('date')}</th>
-                            <th className="text-center p-3 font-medium">{t('type')}</th>
-                            <th className="text-center p-3 font-medium">{t('status')}</th>
-                            <th className="text-end p-3 font-medium">{t('amount')}</th>
-                            <th className="text-end p-3 font-medium">{t('credit_status')}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {creditNotes.map((cn, index) => (
-                            <tr key={cn.id} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                              <td className="p-3 font-mono font-medium">{cn.credit_note_number}</td>
-                              <td className="text-center p-3">
-                                {format(new Date(cn.credit_note_date), 'PP', { locale: getDateLocale() })}
-                              </td>
-                              <td className="text-center p-3">
-                                <Badge variant="outline" className="gap-1">
-                                  {cn.credit_note_type === 'financial' ? (
-                                    <Wallet className="h-3 w-3" />
-                                  ) : (
-                                    <RotateCcw className="h-3 w-3" />
-                                  )}
-                                  {t(`type_${cn.credit_note_type}`)}
-                                </Badge>
-                              </td>
-                              <td className="text-center p-3">
-                                <Badge 
-                                  variant="outline" 
-                                  className={
-                                    cn.status === 'validated' 
-                                      ? 'bg-green-500/10 text-green-600 border-green-500/30'
-                                      : cn.status === 'cancelled'
-                                      ? 'bg-red-500/10 text-red-600 border-red-500/30'
-                                      : 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30'
-                                  }
-                                >
-                                  {t(`status_${cn.status}`)}
-                                </Badge>
-                              </td>
-                              <td className="text-end p-3 font-mono font-medium">
-                                {formatCurrency(cn.net_amount, cn.currency)}
-                              </td>
-                              <td className="text-end p-3">
-                                <div className="text-xs space-y-0.5">
-                                  {cn.credit_available > 0 && (
-                                    <div className="text-green-600">
-                                      {t('available')}: {formatCurrency(cn.credit_available, cn.currency)}
-                                    </div>
-                                  )}
-                                  {cn.credit_blocked > 0 && (
-                                    <div className="text-orange-600">
-                                      {t('blocked')}: {formatCurrency(cn.credit_blocked, cn.currency)}
-                                    </div>
-                                  )}
-                                  {cn.credit_available === 0 && cn.credit_blocked === 0 && cn.status === 'validated' && (
-                                    <div className="text-muted-foreground">
-                                      {t('fully_used')}
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Credit Notes Summary */}
-                    <div className="flex justify-end">
-                      <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
-                        <span className="text-muted-foreground">{t('total_credited')}:</span>
-                        <span className="ml-2 font-mono font-semibold text-primary">
-                          {formatCurrency(
-                            creditNotes
-                              .filter(cn => cn.status === 'validated')
-                              .reduce((sum, cn) => sum + cn.net_amount, 0),
-                            invoice.currency
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
 
               {/* Notes */}
               {invoice.notes && (

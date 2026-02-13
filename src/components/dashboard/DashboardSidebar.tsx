@@ -127,7 +127,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         { id: 'sales-invoice-requests', icon: ClipboardList, labelKey: 'sales_invoice_requests' },
         { id: 'delivery-notes', icon: PackageCheck, labelKey: 'delivery_notes' },
         { id: 'payments', icon: CreditCard, labelKey: 'sales_payments' },
-        { id: 'credit-notes', icon: ReceiptText, labelKey: 'credit_notes' },
         { id: 'quote-requests', icon: MessageSquareQuote, labelKey: 'quote_requests' },
       ],
     },
@@ -142,7 +141,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         { id: 'purchase-orders', icon: ScrollText, labelKey: 'purchase_orders' },
         { id: 'supply', icon: Boxes, labelKey: 'procurement' },
         { id: 'purchase-payments', icon: Wallet, labelKey: 'purchase_payments' },
-        { id: 'supplier-credit-notes', icon: FileInput, labelKey: 'supplier_credit_notes_menu' },
       ],
     },
     {

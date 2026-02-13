@@ -74,7 +74,7 @@ export const InvoiceAISearch: React.FC<InvoiceAISearchProps> = ({
       // Fetch invoice lines and payments for context
       const invoiceIds = invoices.map(inv => inv.id);
       
-      const [linesRes, paymentsRes, creditNotesRes] = await Promise.all([
+      const [linesRes, paymentsRes] = await Promise.all([
         supabase
           .from('invoice_lines')
           .select('invoice_id, product:products(name)')
@@ -82,10 +82,6 @@ export const InvoiceAISearch: React.FC<InvoiceAISearchProps> = ({
         supabase
           .from('payments')
           .select('invoice_id, amount, net_amount')
-          .in('invoice_id', invoiceIds),
-        supabase
-          .from('credit_notes')
-          .select('invoice_id, net_amount, status')
           .in('invoice_id', invoiceIds),
       ]);
 
@@ -110,18 +106,6 @@ export const InvoiceAISearch: React.FC<InvoiceAISearchProps> = ({
         paymentsByInvoice[p.invoice_id].total += p.net_amount || p.amount || 0;
       });
 
-      // Build credit notes map
-      const creditNotesByInvoice: Record<string, { count: number; total: number }> = {};
-      creditNotesRes.data?.forEach((cn: any) => {
-        if (cn.status !== 'cancelled') {
-          if (!creditNotesByInvoice[cn.invoice_id]) {
-            creditNotesByInvoice[cn.invoice_id] = { count: 0, total: 0 };
-          }
-          creditNotesByInvoice[cn.invoice_id].count++;
-          creditNotesByInvoice[cn.invoice_id].total += cn.net_amount || 0;
-        }
-      });
-
       // Prepare invoice data for AI
       const today = new Date();
       const invoiceData = invoices.map(inv => {
@@ -132,7 +116,6 @@ export const InvoiceAISearch: React.FC<InvoiceAISearchProps> = ({
         const daysOverdue = dueDate ? differenceInDays(today, dueDate) : 0;
         
         const payments = paymentsByInvoice[inv.id] || { count: 0, total: 0 };
-        const creditNotes = creditNotesByInvoice[inv.id] || { count: 0, total: 0 };
         const lines = linesByInvoice[inv.id] || [];
 
         return {
@@ -160,8 +143,6 @@ export const InvoiceAISearch: React.FC<InvoiceAISearchProps> = ({
           lines_products: [...new Set(lines)],
           payments_count: payments.count,
           total_payments: payments.total,
-          credit_notes_count: creditNotes.count,
-          total_credited: creditNotes.total,
           days_overdue: daysOverdue,
           is_overdue: daysOverdue > 0 && inv.payment_status !== 'paid',
         };

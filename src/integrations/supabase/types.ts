@@ -157,225 +157,6 @@ export type Database = {
           },
         ]
       }
-      credit_note_lines: {
-        Row: {
-          created_at: string
-          credit_note_id: string
-          description: string | null
-          discount_percent: number
-          global_discount_applied: boolean | null
-          id: string
-          invoice_line_id: string | null
-          line_order: number
-          line_total_ht: number
-          line_total_ttc: number
-          line_vat: number
-          modification_source: string | null
-          original_discount_percent: number | null
-          original_line_total: number | null
-          original_unit_price: number | null
-          product_id: string | null
-          quantity: number
-          return_reason: string | null
-          stock_restored: boolean
-          unit_price_ht: number
-          vat_rate: number
-        }
-        Insert: {
-          created_at?: string
-          credit_note_id: string
-          description?: string | null
-          discount_percent?: number
-          global_discount_applied?: boolean | null
-          id?: string
-          invoice_line_id?: string | null
-          line_order?: number
-          line_total_ht?: number
-          line_total_ttc?: number
-          line_vat?: number
-          modification_source?: string | null
-          original_discount_percent?: number | null
-          original_line_total?: number | null
-          original_unit_price?: number | null
-          product_id?: string | null
-          quantity?: number
-          return_reason?: string | null
-          stock_restored?: boolean
-          unit_price_ht?: number
-          vat_rate?: number
-        }
-        Update: {
-          created_at?: string
-          credit_note_id?: string
-          description?: string | null
-          discount_percent?: number
-          global_discount_applied?: boolean | null
-          id?: string
-          invoice_line_id?: string | null
-          line_order?: number
-          line_total_ht?: number
-          line_total_ttc?: number
-          line_vat?: number
-          modification_source?: string | null
-          original_discount_percent?: number | null
-          original_line_total?: number | null
-          original_unit_price?: number | null
-          product_id?: string | null
-          quantity?: number
-          return_reason?: string | null
-          stock_restored?: boolean
-          unit_price_ht?: number
-          vat_rate?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "credit_note_lines_credit_note_id_fkey"
-            columns: ["credit_note_id"]
-            isOneToOne: false
-            referencedRelation: "credit_notes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credit_note_lines_invoice_line_id_fkey"
-            columns: ["invoice_line_id"]
-            isOneToOne: false
-            referencedRelation: "invoice_lines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credit_note_lines_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      credit_notes: {
-        Row: {
-          client_id: string
-          created_at: string
-          credit_available: number
-          credit_blocked: number
-          credit_generated: number
-          credit_note_counter: number
-          credit_note_date: string
-          credit_note_number: string
-          credit_note_prefix: string
-          credit_note_type: Database["public"]["Enums"]["credit_note_type"]
-          credit_note_year: number
-          credit_used: number
-          currency: string
-          id: string
-          invoice_id: string
-          justification_notes: string | null
-          net_amount: number
-          notes: string | null
-          organization_id: string
-          payment_id: string | null
-          reason: string | null
-          reconciled_at: string | null
-          reconciled_by: string | null
-          stamp_duty_amount: number
-          status: Database["public"]["Enums"]["credit_note_status"]
-          subtotal_ht: number
-          total_ttc: number
-          total_vat: number
-          updated_at: string
-        }
-        Insert: {
-          client_id: string
-          created_at?: string
-          credit_available?: number
-          credit_blocked?: number
-          credit_generated?: number
-          credit_note_counter: number
-          credit_note_date?: string
-          credit_note_number: string
-          credit_note_prefix: string
-          credit_note_type: Database["public"]["Enums"]["credit_note_type"]
-          credit_note_year: number
-          credit_used?: number
-          currency?: string
-          id?: string
-          invoice_id: string
-          justification_notes?: string | null
-          net_amount?: number
-          notes?: string | null
-          organization_id: string
-          payment_id?: string | null
-          reason?: string | null
-          reconciled_at?: string | null
-          reconciled_by?: string | null
-          stamp_duty_amount?: number
-          status?: Database["public"]["Enums"]["credit_note_status"]
-          subtotal_ht?: number
-          total_ttc?: number
-          total_vat?: number
-          updated_at?: string
-        }
-        Update: {
-          client_id?: string
-          created_at?: string
-          credit_available?: number
-          credit_blocked?: number
-          credit_generated?: number
-          credit_note_counter?: number
-          credit_note_date?: string
-          credit_note_number?: string
-          credit_note_prefix?: string
-          credit_note_type?: Database["public"]["Enums"]["credit_note_type"]
-          credit_note_year?: number
-          credit_used?: number
-          currency?: string
-          id?: string
-          invoice_id?: string
-          justification_notes?: string | null
-          net_amount?: number
-          notes?: string | null
-          organization_id?: string
-          payment_id?: string | null
-          reason?: string | null
-          reconciled_at?: string | null
-          reconciled_by?: string | null
-          stamp_duty_amount?: number
-          status?: Database["public"]["Enums"]["credit_note_status"]
-          subtotal_ht?: number
-          total_ttc?: number
-          total_vat?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "credit_notes_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credit_notes_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credit_notes_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_credit_note_payment"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       custom_tax_types: {
         Row: {
           application_order: string
@@ -1213,7 +994,6 @@ export type Database = {
           client_id: string
           client_type: string
           created_at: string
-          credit_note_count: number
           currency: string
           delivery_status: string | null
           due_date: string | null
@@ -1234,7 +1014,6 @@ export type Database = {
           stamp_duty_enabled: boolean
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal_ht: number
-          total_credited: number
           total_discount: number
           total_ttc: number
           total_vat: number
@@ -1247,7 +1026,6 @@ export type Database = {
           client_id: string
           client_type: string
           created_at?: string
-          credit_note_count?: number
           currency?: string
           delivery_status?: string | null
           due_date?: string | null
@@ -1268,7 +1046,6 @@ export type Database = {
           stamp_duty_enabled?: boolean
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal_ht?: number
-          total_credited?: number
           total_discount?: number
           total_ttc?: number
           total_vat?: number
@@ -1281,7 +1058,6 @@ export type Database = {
           client_id?: string
           client_type?: string
           created_at?: string
-          credit_note_count?: number
           currency?: string
           delivery_status?: string | null
           due_date?: string | null
@@ -1302,7 +1078,6 @@ export type Database = {
           stamp_duty_enabled?: boolean
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal_ht?: number
-          total_credited?: number
           total_discount?: number
           total_ttc?: number
           total_vat?: number
@@ -2406,194 +2181,6 @@ export type Database = {
           },
         ]
       }
-      supplier_credit_note_lines: {
-        Row: {
-          created_at: string
-          description: string | null
-          discount_percent: number
-          id: string
-          line_order: number
-          line_total_ht: number
-          line_total_ttc: number
-          line_vat: number
-          product_id: string | null
-          purchase_line_id: string | null
-          quantity: number
-          return_reason: string | null
-          stock_deducted: boolean
-          supplier_credit_note_id: string
-          unit_price_ht: number
-          vat_rate: number
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          discount_percent?: number
-          id?: string
-          line_order?: number
-          line_total_ht?: number
-          line_total_ttc?: number
-          line_vat?: number
-          product_id?: string | null
-          purchase_line_id?: string | null
-          quantity?: number
-          return_reason?: string | null
-          stock_deducted?: boolean
-          supplier_credit_note_id: string
-          unit_price_ht?: number
-          vat_rate?: number
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          discount_percent?: number
-          id?: string
-          line_order?: number
-          line_total_ht?: number
-          line_total_ttc?: number
-          line_vat?: number
-          product_id?: string | null
-          purchase_line_id?: string | null
-          quantity?: number
-          return_reason?: string | null
-          stock_deducted?: boolean
-          supplier_credit_note_id?: string
-          unit_price_ht?: number
-          vat_rate?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_credit_note_lines_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_credit_note_lines_purchase_line_id_fkey"
-            columns: ["purchase_line_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_lines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_credit_note_lines_supplier_credit_note_id_fkey"
-            columns: ["supplier_credit_note_id"]
-            isOneToOne: false
-            referencedRelation: "supplier_credit_notes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      supplier_credit_notes: {
-        Row: {
-          created_at: string
-          credit_available: number
-          credit_blocked: number
-          credit_generated: number
-          credit_note_counter: number
-          credit_note_date: string
-          credit_note_number: string
-          credit_note_prefix: string
-          credit_note_type: string
-          credit_note_year: number
-          credit_used: number
-          currency: string
-          exchange_rate: number
-          id: string
-          net_amount: number
-          notes: string | null
-          organization_id: string
-          purchase_document_id: string
-          reason: string | null
-          stamp_duty_amount: number
-          status: string
-          subtotal_ht: number
-          supplier_id: string
-          total_ttc: number
-          total_vat: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          credit_available?: number
-          credit_blocked?: number
-          credit_generated?: number
-          credit_note_counter: number
-          credit_note_date?: string
-          credit_note_number: string
-          credit_note_prefix: string
-          credit_note_type: string
-          credit_note_year: number
-          credit_used?: number
-          currency?: string
-          exchange_rate?: number
-          id?: string
-          net_amount?: number
-          notes?: string | null
-          organization_id: string
-          purchase_document_id: string
-          reason?: string | null
-          stamp_duty_amount?: number
-          status?: string
-          subtotal_ht?: number
-          supplier_id: string
-          total_ttc?: number
-          total_vat?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          credit_available?: number
-          credit_blocked?: number
-          credit_generated?: number
-          credit_note_counter?: number
-          credit_note_date?: string
-          credit_note_number?: string
-          credit_note_prefix?: string
-          credit_note_type?: string
-          credit_note_year?: number
-          credit_used?: number
-          currency?: string
-          exchange_rate?: number
-          id?: string
-          net_amount?: number
-          notes?: string | null
-          organization_id?: string
-          purchase_document_id?: string
-          reason?: string | null
-          stamp_duty_amount?: number
-          status?: string
-          subtotal_ht?: number
-          supplier_id?: string
-          total_ttc?: number
-          total_vat?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_credit_notes_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_credit_notes_purchase_document_id_fkey"
-            columns: ["purchase_document_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_credit_notes_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       suppliers: {
         Row: {
           address: string | null
@@ -2739,10 +2326,6 @@ export type Database = {
       }
       get_client_balance: { Args: { p_client_id: string }; Returns: number }
       has_organization: { Args: never; Returns: boolean }
-      is_credit_note_owner: {
-        Args: { credit_note_id: string }
-        Returns: boolean
-      }
       is_custom_tax_value_in_use: {
         Args: { value_id: string }
         Returns: boolean
@@ -2766,10 +2349,6 @@ export type Database = {
       }
       is_reservation_owner: {
         Args: { reservation_id: string }
-        Returns: boolean
-      }
-      is_supplier_credit_note_owner: {
-        Args: { scn_id: string }
         Returns: boolean
       }
       is_vat_rate_in_use: { Args: { rate_value: number }; Returns: boolean }

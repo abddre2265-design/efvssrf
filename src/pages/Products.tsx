@@ -96,12 +96,6 @@ const Products: React.FC = () => {
         .select('product_id')
         .in('product_id', productIds);
 
-      // Check credit_note_lines
-      const { data: creditNoteLines } = await supabase
-        .from('credit_note_lines')
-        .select('product_id')
-        .in('product_id', productIds);
-
       // Check purchase_lines
       const { data: purchaseLines } = await supabase
         .from('purchase_lines')
@@ -119,11 +113,10 @@ const Products: React.FC = () => {
       
       productIds.forEach(id => {
         const hasInvoice = invoiceLines?.some(il => il.product_id === id) || false;
-        const hasCreditNote = creditNoteLines?.some(cnl => cnl.product_id === id) || false;
         const hasPurchase = purchaseLines?.some(pl => pl.product_id === id) || false;
         const hasStock = stockMovements?.some(sm => sm.product_id === id) || false;
         
-        hasRelationship[id] = hasInvoice || hasCreditNote || hasPurchase || hasStock;
+        hasRelationship[id] = hasInvoice || hasPurchase || hasStock;
       });
 
       setProductRelationships(hasRelationship);

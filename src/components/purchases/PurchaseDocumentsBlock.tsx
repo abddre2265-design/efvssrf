@@ -38,7 +38,6 @@ import {
   ExternalLink,
   FileInput
 } from 'lucide-react';
-import { SupplierCreditNoteCreateDialog } from '@/components/supplier-credit-notes';
 import { PurchaseDocument } from './types';
 import { formatCurrency } from '@/components/invoices/types';
 
@@ -82,8 +81,8 @@ export const PurchaseDocumentsBlock: React.FC<PurchaseDocumentsBlockProps> = ({
   const [documentLines, setDocumentLines] = useState<PurchaseLine[]>([]);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isLoadingLines, setIsLoadingLines] = useState(false);
-  const [creditNoteDocument, setCreditNoteDocument] = useState<PurchaseDocument | null>(null);
-  const [isCreditNoteDialogOpen, setIsCreditNoteDialogOpen] = useState(false);
+
+
 
   // Load suppliers for all documents
   useEffect(() => {
@@ -215,23 +214,6 @@ export const PurchaseDocumentsBlock: React.FC<PurchaseDocumentsBlockProps> = ({
     console.log('Pay document:', doc.id);
   };
 
-  const handleCreateCreditNote = async (doc: PurchaseDocument) => {
-    // Fetch full document with supplier for credit note dialog
-    const { data: fullDoc } = await supabase
-      .from('purchase_documents')
-      .select(`
-        *,
-        supplier:suppliers(id, supplier_type, first_name, last_name, company_name)
-      `)
-      .eq('id', doc.id)
-      .single();
-    
-    if (fullDoc) {
-      setCreditNoteDocument(fullDoc as any);
-      setIsCreditNoteDialogOpen(true);
-    }
-  };
-
   const renderDocumentsTable = (documents: PurchaseDocument[], title: string, icon: React.ReactNode) => (
     <Card>
       <CardHeader>
@@ -308,12 +290,6 @@ export const PurchaseDocumentsBlock: React.FC<PurchaseDocumentsBlockProps> = ({
                             <DropdownMenuItem onClick={() => handlePayDocument(doc)}>
                               <CreditCard className="mr-2 h-4 w-4" />
                               {t('pay')}
-                            </DropdownMenuItem>
-                          )}
-                          {doc.status === 'validated' && doc.supplier_id && (
-                            <DropdownMenuItem onClick={() => handleCreateCreditNote(doc)}>
-                              <FileInput className="mr-2 h-4 w-4" />
-                              {t('create_credit_note') || 'Créer un avoir'}
                             </DropdownMenuItem>
                           )}
                           {doc.pdf_url && (
@@ -503,22 +479,6 @@ export const PurchaseDocumentsBlock: React.FC<PurchaseDocumentsBlockProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Credit Note Creation Dialog */}
-      {creditNoteDocument && (
-        <SupplierCreditNoteCreateDialog
-          open={isCreditNoteDialogOpen}
-          onOpenChange={(open) => {
-            setIsCreditNoteDialogOpen(open);
-            if (!open) setCreditNoteDocument(null);
-          }}
-          purchaseDocument={creditNoteDocument as any}
-          onCreated={() => {
-            setIsCreditNoteDialogOpen(false);
-            setCreditNoteDocument(null);
-            onRefresh();
-          }}
-        />
-      )}
     </div>
   );
 };
