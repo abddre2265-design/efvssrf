@@ -163,12 +163,17 @@ export type Database = {
           credit_note_id: string
           description: string | null
           discount_percent: number
+          global_discount_applied: boolean | null
           id: string
           invoice_line_id: string | null
           line_order: number
           line_total_ht: number
           line_total_ttc: number
           line_vat: number
+          modification_source: string | null
+          original_discount_percent: number | null
+          original_line_total: number | null
+          original_unit_price: number | null
           product_id: string | null
           quantity: number
           return_reason: string | null
@@ -181,12 +186,17 @@ export type Database = {
           credit_note_id: string
           description?: string | null
           discount_percent?: number
+          global_discount_applied?: boolean | null
           id?: string
           invoice_line_id?: string | null
           line_order?: number
           line_total_ht?: number
           line_total_ttc?: number
           line_vat?: number
+          modification_source?: string | null
+          original_discount_percent?: number | null
+          original_line_total?: number | null
+          original_unit_price?: number | null
           product_id?: string | null
           quantity?: number
           return_reason?: string | null
@@ -199,12 +209,17 @@ export type Database = {
           credit_note_id?: string
           description?: string | null
           discount_percent?: number
+          global_discount_applied?: boolean | null
           id?: string
           invoice_line_id?: string | null
           line_order?: number
           line_total_ht?: number
           line_total_ttc?: number
           line_vat?: number
+          modification_source?: string | null
+          original_discount_percent?: number | null
+          original_line_total?: number | null
+          original_unit_price?: number | null
           product_id?: string | null
           quantity?: number
           return_reason?: string | null
@@ -253,10 +268,14 @@ export type Database = {
           currency: string
           id: string
           invoice_id: string
+          justification_notes: string | null
           net_amount: number
           notes: string | null
           organization_id: string
+          payment_id: string | null
           reason: string | null
+          reconciled_at: string | null
+          reconciled_by: string | null
           stamp_duty_amount: number
           status: Database["public"]["Enums"]["credit_note_status"]
           subtotal_ht: number
@@ -280,10 +299,14 @@ export type Database = {
           currency?: string
           id?: string
           invoice_id: string
+          justification_notes?: string | null
           net_amount?: number
           notes?: string | null
           organization_id: string
+          payment_id?: string | null
           reason?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
           stamp_duty_amount?: number
           status?: Database["public"]["Enums"]["credit_note_status"]
           subtotal_ht?: number
@@ -307,10 +330,14 @@ export type Database = {
           currency?: string
           id?: string
           invoice_id?: string
+          justification_notes?: string | null
           net_amount?: number
           notes?: string | null
           organization_id?: string
+          payment_id?: string | null
           reason?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
           stamp_duty_amount?: number
           status?: Database["public"]["Enums"]["credit_note_status"]
           subtotal_ht?: number
@@ -338,6 +365,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_credit_note_payment"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
             referencedColumns: ["id"]
           },
         ]
@@ -2747,10 +2781,22 @@ export type Database = {
     Enums: {
       client_status: "active" | "archived"
       client_type: "individual_local" | "business_local" | "foreign"
-      credit_note_status: "draft" | "validated" | "cancelled"
-      credit_note_type: "financial" | "product_return"
+      credit_note_status:
+        | "draft"
+        | "validated"
+        | "cancelled"
+        | "blocked"
+        | "unblocked"
+        | "partially_applied"
+        | "settled"
+      credit_note_type: "financial" | "product_return" | "commercial_price"
       import_folder_status: "open" | "closed"
-      invoice_status: "created" | "draft" | "validated"
+      invoice_status:
+        | "created"
+        | "draft"
+        | "validated"
+        | "product_return_total"
+        | "cancelled"
       payment_status: "unpaid" | "partial" | "paid"
       product_status: "active" | "archived"
       product_type: "physical" | "service"
@@ -2888,10 +2934,24 @@ export const Constants = {
     Enums: {
       client_status: ["active", "archived"],
       client_type: ["individual_local", "business_local", "foreign"],
-      credit_note_status: ["draft", "validated", "cancelled"],
-      credit_note_type: ["financial", "product_return"],
+      credit_note_status: [
+        "draft",
+        "validated",
+        "cancelled",
+        "blocked",
+        "unblocked",
+        "partially_applied",
+        "settled",
+      ],
+      credit_note_type: ["financial", "product_return", "commercial_price"],
       import_folder_status: ["open", "closed"],
-      invoice_status: ["created", "draft", "validated"],
+      invoice_status: [
+        "created",
+        "draft",
+        "validated",
+        "product_return_total",
+        "cancelled",
+      ],
       payment_status: ["unpaid", "partial", "paid"],
       product_status: ["active", "archived"],
       product_type: ["physical", "service"],
