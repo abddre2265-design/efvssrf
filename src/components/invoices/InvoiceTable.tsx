@@ -53,6 +53,7 @@ interface InvoiceTableProps {
   onUse: (invoice: Invoice) => void;
   onPay: (invoice: Invoice) => void;
   onDeliver?: (invoice: Invoice) => void;
+  onCreateCreditNote?: (invoice: Invoice) => void;
 }
 
 export const InvoiceTable: React.FC<InvoiceTableProps> = ({
@@ -66,6 +67,7 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
   onUse,
   onPay,
   onDeliver,
+  onCreateCreditNote,
 }) => {
   const { t, language, isRTL } = useLanguage();
 
@@ -260,6 +262,12 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
                           <DropdownMenuItem onClick={() => onDeliver(invoice)}>
                             <Truck className="mr-2 h-4 w-4" />
                             {t('deliver_invoice')}
+                          </DropdownMenuItem>
+                        )}
+                        {onCreateCreditNote && (
+                          <DropdownMenuItem onClick={() => onCreateCreditNote(invoice)}>
+                            <ClipboardList className="mr-2 h-4 w-4" />
+                            {t('create_credit_note')}
                           </DropdownMenuItem>
                         )}
                       </>
