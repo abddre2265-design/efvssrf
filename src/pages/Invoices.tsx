@@ -13,6 +13,7 @@ import { PaymentDialog } from '@/components/invoices/PaymentDialog';
 import { InvoiceAISearch } from '@/components/invoices/InvoiceAISearch';
 import { AIInvoiceGeneratorDialog } from '@/components/invoices/AIInvoiceGeneratorDialog';
 import { CreditNoteTypeChoiceDialog, CreditNoteType } from '@/components/invoices/CreditNoteTypeChoiceDialog';
+import { CommercialCreditNoteDialog } from '@/components/invoices/CommercialCreditNoteDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +57,7 @@ const Invoices: React.FC = () => {
   // Credit note type choice dialog state
   const [creditNoteChoiceOpen, setCreditNoteChoiceOpen] = useState(false);
   const [creditNoteInvoice, setCreditNoteInvoice] = useState<Invoice | null>(null);
+  const [commercialCreditOpen, setCommercialCreditOpen] = useState(false);
 
   const fetchInvoices = async () => {
     try {
@@ -238,8 +240,12 @@ const Invoices: React.FC = () => {
 
   const handleCreditNoteTypeSelected = (type: CreditNoteType) => {
     setCreditNoteChoiceOpen(false);
-    // TODO: will be implemented when building credit note creation
-    console.log('Credit note type selected:', type, 'for invoice:', creditNoteInvoice?.invoice_number);
+    if (type === 'commercial_price') {
+      setCommercialCreditOpen(true);
+    } else {
+      // TODO: product credit note
+      console.log('Product credit note for:', creditNoteInvoice?.invoice_number);
+    }
   };
 
   const handleDeliver = async (invoice: Invoice) => {
@@ -447,6 +453,14 @@ const Invoices: React.FC = () => {
         open={creditNoteChoiceOpen}
         onOpenChange={setCreditNoteChoiceOpen}
         onSelect={handleCreditNoteTypeSelected}
+      />
+
+      {/* Commercial Credit Note Dialog */}
+      <CommercialCreditNoteDialog
+        open={commercialCreditOpen}
+        onOpenChange={setCommercialCreditOpen}
+        invoice={creditNoteInvoice}
+        onComplete={fetchInvoices}
       />
     </motion.div>
   );
