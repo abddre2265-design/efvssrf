@@ -12,6 +12,7 @@ import { InvoiceEditDialog } from '@/components/invoices/InvoiceEditDialog';
 import { PaymentDialog } from '@/components/invoices/PaymentDialog';
 import { InvoiceAISearch } from '@/components/invoices/InvoiceAISearch';
 import { AIInvoiceGeneratorDialog } from '@/components/invoices/AIInvoiceGeneratorDialog';
+import { CreditNoteTypeChoiceDialog, CreditNoteType } from '@/components/invoices/CreditNoteTypeChoiceDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +52,10 @@ const Invoices: React.FC = () => {
 
   // AI Generator dialog state
   const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
+
+  // Credit note type choice dialog state
+  const [creditNoteChoiceOpen, setCreditNoteChoiceOpen] = useState(false);
+  const [creditNoteInvoice, setCreditNoteInvoice] = useState<Invoice | null>(null);
 
   const fetchInvoices = async () => {
     try {
@@ -226,6 +231,17 @@ const Invoices: React.FC = () => {
     setPaymentDialogOpen(true);
   };
 
+  const handleCreateCreditNote = (invoice: Invoice) => {
+    setCreditNoteInvoice(invoice);
+    setCreditNoteChoiceOpen(true);
+  };
+
+  const handleCreditNoteTypeSelected = (type: CreditNoteType) => {
+    setCreditNoteChoiceOpen(false);
+    // TODO: will be implemented when building credit note creation
+    console.log('Credit note type selected:', type, 'for invoice:', creditNoteInvoice?.invoice_number);
+  };
+
   const handleDeliver = async (invoice: Invoice) => {
     try {
       // 1. Get current year and next counter for delivery note
@@ -350,6 +366,7 @@ const Invoices: React.FC = () => {
         onUse={handleUse}
         onPay={handlePay}
         onDeliver={handleDeliver}
+        onCreateCreditNote={handleCreateCreditNote}
       />
 
       {/* Create Dialog */}
@@ -423,6 +440,13 @@ const Invoices: React.FC = () => {
         open={aiGeneratorOpen}
         onOpenChange={setAiGeneratorOpen}
         onGenerated={fetchInvoices}
+      />
+
+      {/* Credit Note Type Choice Dialog */}
+      <CreditNoteTypeChoiceDialog
+        open={creditNoteChoiceOpen}
+        onOpenChange={setCreditNoteChoiceOpen}
+        onSelect={handleCreditNoteTypeSelected}
       />
     </motion.div>
   );
