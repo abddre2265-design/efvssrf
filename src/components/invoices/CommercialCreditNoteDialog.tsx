@@ -316,7 +316,6 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
   const handleTotalTtcChange = (value: number) => {
     if (!details) return;
     const clamped = Math.min(Math.max(0, value), details.invoice.total_ttc);
-    // Reverse: find ratio from TTC
     const origTtc = details.invoice.total_ttc;
     const origHt = details.invoice.subtotal_ht;
     if (origTtc > 0) {
@@ -324,6 +323,19 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
       setTotalNewHt(origHt * ratio);
     }
     setTotalLastEdited('ttc');
+  };
+
+  // Handle total mode VAT change - keep HT, derive TTC
+  const handleTotalVatChange = (value: number) => {
+    if (!details) return;
+    const origVat = details.invoice.total_vat;
+    const origHt = details.invoice.subtotal_ht;
+    const clamped = Math.min(Math.max(0, value), origVat);
+    if (origVat > 0) {
+      const ratio = clamped / origVat;
+      setTotalNewHt(origHt * ratio);
+    }
+    setTotalLastEdited('vat');
   };
 
   const hasDiscount = newTotals ? newTotals.totalDiscountHt > 0 : false;
@@ -434,7 +446,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
                 {/* Mode 2: Total discount */}
                 <TabsContent value="total" className="mt-4">
                   <div className="border rounded-lg p-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">{t('new_total_ht')}</label>
                         <Input
@@ -444,6 +456,18 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
                           max={details.invoice.subtotal_ht}
                           value={totalNewHt}
                           onChange={(e) => handleTotalHtChange(parseFloat(e.target.value) || 0)}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">{t('new_total_vat')}</label>
+                        <Input
+                          type="number"
+                          step="0.001"
+                          min={0}
+                          max={details.invoice.total_vat}
+                          value={newTotals?.newTotalVat?.toFixed(3) || '0.000'}
+                          onChange={(e) => handleTotalVatChange(parseFloat(e.target.value) || 0)}
                           className="mt-1"
                         />
                       </div>
@@ -462,7 +486,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
                     </div>
                     {newTotals && newTotals.vatBreakdown.length > 0 && (
                       <div className="space-y-1">
-                        <label className="text-sm font-medium text-muted-foreground">{t('new_total_vat')}</label>
+                        <label className="text-sm font-medium text-muted-foreground">{t('vat_breakdown')}</label>
                         {newTotals.vatBreakdown.map(v => (
                           <div key={v.rate} className="flex justify-between text-sm text-muted-foreground">
                             <span>{t('vat')} {v.rate}% ({formatCurrency(v.baseHt, 'TND')})</span>
