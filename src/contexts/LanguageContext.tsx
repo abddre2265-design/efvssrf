@@ -924,6 +924,8 @@ export const translations: Translations = {
   invoice_will_be_modified: { fr: 'La facture sera modifiée', en: 'Invoice will be modified', ar: 'سيتم تعديل الفاتورة' },
   stock_will_increase: { fr: 'Le stock sera augmenté', en: 'Stock will be increased', ar: 'سيتم زيادة المخزون' },
   client_credit_if_overpaid: { fr: 'Si trop-perçu, un crédit client sera créé', en: 'If overpaid, client credit will be created', ar: 'في حالة الدفع الزائد، سيتم إنشاء رصيد للعميل' },
+  credit_note_deleted: { fr: 'Avoir supprimé', en: 'Credit note deleted', ar: 'تم حذف الإشعار الدائن' },
+  method: { fr: 'Méthode', en: 'Method', ar: 'الطريقة' },
   // Purchases
   purchases: { fr: 'Achats', en: 'Purchases', ar: 'المشتريات' },
   purchases_description: { fr: 'Gérez vos achats et approvisionnements', en: 'Manage your purchases and supplies', ar: 'إدارة المشتريات والتوريدات' },

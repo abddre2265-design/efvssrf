@@ -83,6 +83,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
   const [withholdingOverride, setWithholdingOverride] = useState<number | null>(null);
   const [withholdingDialogOpen, setWithholdingDialogOpen] = useState(false);
   const withholdingPromptShown = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch full invoice details
   useEffect(() => {
@@ -339,6 +340,119 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
   };
 
   const hasDiscount = newTotals ? newTotals.totalDiscountHt > 0 : false;
+
+  // Save to DB
+  const handleSave = async () => {
+    if (!details || !newTotals || !invoice) return;
+    setIsSaving(true);
+    try {
+      const currentYear = new Date().getFullYear();
+      const { data: lastCn } = await supabase
+        .from('credit_notes')
+        .select('credit_note_counter')
+        .eq('credit_note_year', currentYear)
+        .order('credit_note_counter', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const nextCounter = ((lastCn as any)?.credit_note_counter || 0) + 1;
+      const cnNumber = `AV-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
+
+      const originalRatio = details.invoice.subtotal_ht > 0 ? totalNewHt / details.invoice.subtotal_ht : 1;
+
+      // Build line data
+      const buildLines = () => {
+        return details.lines.map((line, idx) => {
+          let discountHt: number, discountRate: number;
+          if (mode === 'lines') {
+            const ld = lineDiscounts.find(d => d.lineId === line.id);
+            discountHt = ld?.discountHt || 0;
+            discountRate = ld?.discountRate || 0;
+          } else {
+            discountHt = line.line_total_ht * (1 - originalRatio);
+            discountRate = line.line_total_ht > 0 ? (discountHt / line.line_total_ht) * 100 : 0;
+          }
+          const vatRate = isForeign ? 0 : line.vat_rate;
+          const newLineHt = line.line_total_ht - discountHt;
+          const newLineVat = newLineHt * (vatRate / 100);
+          const newLineTtc = newLineHt + newLineVat;
+          const discountTtc = discountHt * (1 + vatRate / 100);
+
+          return {
+            invoice_line_id: line.id,
+            product_id: line.product_id,
+            product_name: line.product?.name || null,
+            product_reference: line.product?.reference || null,
+            original_quantity: line.quantity,
+            original_unit_price_ht: line.unit_price_ht,
+            original_line_total_ht: line.line_total_ht,
+            original_line_vat: line.line_vat,
+            original_line_total_ttc: line.line_total_ttc,
+            discount_ht: discountHt,
+            discount_ttc: discountTtc,
+            discount_rate: discountRate,
+            new_line_total_ht: newLineHt,
+            new_line_vat: newLineVat,
+            new_line_total_ttc: newLineTtc,
+            vat_rate: vatRate,
+            line_order: idx,
+          };
+        });
+      };
+
+      const cnLines = buildLines();
+
+      // Insert credit note
+      const { data: cnData, error: cnError } = await supabase
+        .from('credit_notes')
+        .insert({
+          organization_id: invoice.organization_id,
+          invoice_id: invoice.id,
+          client_id: invoice.client_id,
+          credit_note_number: cnNumber,
+          credit_note_prefix: 'AV',
+          credit_note_year: currentYear,
+          credit_note_counter: nextCounter,
+          credit_note_type: 'commercial_price',
+          credit_note_method: mode,
+          subtotal_ht: newTotals.newSubtotalHt,
+          total_vat: newTotals.newTotalVat,
+          total_ttc: newTotals.newTotalTtc,
+          stamp_duty_amount: details.stampDuty,
+          withholding_rate: effectiveWithholdingRate,
+          withholding_amount: newWithholdingAmount,
+          original_net_payable: details.invoice.net_payable,
+          new_net_payable: newNetPayable,
+          financial_credit: financialCredit,
+          status: 'validated',
+        } as any)
+        .select()
+        .single();
+
+      if (cnError) throw cnError;
+
+      // Insert lines
+      const linesWithCnId = cnLines.map(l => ({
+        ...l,
+        credit_note_id: (cnData as any).id,
+      }));
+
+      const { error: linesError } = await supabase
+        .from('credit_note_lines')
+        .insert(linesWithCnId as any);
+
+      if (linesError) throw linesError;
+
+      toast.success(t('credit_note_created'));
+      onOpenChange(false);
+      onComplete?.();
+    } catch (error) {
+      console.error('Error saving credit note:', error);
+      toast.error(t('error_creating_credit_note'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!details || isLoading) return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -624,14 +738,10 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
               {t('cancel')}
             </Button>
             <Button
-              disabled={!hasDiscount}
-              onClick={() => {
-                toast.success(t('confirm_commercial_credit'));
-                onOpenChange(false);
-                onComplete?.();
-              }}
+              disabled={!hasDiscount || isSaving}
+              onClick={handleSave}
             >
-              {t('confirm_commercial_credit')}
+              {isSaving ? t('processing') : t('confirm_commercial_credit')}
             </Button>
           </div>
         </DialogContent>

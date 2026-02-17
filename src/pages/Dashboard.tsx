@@ -24,6 +24,7 @@ import PdfSettings from '@/pages/PdfSettings';
 import DeliveryNotes from '@/pages/DeliveryNotes';
 import Taxes from '@/pages/Taxes';
 import PurchaseInvoices from '@/pages/PurchaseInvoices';
+import CreditNotes from '@/pages/CreditNotes';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -116,6 +117,8 @@ const Dashboard: React.FC = () => {
         return <Taxes />;
       case 'purchase-invoices':
         return <PurchaseInvoices />;
+      case 'credit-notes':
+        return <CreditNotes />;
       default:
         return <DashboardHome />;
     }

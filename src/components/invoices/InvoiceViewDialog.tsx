@@ -20,13 +20,15 @@ import {
   FileWarning,
   RotateCcw,
   Wallet,
-  Printer
+  Printer,
+  ClipboardList
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice, InvoiceLine, formatCurrency } from './types';
 import { InvoicePrintDialog } from './InvoicePrintDialog';
+import { CreditNote } from '@/components/credit-notes/types';
 
 interface InvoiceViewDialogProps {
   open: boolean;
@@ -68,6 +70,7 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
   const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
   const getDateLocale = () => {
     switch (language) {
       case 'ar': return arSA;
@@ -110,19 +113,20 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
         // Fetch invoice lines with products
         const { data: linesData, error: linesError } = await supabase
           .from('invoice_lines')
-          .select(`
-            *,
-            product:products(
-              id,
-              name,
-              reference,
-              ean
-            )
-          `)
+          .select(`*, product:products(id, name, reference, ean)`)
           .eq('invoice_id', invoiceId)
           .order('line_order', { ascending: true });
 
         if (linesError) throw linesError;
+
+        // Fetch credit notes for this invoice
+        const { data: cnData } = await supabase
+          .from('credit_notes')
+          .select('*')
+          .eq('invoice_id', invoiceId)
+          .order('created_at', { ascending: false });
+
+        setCreditNotes((cnData || []) as unknown as CreditNote[]);
 
         setInvoice({
           ...invoiceData,
@@ -406,6 +410,49 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Credit Notes Section */}
+              {creditNotes.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-primary font-medium">
+                      <ClipboardList className="h-4 w-4" />
+                      {t('credit_notes')} ({creditNotes.length})
+                    </div>
+                    {creditNotes.map(cn => (
+                      <div key={cn.id} className="p-4 rounded-lg bg-muted/30 border space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono font-semibold">{cn.credit_note_number}</span>
+                          <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+                            {t(`status_${cn.status}`)}
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">{t('type')}:</span>
+                            <p className="font-medium">{t(cn.credit_note_type === 'commercial_price' ? 'credit_note_commercial_price' : 'credit_note_product')}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">{t('date')}:</span>
+                            <p className="font-medium">{format(new Date(cn.credit_note_date), 'PP', { locale: getDateLocale() })}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">{t('total_ttc')}:</span>
+                            <p className="font-mono font-medium">{formatCurrency(cn.total_ttc, 'TND')}</p>
+                          </div>
+                        </div>
+                        {cn.financial_credit > 0 && (
+                          <div className="flex justify-between text-sm pt-1 border-t">
+                            <span className="text-muted-foreground">{t('financial_credit')}:</span>
+                            <span className="font-mono text-green-600 font-medium">{formatCurrency(cn.financial_credit, 'TND')}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
 
               {/* Notes */}
               {invoice.notes && (
