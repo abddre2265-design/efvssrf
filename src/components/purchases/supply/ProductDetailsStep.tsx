@@ -123,6 +123,7 @@ interface ProductDetailsStepProps {
   currency: string;
   exchangeRate: number;
   isForeignSupplier: boolean;
+  hideSalePricing?: boolean;
   onProductsDetailsConfirmed: (products: ProductDetailData[]) => void;
 }
 
@@ -133,6 +134,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
   currency,
   exchangeRate,
   isForeignSupplier,
+  hideSalePricing = false,
   onProductsDetailsConfirmed,
 }) => {
   const { t, isRTL } = useLanguage();
@@ -956,6 +958,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
                 </div>
 
                 {/* Third Block: Sale Pricing Info */}
+                {!hideSalePricing && (
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex items-center gap-2 mb-3">
                     <Tag className="h-4 w-4 text-green-600" />
@@ -1123,6 +1126,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
                     </div>
                   )}
                 </div>
+                )}
               </div>
             ))}
           </div>

@@ -332,6 +332,7 @@ export const LocalPurchaseWorkflowDialog: React.FC<LocalPurchaseWorkflowDialogPr
                   currency={workflowData.currency}
                   exchangeRate={workflowData.exchangeRate}
                   isForeignSupplier={workflowData.supplierType === 'foreign'}
+                  hideSalePricing
                   onProductsDetailsConfirmed={handleProductDetailsConfirmed}
                 />
               )}
