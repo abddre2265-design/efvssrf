@@ -379,13 +379,7 @@ export const LocalPurchaseWorkflowDialog: React.FC<LocalPurchaseWorkflowDialogPr
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Show Continue button for steps that don't have their own navigation */}
-              {currentStep === 'transfer' && (
-                <Button onClick={goToNextStep} className="gap-2">
-                  Continuer
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              )}
+              {/* Transfer step handles its own navigation */}
               
               {currentStep === 'products' && !workflowData.supplierId && (
                 <Button onClick={goToNextStep} className="gap-2">
