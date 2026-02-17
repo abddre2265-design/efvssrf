@@ -429,32 +429,112 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
 
                   {/* Operational Summary - Updated amounts after credit notes */}
                   <div className="flex justify-end">
-                    <div className="w-80 space-y-2 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                      <div className="flex items-center gap-2 text-primary font-medium mb-3">
-                        <RotateCcw className="h-4 w-4" />
-                        Montants opérationnels (après avoirs)
-                      </div>
+                    {(() => {
+                      const validatedCNs = creditNotes.filter(cn => cn.status === 'validated');
+                      const totalDiscountHt = validatedCNs.reduce((sum, cn) => {
+                        const origHt = cn.subtotal_ht || 0;
+                        return sum + origHt;
+                      }, 0);
+                      // Compute adjusted values from last validated credit note's new values
+                      const lastCn = validatedCNs.length > 0 ? validatedCNs[0] : null; // sorted desc
+                      const adjustedSubtotalHt = lastCn ? lastCn.subtotal_ht : invoice.subtotal_ht;
+                      const adjustedTotalVat = lastCn ? lastCn.total_vat : invoice.total_vat;
+                      const adjustedTotalTtc = lastCn ? lastCn.total_ttc : invoice.total_ttc;
                       
-                      {!isForeign && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Total TTC ajusté:</span>
-                          <span className="font-mono font-medium">
-                            {formatCurrency(invoice.total_ttc - (invoice.total_credited || 0), invoice.currency)}
-                          </span>
-                        </div>
-                      )}
+                      // Sum all discount amounts from all validated credit notes
+                      const totalCreditedHt = validatedCNs.reduce((sum, cn) => {
+                        // discount = original - new for each CN
+                        return sum + (cn.original_net_payable - cn.new_net_payable);
+                      }, 0);
                       
-                      <div className="flex justify-between pt-2 border-t border-primary/20 text-lg font-semibold">
-                        <span>Net à payer ajusté:</span>
-                        <span className="font-mono text-primary">
-                          {formatCurrency(invoice.net_payable - (invoice.total_credited || 0), invoice.currency)}
-                        </span>
-                      </div>
+                      // Operational amounts
+                      const opSubtotalHt = invoice.subtotal_ht - validatedCNs.reduce((sum, cn) => sum + (cn.original_net_payable - cn.new_net_payable > 0 ? invoice.subtotal_ht - (lastCn?.subtotal_ht || invoice.subtotal_ht) : 0), 0);
+                      
+                      // Use the last credit note's new values as the operational state
+                      const opHt = lastCn ? lastCn.subtotal_ht : invoice.subtotal_ht;
+                      const opVat = lastCn ? lastCn.total_vat : invoice.total_vat;
+                      const opTtc = lastCn ? lastCn.total_ttc : invoice.total_ttc;
+                      const remiseHt = invoice.subtotal_ht - opHt;
+                      const remiseVat = invoice.total_vat - opVat;
+                      const remiseTtc = invoice.total_ttc - opTtc;
+                      
+                      // Withholding on adjusted TTC
+                      const withholdingRate = invoice.withholding_applied ? invoice.withholding_rate : 0;
+                      const opWithholdingAmount = opTtc * (withholdingRate / 100);
+                      const stampDuty = invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0;
+                      const opNetPayable = opTtc - opWithholdingAmount + stampDuty;
 
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {creditNotes.filter(cn => cn.status === 'validated').length} avoir(s) validé(s) appliqué(s)
-                      </p>
-                    </div>
+                      return (
+                        <div className="w-96 space-y-2 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                          <div className="flex items-center gap-2 text-primary font-medium mb-3">
+                            <RotateCcw className="h-4 w-4" />
+                            Montants opérationnels (après avoirs)
+                          </div>
+                          
+                          {!isForeign && (
+                            <>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">{t('subtotal_ht')} original:</span>
+                                <span className="font-mono">{formatCurrency(invoice.subtotal_ht, invoice.currency)}</span>
+                              </div>
+                              <div className="flex justify-between text-sm text-red-600">
+                                <span>Remise HT (avoirs):</span>
+                                <span className="font-mono">-{formatCurrency(remiseHt, invoice.currency)}</span>
+                              </div>
+                              <div className="flex justify-between text-sm font-medium">
+                                <span className="text-muted-foreground">{t('subtotal_ht')} ajusté:</span>
+                                <span className="font-mono">{formatCurrency(opHt, invoice.currency)}</span>
+                              </div>
+                              <Separator className="my-1" />
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">{t('total_vat')} original:</span>
+                                <span className="font-mono">{formatCurrency(invoice.total_vat, invoice.currency)}</span>
+                              </div>
+                              <div className="flex justify-between text-sm text-red-600">
+                                <span>Remise TVA:</span>
+                                <span className="font-mono">-{formatCurrency(remiseVat, invoice.currency)}</span>
+                              </div>
+                              <div className="flex justify-between text-sm font-medium">
+                                <span className="text-muted-foreground">{t('total_vat')} ajustée:</span>
+                                <span className="font-mono">{formatCurrency(opVat, invoice.currency)}</span>
+                              </div>
+                              <Separator className="my-1" />
+                              <div className="flex justify-between text-sm font-medium">
+                                <span className="text-muted-foreground">{t('total_ttc')} ajusté:</span>
+                                <span className="font-mono">{formatCurrency(opTtc, invoice.currency)}</span>
+                              </div>
+                            </>
+                          )}
+
+                          {/* Withholding on adjusted */}
+                          {!isForeign && invoice.withholding_applied && withholdingRate > 0 && (
+                            <div className="flex justify-between text-sm text-red-600">
+                              <span>{t('withholding_tax')} ({withholdingRate}%):</span>
+                              <span className="font-mono">-{formatCurrency(opWithholdingAmount, invoice.currency)}</span>
+                            </div>
+                          )}
+
+                          {/* Stamp duty */}
+                          {!isForeign && invoice.stamp_duty_enabled && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{t('stamp_duty')}:</span>
+                              <span className="font-mono">{formatCurrency(stampDuty, 'TND')}</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-between pt-2 border-t border-primary/20 text-lg font-semibold">
+                            <span>{t('net_payable')} ajusté:</span>
+                            <span className="font-mono text-primary">
+                              {formatCurrency(opNetPayable, invoice.currency)}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {validatedCNs.length} avoir(s) validé(s) appliqué(s)
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <Separator />
