@@ -161,52 +161,67 @@ export type Database = {
         Row: {
           created_at: string
           credit_note_id: string
-          description: string | null
-          discount_percent: number
+          discount_ht: number
+          discount_rate: number
+          discount_ttc: number
           id: string
           invoice_line_id: string
           line_order: number
-          line_total_ht: number
-          line_total_ttc: number
-          line_vat: number
+          new_line_total_ht: number
+          new_line_total_ttc: number
+          new_line_vat: number
+          original_line_total_ht: number
+          original_line_total_ttc: number
+          original_line_vat: number
+          original_quantity: number
+          original_unit_price_ht: number
           product_id: string
-          quantity: number
-          stock_restored: boolean
-          unit_price_ht: number
+          product_name: string | null
+          product_reference: string | null
           vat_rate: number
         }
         Insert: {
           created_at?: string
           credit_note_id: string
-          description?: string | null
-          discount_percent?: number
+          discount_ht?: number
+          discount_rate?: number
+          discount_ttc?: number
           id?: string
           invoice_line_id: string
           line_order?: number
-          line_total_ht?: number
-          line_total_ttc?: number
-          line_vat?: number
+          new_line_total_ht?: number
+          new_line_total_ttc?: number
+          new_line_vat?: number
+          original_line_total_ht?: number
+          original_line_total_ttc?: number
+          original_line_vat?: number
+          original_quantity?: number
+          original_unit_price_ht?: number
           product_id: string
-          quantity?: number
-          stock_restored?: boolean
-          unit_price_ht?: number
+          product_name?: string | null
+          product_reference?: string | null
           vat_rate?: number
         }
         Update: {
           created_at?: string
           credit_note_id?: string
-          description?: string | null
-          discount_percent?: number
+          discount_ht?: number
+          discount_rate?: number
+          discount_ttc?: number
           id?: string
           invoice_line_id?: string
           line_order?: number
-          line_total_ht?: number
-          line_total_ttc?: number
-          line_vat?: number
+          new_line_total_ht?: number
+          new_line_total_ttc?: number
+          new_line_vat?: number
+          original_line_total_ht?: number
+          original_line_total_ttc?: number
+          original_line_vat?: number
+          original_quantity?: number
+          original_unit_price_ht?: number
           product_id?: string
-          quantity?: number
-          stock_restored?: boolean
-          unit_price_ht?: number
+          product_name?: string | null
+          product_reference?: string | null
           vat_rate?: number
         }
         Relationships: [
@@ -237,22 +252,20 @@ export type Database = {
         Row: {
           client_id: string
           created_at: string
-          credit_available: number
-          credit_blocked: number
-          credit_generated: number
           credit_note_counter: number
           credit_note_date: string
+          credit_note_method: string
           credit_note_number: string
           credit_note_prefix: string
           credit_note_type: string
           credit_note_year: number
-          credit_used: number
-          currency: string
+          financial_credit: number
           id: string
           invoice_id: string
-          net_amount: number
+          new_net_payable: number
           notes: string | null
           organization_id: string
+          original_net_payable: number
           reason: string | null
           stamp_duty_amount: number
           status: string
@@ -260,26 +273,26 @@ export type Database = {
           total_ttc: number
           total_vat: number
           updated_at: string
+          withholding_amount: number
+          withholding_rate: number
         }
         Insert: {
           client_id: string
           created_at?: string
-          credit_available?: number
-          credit_blocked?: number
-          credit_generated?: number
           credit_note_counter: number
           credit_note_date?: string
+          credit_note_method?: string
           credit_note_number: string
           credit_note_prefix?: string
           credit_note_type?: string
           credit_note_year: number
-          credit_used?: number
-          currency?: string
+          financial_credit?: number
           id?: string
           invoice_id: string
-          net_amount?: number
+          new_net_payable?: number
           notes?: string | null
           organization_id: string
+          original_net_payable?: number
           reason?: string | null
           stamp_duty_amount?: number
           status?: string
@@ -287,26 +300,26 @@ export type Database = {
           total_ttc?: number
           total_vat?: number
           updated_at?: string
+          withholding_amount?: number
+          withholding_rate?: number
         }
         Update: {
           client_id?: string
           created_at?: string
-          credit_available?: number
-          credit_blocked?: number
-          credit_generated?: number
           credit_note_counter?: number
           credit_note_date?: string
+          credit_note_method?: string
           credit_note_number?: string
           credit_note_prefix?: string
           credit_note_type?: string
           credit_note_year?: number
-          credit_used?: number
-          currency?: string
+          financial_credit?: number
           id?: string
           invoice_id?: string
-          net_amount?: number
+          new_net_payable?: number
           notes?: string | null
           organization_id?: string
+          original_net_payable?: number
           reason?: string | null
           stamp_duty_amount?: number
           status?: string
@@ -314,6 +327,8 @@ export type Database = {
           total_ttc?: number
           total_vat?: number
           updated_at?: string
+          withholding_amount?: number
+          withholding_rate?: number
         }
         Relationships: [
           {
