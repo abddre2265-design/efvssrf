@@ -599,8 +599,12 @@ export const PendingPublicUploadsBlock: React.FC<PendingPublicUploadsBlockProps>
             
             setIsInitialDialogOpen(false);
             
-            // Branch based on document category
-            if (docCategory === 'quittance_douaniere') {
+            // Branch based on document type and category
+            if (docType === 'local_purchase') {
+              // Local purchase always goes to invoice workflow
+              setLocalPurchaseUpload(updatedUpload);
+              setIsLocalPurchaseDialogOpen(true);
+            } else if (docCategory === 'quittance_douaniere') {
               // Customs receipt workflow
               setCustomsReceiptUpload(updatedUpload);
               setIsCustomsReceiptDialogOpen(true);
