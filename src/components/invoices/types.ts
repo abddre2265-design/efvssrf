@@ -26,6 +26,8 @@ export interface Invoice {
   withholding_rate: number;
   withholding_amount: number;
   withholding_applied: boolean;
+  total_credited: number;
+  credit_note_count: number;
   status: InvoiceStatus;
   payment_status: PaymentStatus;
   delivery_status: DeliveryStatus | null;
