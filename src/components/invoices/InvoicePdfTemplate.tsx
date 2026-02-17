@@ -78,6 +78,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const [lines, setLines] = useState<InvoiceLineWithProduct[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [banks, setBanks] = useState<OrganizationBank[]>([]);
+  const [creditNotes, setCreditNotes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Helper to check if a component is enabled
@@ -133,6 +134,15 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           .eq('invoice_id', invoiceId)
           .order('line_order', { ascending: true });
         setLines(linesData || []);
+
+        // Fetch credit notes for this invoice
+        const { data: creditNotesData } = await supabase
+          .from('credit_notes')
+          .select('*')
+          .eq('invoice_id', invoiceId)
+          .eq('status', 'validated')
+          .order('credit_note_date', { ascending: true });
+        setCreditNotes(creditNotesData || []);
 
       } catch (error) {
         console.error('Error fetching invoice data:', error);
@@ -496,6 +506,68 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
       color: #666;
     }
 
+    .invoice-credit-notes-block {
+      border: 2px solid #0a84ff;
+      margin-top: 12px;
+      padding: 10px;
+    }
+
+    .invoice-credit-notes-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0a84ff;
+      margin-bottom: 8px;
+      text-align: center;
+      border-bottom: 1px solid #0a84ff;
+      padding-bottom: 5px;
+    }
+
+    .invoice-credit-note-item {
+      border: 1px solid #e0e0e0;
+      padding: 8px;
+      margin-bottom: 6px;
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .invoice-credit-note-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .invoice-credit-note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .invoice-credit-note-number {
+      font-weight: 700;
+      color: #0a84ff;
+      font-size: 11px;
+    }
+
+    .invoice-credit-note-type {
+      display: inline-block;
+      background: #f4faff;
+      border: 1px solid #0a84ff;
+      color: #0a84ff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 9px;
+      font-weight: 600;
+    }
+
+    .invoice-credit-note-details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .invoice-credit-note-details span {
+      white-space: nowrap;
+    }
+
     .invoice-continuation-header {
       display: flex;
       justify-content: space-between;
@@ -774,10 +846,40 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
             {renderTableRows(pageLines)}
           </table>
 
-          {/* Only show totals and footer on last page */}
+          {/* Only show totals, credit notes block, and footer on last page */}
           {pageIndex === totalPages - 1 && (
             <>
               {renderTotals()}
+              {creditNotes.length > 0 && (
+                <div className="invoice-credit-notes-block">
+                  <div className="invoice-credit-notes-title">AVOIRS ASSOCIÉS</div>
+                  {creditNotes.map((cn) => (
+                    <div key={cn.id} className="invoice-credit-note-item">
+                      <div className="invoice-credit-note-header">
+                        <span className="invoice-credit-note-number">{cn.credit_note_number}</span>
+                        <span className="invoice-credit-note-type">
+                          {cn.credit_note_type === 'commercial_price' ? 'Avoir Commercial' : 'Avoir Produit'}
+                        </span>
+                      </div>
+                      <div className="invoice-credit-note-details">
+                        <span>Date : {format(new Date(cn.credit_note_date), 'dd/MM/yyyy', { locale: fr })}</span>
+                        <span>Méthode : {cn.credit_note_method === 'lines' ? 'Par ligne' : 'Sur total'}</span>
+                        <span>Réduction HT : {formatCurrency(cn.subtotal_ht, invoice.currency)}</span>
+                        <span>TVA : {formatCurrency(cn.total_vat, invoice.currency)}</span>
+                        <span>Réduction TTC : {formatCurrency(cn.total_ttc, invoice.currency)}</span>
+                        {cn.stamp_duty_amount > 0 && <span>Timbre : {formatCurrency(cn.stamp_duty_amount, 'TND')}</span>}
+                        {cn.withholding_amount > 0 && <span>Retenue : {formatCurrency(cn.withholding_amount, invoice.currency)}</span>}
+                        <span><strong>Nouveau Net : {formatCurrency(cn.new_net_payable, invoice.currency)}</strong></span>
+                      </div>
+                      {cn.reason && (
+                        <div style={{ marginTop: '3px', fontStyle: 'italic', color: '#666' }}>
+                          Motif : {cn.reason}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               {renderFooter()}
             </>
           )}
