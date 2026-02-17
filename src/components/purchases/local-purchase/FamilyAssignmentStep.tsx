@@ -45,7 +45,7 @@ export const FamilyAssignmentStep: React.FC<FamilyAssignmentStepProps> = ({
   const { t, isRTL } = useLanguage();
   const [families, setFamilies] = useState<DocumentFamily[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedFamilyId, setSelectedFamilyId] = useState<string>('none');
+  const [selectedFamilyId, setSelectedFamilyId] = useState<string>('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   
@@ -114,11 +114,12 @@ export const FamilyAssignmentStep: React.FC<FamilyAssignmentStepProps> = ({
   };
 
   const handleContinue = () => {
-    const familyId = selectedFamilyId === 'none' ? null : selectedFamilyId;
-    const familyName = familyId 
-      ? families.find(f => f.id === familyId)?.name || null 
-      : null;
-    onFamilyConfirmed(familyId, familyName);
+    if (!selectedFamilyId) {
+      toast.error('Veuillez sélectionner une famille de document');
+      return;
+    }
+    const familyName = families.find(f => f.id === selectedFamilyId)?.name || null;
+    onFamilyConfirmed(selectedFamilyId, familyName);
   };
 
   const selectedFamily = families.find(f => f.id === selectedFamilyId);
@@ -132,7 +133,7 @@ export const FamilyAssignmentStep: React.FC<FamilyAssignmentStepProps> = ({
             Assignation de famille
           </CardTitle>
           <CardDescription>
-            Assignez ce document à une famille pour une meilleure organisation (optionnel)
+            Assignez ce document à une famille pour une meilleure organisation
           </CardDescription>
         </CardHeader>
 
@@ -145,16 +146,13 @@ export const FamilyAssignmentStep: React.FC<FamilyAssignmentStepProps> = ({
             <>
               {/* Family Selection */}
               <div className="space-y-3">
-                <Label>Famille de document</Label>
+                <Label>Famille de document *</Label>
                 <div className="flex gap-2">
                   <Select value={selectedFamilyId} onValueChange={setSelectedFamilyId}>
                     <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Sélectionner une famille..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">
-                        <span className="text-muted-foreground">Aucune famille</span>
-                      </SelectItem>
                       {families.map(family => (
                         <SelectItem key={family.id} value={family.id}>
                           <div className="flex items-center gap-2">
@@ -190,7 +188,7 @@ export const FamilyAssignmentStep: React.FC<FamilyAssignmentStepProps> = ({
               )}
 
               {/* Available Families Preview */}
-              {families.length > 0 && selectedFamilyId === 'none' && (
+              {families.length > 0 && !selectedFamilyId && (
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Familles disponibles :</p>
                   <ScrollArea className="h-[150px]">
