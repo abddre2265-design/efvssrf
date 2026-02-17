@@ -142,7 +142,18 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           .eq('invoice_id', invoiceId)
           .eq('status', 'validated')
           .order('credit_note_date', { ascending: true });
-        setCreditNotes(creditNotesData || []);
+        
+        // Fetch credit note lines for each credit note
+        const cnWithLines = [];
+        for (const cn of (creditNotesData || [])) {
+          const { data: cnLines } = await supabase
+            .from('credit_note_lines')
+            .select('*')
+            .eq('credit_note_id', cn.id)
+            .order('line_order', { ascending: true });
+          cnWithLines.push({ ...cn, lines: cnLines || [] });
+        }
+        setCreditNotes(cnWithLines);
 
       } catch (error) {
         console.error('Error fetching invoice data:', error);
@@ -864,6 +875,41 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                       <div className="invoice-credit-note-details">
                         <span>Date : {format(new Date(cn.credit_note_date), 'dd/MM/yyyy', { locale: fr })}</span>
                         <span>Méthode : {cn.credit_note_method === 'lines' ? 'Par ligne' : 'Sur total'}</span>
+                      </div>
+
+                      {/* Line-by-line details table */}
+                      {cn.lines && cn.lines.length > 0 && (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '6px', fontSize: '9px' }}>
+                          <thead>
+                            <tr style={{ background: '#f4faff' }}>
+                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Produit</th>
+                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Réf</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Montant HT</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Remise HT</th>
+                              <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Taux</th>
+                              {!isForeign && <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>TVA</th>}
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Remise TTC</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Nouveau HT</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cn.lines.map((line: any) => (
+                              <tr key={line.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                                <td style={{ padding: '2px 5px' }}>{line.product_name || '-'}</td>
+                                <td style={{ padding: '2px 5px' }}>{line.product_reference || '-'}</td>
+                                <td style={{ textAlign: 'right', padding: '2px 5px' }}>{formatCurrency(line.original_line_total_ht, invoice.currency)}</td>
+                                <td style={{ textAlign: 'right', padding: '2px 5px', color: '#e53935' }}>-{formatCurrency(line.discount_ht, invoice.currency)}</td>
+                                <td style={{ textAlign: 'center', padding: '2px 5px' }}>{line.discount_rate.toFixed(1)}%</td>
+                                {!isForeign && <td style={{ textAlign: 'center', padding: '2px 5px' }}>{line.vat_rate}%</td>}
+                                <td style={{ textAlign: 'right', padding: '2px 5px', color: '#e53935' }}>-{formatCurrency(line.discount_ttc, invoice.currency)}</td>
+                                <td style={{ textAlign: 'right', padding: '2px 5px', fontWeight: 600 }}>{formatCurrency(line.new_line_total_ht, invoice.currency)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+
+                      <div className="invoice-credit-note-details" style={{ marginTop: '6px', borderTop: '1px solid #b0bec5', paddingTop: '4px' }}>
                         <span>Réduction HT : {formatCurrency(cn.subtotal_ht, invoice.currency)}</span>
                         <span>TVA : {formatCurrency(cn.total_vat, invoice.currency)}</span>
                         <span>Réduction TTC : {formatCurrency(cn.total_ttc, invoice.currency)}</span>
