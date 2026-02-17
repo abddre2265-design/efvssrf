@@ -60,6 +60,9 @@ interface InvoiceFullDetails {
   lines: InvoiceLineWithProduct[];
   customTaxes: SelectedCustomTax[];
   stampDuty: number;
+  // Remaining amounts after previous credit notes (operational base)
+  remainingLineAmounts: Record<string, { remainingHt: number; remainingTtc: number }>;
+  previousTotalCredited: number;
 }
 
 export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProps> = ({
@@ -91,7 +94,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
       if (!invoice || !open) return;
       setIsLoading(true);
       try {
-        const [linesRes, taxesRes] = await Promise.all([
+        const [linesRes, taxesRes, prevCreditNotesRes] = await Promise.all([
           supabase
             .from('invoice_lines')
             .select('*, product:products(id, name, reference, ean)')
@@ -101,9 +104,45 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
             .from('invoice_custom_taxes')
             .select('*, tax_value:custom_tax_values(*, tax_type:custom_tax_types(*))')
             .eq('invoice_id', invoice.id),
+          supabase
+            .from('credit_notes')
+            .select('id, status, subtotal_ht, total_vat, total_ttc, original_net_payable, new_net_payable')
+            .eq('invoice_id', invoice.id)
+            .in('status', ['validated', 'draft']),
         ]);
 
         const lines = (linesRes.data || []) as unknown as InvoiceLineWithProduct[];
+        const validatedCreditNotes = (prevCreditNotesRes.data || []).filter((cn: any) => cn.status === 'validated');
+
+        // Fetch previous credit note lines for validated credit notes
+        let remainingLineAmounts: Record<string, { remainingHt: number; remainingTtc: number }> = {};
+        let previousTotalCredited = 0;
+
+        // Initialize with original line amounts
+        lines.forEach(l => {
+          remainingLineAmounts[l.id] = { remainingHt: l.line_total_ht, remainingTtc: l.line_total_ttc };
+        });
+
+        if (validatedCreditNotes.length > 0) {
+          const cnIds = validatedCreditNotes.map((cn: any) => cn.id);
+          const { data: prevLines } = await supabase
+            .from('credit_note_lines')
+            .select('invoice_line_id, discount_ht, discount_ttc')
+            .in('credit_note_id', cnIds);
+
+          if (prevLines) {
+            prevLines.forEach((pl: any) => {
+              if (remainingLineAmounts[pl.invoice_line_id]) {
+                remainingLineAmounts[pl.invoice_line_id].remainingHt -= pl.discount_ht;
+                remainingLineAmounts[pl.invoice_line_id].remainingTtc -= pl.discount_ttc;
+              }
+            });
+          }
+
+          previousTotalCredited = validatedCreditNotes.reduce((sum: number, cn: any) => {
+            return sum + (cn.original_net_payable - cn.new_net_payable);
+          }, 0);
+        }
 
         // Map custom taxes
         const customTaxes: SelectedCustomTax[] = (taxesRes.data || []).map((t: any) => ({
@@ -118,7 +157,11 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
 
         const stampDuty = invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0;
 
-        setDetails({ invoice, lines, customTaxes, stampDuty });
+        // Compute operational amounts (remaining after previous credit notes)
+        const operationalSubtotalHt = Object.values(remainingLineAmounts).reduce((sum, v) => sum + v.remainingHt, 0);
+        const operationalTotalTtc = Object.values(remainingLineAmounts).reduce((sum, v) => sum + v.remainingTtc, 0);
+
+        setDetails({ invoice, lines, customTaxes, stampDuty, remainingLineAmounts, previousTotalCredited });
         
         // Init line discounts
         setLineDiscounts(lines.map(l => ({
@@ -129,8 +172,8 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
           lastEdited: 'ht',
         })));
 
-        setTotalNewHt(invoice.subtotal_ht);
-        setTotalNewTtc(invoice.total_ttc);
+        setTotalNewHt(operationalSubtotalHt);
+        setTotalNewTtc(operationalTotalTtc);
         setWithholdingOverride(null);
         withholdingPromptShown.current = false;
       } catch (error) {
@@ -144,7 +187,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
 
   const isForeign = details?.invoice.client_type === 'foreign';
 
-  // Sync line discount fields
+  // Sync line discount fields (capped by remaining amounts after previous credit notes)
   const updateLineDiscount = useCallback((lineId: string, field: 'ht' | 'ttc' | 'rate', value: number) => {
     if (!details) return;
     setLineDiscounts(prev => prev.map(ld => {
@@ -153,27 +196,30 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
       if (!line) return ld;
 
       const vatRate = isForeign ? 0 : line.vat_rate;
+      const remaining = details.remainingLineAmounts[lineId];
+      const maxHt = remaining?.remainingHt ?? line.line_total_ht;
+      const maxTtc = remaining?.remainingTtc ?? line.line_total_ttc;
 
       if (field === 'ht') {
-        const discountHt = Math.min(value, line.line_total_ht);
+        const discountHt = Math.min(Math.max(0, value), maxHt);
         const discountTtc = discountHt * (1 + vatRate / 100);
-        const discountRate = line.line_total_ht > 0 ? (discountHt / line.line_total_ht) * 100 : 0;
+        const discountRate = maxHt > 0 ? (discountHt / maxHt) * 100 : 0;
         return { ...ld, discountHt, discountTtc, discountRate, lastEdited: 'ht' };
       } else if (field === 'ttc') {
-        const discountTtc = Math.min(value, line.line_total_ttc);
+        const discountTtc = Math.min(Math.max(0, value), maxTtc);
         const discountHt = discountTtc / (1 + vatRate / 100);
-        const discountRate = line.line_total_ht > 0 ? (discountHt / line.line_total_ht) * 100 : 0;
+        const discountRate = maxHt > 0 ? (discountHt / maxHt) * 100 : 0;
         return { ...ld, discountHt, discountTtc, discountRate, lastEdited: 'ttc' };
       } else {
-        const discountRate = Math.min(value, 100);
-        const discountHt = line.line_total_ht * (discountRate / 100);
+        const discountRate = Math.min(Math.max(0, value), 100);
+        const discountHt = maxHt * (discountRate / 100);
         const discountTtc = discountHt * (1 + vatRate / 100);
         return { ...ld, discountHt, discountTtc, discountRate, lastEdited: 'rate' };
       }
     }));
   }, [details, isForeign]);
 
-  // Compute new totals from line discounts (Mode 1)
+  // Compute new totals from line discounts (Mode 1) - based on remaining amounts
   const computeLineTotals = useCallback(() => {
     if (!details) return null;
     
@@ -184,7 +230,9 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
     details.lines.forEach(line => {
       const ld = lineDiscounts.find(d => d.lineId === line.id);
       const discountHt = ld?.discountHt || 0;
-      const newLineHt = line.line_total_ht - discountHt;
+      const remaining = details.remainingLineAmounts[line.id];
+      const remainingHt = remaining?.remainingHt ?? line.line_total_ht;
+      const newLineHt = remainingHt - discountHt;
       const vatRate = isForeign ? 0 : line.vat_rate;
       const newLineVat = newLineHt * (vatRate / 100);
 
@@ -208,19 +256,21 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
     return { newSubtotalHt, newTotalVat, newTotalTtc, vatBreakdown, totalDiscountHt };
   }, [details, lineDiscounts, isForeign]);
 
-  // Compute new totals from total mode (Mode 2)
+  // Compute new totals from total mode (Mode 2) - based on remaining amounts
   const computeTotalModeTotals = useCallback(() => {
     if (!details) return null;
 
-    // Proportional distribution of discount
-    const originalHt = details.invoice.subtotal_ht;
-    const ratio = originalHt > 0 ? totalNewHt / originalHt : 1;
+    // Remaining operational HT
+    const operationalHt = Object.values(details.remainingLineAmounts).reduce((sum, v) => sum + v.remainingHt, 0);
+    const ratio = operationalHt > 0 ? totalNewHt / operationalHt : 1;
 
     const vatMap: Record<number, { base: number; vat: number }> = {};
     let newSubtotalHt = 0;
 
     details.lines.forEach(line => {
-      const newLineHt = line.line_total_ht * ratio;
+      const remaining = details.remainingLineAmounts[line.id];
+      const remainingHt = remaining?.remainingHt ?? line.line_total_ht;
+      const newLineHt = remainingHt * ratio;
       const vatRate = isForeign ? 0 : line.vat_rate;
       const newLineVat = newLineHt * (vatRate / 100);
 
@@ -240,7 +290,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
       .map(([rate, { base, vat }]) => ({ rate: Number(rate), baseHt: base, vatAmount: vat }))
       .sort((a, b) => a.rate - b.rate);
 
-    return { newSubtotalHt, newTotalVat, newTotalTtc, vatBreakdown, totalDiscountHt: originalHt - newSubtotalHt };
+    return { newSubtotalHt, newTotalVat, newTotalTtc, vatBreakdown, totalDiscountHt: operationalHt - newSubtotalHt };
   }, [details, totalNewHt, isForeign]);
 
   const newTotals = mode === 'lines' ? computeLineTotals() : computeTotalModeTotals();
@@ -305,10 +355,13 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
       .sort((a, b) => a.rate - b.rate);
   }, [details, isForeign]);
 
-  // Handle total mode HT change
+  // Handle total mode HT change (capped by remaining operational HT)
+  const operationalHt = details ? Object.values(details.remainingLineAmounts).reduce((sum, v) => sum + v.remainingHt, 0) : 0;
+  const operationalTtc = details ? Object.values(details.remainingLineAmounts).reduce((sum, v) => sum + v.remainingTtc, 0) : 0;
+
   const handleTotalHtChange = (value: number) => {
     if (!details) return;
-    const clamped = Math.min(Math.max(0, value), details.invoice.subtotal_ht);
+    const clamped = Math.min(Math.max(0, value), operationalHt);
     setTotalNewHt(clamped);
     setTotalLastEdited('ht');
   };
@@ -316,25 +369,22 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
   // Handle total mode TTC change - reverse-calculate HT
   const handleTotalTtcChange = (value: number) => {
     if (!details) return;
-    const clamped = Math.min(Math.max(0, value), details.invoice.total_ttc);
-    const origTtc = details.invoice.total_ttc;
-    const origHt = details.invoice.subtotal_ht;
-    if (origTtc > 0) {
-      const ratio = clamped / origTtc;
-      setTotalNewHt(origHt * ratio);
+    const clamped = Math.min(Math.max(0, value), operationalTtc);
+    if (operationalTtc > 0) {
+      const ratio = clamped / operationalTtc;
+      setTotalNewHt(operationalHt * ratio);
     }
     setTotalLastEdited('ttc');
   };
 
-  // Handle total mode VAT change - keep HT, derive TTC
+  // Handle total mode VAT change
   const handleTotalVatChange = (value: number) => {
     if (!details) return;
-    const origVat = details.invoice.total_vat;
-    const origHt = details.invoice.subtotal_ht;
-    const clamped = Math.min(Math.max(0, value), origVat);
-    if (origVat > 0) {
-      const ratio = clamped / origVat;
-      setTotalNewHt(origHt * ratio);
+    const operationalVat = operationalTtc - operationalHt;
+    const clamped = Math.min(Math.max(0, value), operationalVat);
+    if (operationalVat > 0) {
+      const ratio = clamped / operationalVat;
+      setTotalNewHt(operationalHt * ratio);
     }
     setTotalLastEdited('vat');
   };
@@ -358,22 +408,24 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
       const nextCounter = ((lastCn as any)?.credit_note_counter || 0) + 1;
       const cnNumber = `AV-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
 
-      const originalRatio = details.invoice.subtotal_ht > 0 ? totalNewHt / details.invoice.subtotal_ht : 1;
+      const originalRatio = operationalHt > 0 ? totalNewHt / operationalHt : 1;
 
-      // Build line data
+      // Build line data - using remaining amounts as the base
       const buildLines = () => {
         return details.lines.map((line, idx) => {
+          const remaining = details.remainingLineAmounts[line.id];
+          const remainingHt = remaining?.remainingHt ?? line.line_total_ht;
           let discountHt: number, discountRate: number;
           if (mode === 'lines') {
             const ld = lineDiscounts.find(d => d.lineId === line.id);
             discountHt = ld?.discountHt || 0;
             discountRate = ld?.discountRate || 0;
           } else {
-            discountHt = line.line_total_ht * (1 - originalRatio);
-            discountRate = line.line_total_ht > 0 ? (discountHt / line.line_total_ht) * 100 : 0;
+            discountHt = remainingHt * (1 - originalRatio);
+            discountRate = remainingHt > 0 ? (discountHt / remainingHt) * 100 : 0;
           }
           const vatRate = isForeign ? 0 : line.vat_rate;
-          const newLineHt = line.line_total_ht - discountHt;
+          const newLineHt = remainingHt - discountHt;
           const newLineVat = newLineHt * (vatRate / 100);
           const newLineTtc = newLineHt + newLineVat;
           const discountTtc = discountHt * (1 + vatRate / 100);
@@ -385,9 +437,9 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
             product_reference: line.product?.reference || null,
             original_quantity: line.quantity,
             original_unit_price_ht: line.unit_price_ht,
-            original_line_total_ht: line.line_total_ht,
+            original_line_total_ht: remainingHt,
             original_line_vat: line.line_vat,
-            original_line_total_ttc: line.line_total_ttc,
+            original_line_total_ttc: remaining?.remainingTtc ?? line.line_total_ttc,
             discount_ht: discountHt,
             discount_ttc: discountTtc,
             discount_rate: discountRate,
@@ -401,6 +453,10 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
       };
 
       const cnLines = buildLines();
+
+      // Compute the credit amount (difference between current operational net payable and new net payable)
+      const currentOperationalNetPayable = invoice.net_payable - details.previousTotalCredited;
+      const thisCreditAmount = currentOperationalNetPayable - newNetPayable;
 
       // Insert credit note
       const { data: cnData, error: cnError } = await supabase
@@ -421,7 +477,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
           stamp_duty_amount: details.stampDuty,
           withholding_rate: effectiveWithholdingRate,
           withholding_amount: newWithholdingAmount,
-          original_net_payable: details.invoice.net_payable,
+          original_net_payable: currentOperationalNetPayable,
           new_net_payable: newNetPayable,
           financial_credit: financialCredit,
           status: 'validated',
@@ -442,6 +498,18 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
         .insert(linesWithCnId as any);
 
       if (linesError) throw linesError;
+
+      // Update invoice operational fields (total_credited, credit_note_count)
+      const newTotalCredited = details.previousTotalCredited + thisCreditAmount;
+      const { error: invoiceUpdateError } = await supabase
+        .from('invoices')
+        .update({
+          total_credited: newTotalCredited,
+          credit_note_count: (invoice.credit_note_count || 0) + 1,
+        })
+        .eq('id', invoice.id);
+
+      if (invoiceUpdateError) throw invoiceUpdateError;
 
       toast.success(t('credit_note_created'));
       onOpenChange(false);

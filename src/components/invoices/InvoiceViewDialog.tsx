@@ -415,6 +415,39 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
               {creditNotes.length > 0 && (
                 <>
                   <Separator />
+
+                  {/* Operational Summary - Updated amounts after credit notes */}
+                  <div className="flex justify-end">
+                    <div className="w-80 space-y-2 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="flex items-center gap-2 text-primary font-medium mb-3">
+                        <RotateCcw className="h-4 w-4" />
+                        Montants opérationnels (après avoirs)
+                      </div>
+                      
+                      {!isForeign && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Total TTC ajusté:</span>
+                          <span className="font-mono font-medium">
+                            {formatCurrency(invoice.total_ttc - (invoice.total_credited || 0), invoice.currency)}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between pt-2 border-t border-primary/20 text-lg font-semibold">
+                        <span>Net à payer ajusté:</span>
+                        <span className="font-mono text-primary">
+                          {formatCurrency(invoice.net_payable - (invoice.total_credited || 0), invoice.currency)}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {creditNotes.filter(cn => cn.status === 'validated').length} avoir(s) validé(s) appliqué(s)
+                      </p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-primary font-medium">
                       <ClipboardList className="h-4 w-4" />
@@ -440,6 +473,16 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
                           <div>
                             <span className="text-muted-foreground">{t('total_ttc')}:</span>
                             <p className="font-mono font-medium">{formatCurrency(cn.total_ttc, 'TND')}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm border-t pt-2">
+                          <div>
+                            <span className="text-muted-foreground">Net avant:</span>
+                            <p className="font-mono">{formatCurrency(cn.original_net_payable, 'TND')}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Net après:</span>
+                            <p className="font-mono font-medium">{formatCurrency(cn.new_net_payable, 'TND')}</p>
                           </div>
                         </div>
                         {cn.financial_credit > 0 && (

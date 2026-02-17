@@ -189,12 +189,14 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
               </TableCell>
               <TableCell className="text-right font-medium">
                 {formatCurrency(
-                  invoice.client_type === 'foreign' ? invoice.subtotal_ht : invoice.total_ttc,
+                  invoice.client_type === 'foreign' 
+                    ? invoice.subtotal_ht 
+                    : invoice.total_ttc - (invoice.total_credited || 0),
                   invoice.currency
                 )}
               </TableCell>
               <TableCell className="text-right font-semibold text-primary">
-                {formatCurrency(invoice.net_payable, invoice.currency)}
+                {formatCurrency(invoice.net_payable - (invoice.total_credited || 0), invoice.currency)}
               </TableCell>
               <TableCell>
                 <div className="flex flex-col gap-1">
