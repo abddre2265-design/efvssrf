@@ -126,7 +126,18 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
           .eq('invoice_id', invoiceId)
           .order('created_at', { ascending: false });
 
-        setCreditNotes((cnData || []) as unknown as CreditNote[]);
+        // Fetch credit note lines for each credit note
+        const cnWithLines = [];
+        for (const cn of (cnData || [])) {
+          const { data: cnLines } = await supabase
+            .from('credit_note_lines')
+            .select('*')
+            .eq('credit_note_id', cn.id)
+            .order('line_order', { ascending: true });
+          cnWithLines.push({ ...cn, lines: cnLines || [] });
+        }
+
+        setCreditNotes(cnWithLines as unknown as CreditNote[]);
 
         setInvoice({
           ...invoiceData,
@@ -475,6 +486,44 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
                             <p className="font-mono font-medium">{formatCurrency(cn.total_ttc, 'TND')}</p>
                           </div>
                         </div>
+
+                        {/* Line-by-line details */}
+                        {(cn as any).lines && (cn as any).lines.length > 0 && (
+                          <div className="rounded-lg border overflow-hidden mt-2">
+                            <table className="w-full text-xs">
+                              <thead className="bg-muted/50">
+                                <tr>
+                                  <th className="text-start p-2 font-medium">{t('product')}</th>
+                                  <th className="text-end p-2 font-medium">Montant HT</th>
+                                  <th className="text-end p-2 font-medium">Remise HT</th>
+                                  <th className="text-center p-2 font-medium">Taux</th>
+                                  {!isForeign && <th className="text-center p-2 font-medium">{t('vat')}</th>}
+                                  <th className="text-end p-2 font-medium">Remise TTC</th>
+                                  <th className="text-end p-2 font-medium">Nouveau HT</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {(cn as any).lines.map((line: any, idx: number) => (
+                                  <tr key={line.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                                    <td className="p-2">
+                                      <div className="font-medium">{line.product_name || '-'}</div>
+                                      {line.product_reference && (
+                                        <div className="text-[10px] text-muted-foreground font-mono">{line.product_reference}</div>
+                                      )}
+                                    </td>
+                                    <td className="text-end p-2 font-mono">{formatCurrency(line.original_line_total_ht, 'TND')}</td>
+                                    <td className="text-end p-2 font-mono text-red-600">-{formatCurrency(line.discount_ht, 'TND')}</td>
+                                    <td className="text-center p-2">{line.discount_rate.toFixed(1)}%</td>
+                                    {!isForeign && <td className="text-center p-2">{line.vat_rate}%</td>}
+                                    <td className="text-end p-2 font-mono text-red-600">-{formatCurrency(line.discount_ttc, 'TND')}</td>
+                                    <td className="text-end p-2 font-mono font-semibold">{formatCurrency(line.new_line_total_ht, 'TND')}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-2 text-sm border-t pt-2">
                           <div>
                             <span className="text-muted-foreground">Net avant:</span>
