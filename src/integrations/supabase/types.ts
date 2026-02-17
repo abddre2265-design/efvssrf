@@ -157,6 +157,188 @@ export type Database = {
           },
         ]
       }
+      credit_note_lines: {
+        Row: {
+          created_at: string
+          credit_note_id: string
+          description: string | null
+          discount_percent: number
+          id: string
+          invoice_line_id: string
+          line_order: number
+          line_total_ht: number
+          line_total_ttc: number
+          line_vat: number
+          product_id: string
+          quantity: number
+          stock_restored: boolean
+          unit_price_ht: number
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          credit_note_id: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          invoice_line_id: string
+          line_order?: number
+          line_total_ht?: number
+          line_total_ttc?: number
+          line_vat?: number
+          product_id: string
+          quantity?: number
+          stock_restored?: boolean
+          unit_price_ht?: number
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          credit_note_id?: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          invoice_line_id?: string
+          line_order?: number
+          line_total_ht?: number
+          line_total_ttc?: number
+          line_vat?: number
+          product_id?: string
+          quantity?: number
+          stock_restored?: boolean
+          unit_price_ht?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_note_lines_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "credit_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_note_lines_invoice_line_id_fkey"
+            columns: ["invoice_line_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_note_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_notes: {
+        Row: {
+          client_id: string
+          created_at: string
+          credit_available: number
+          credit_blocked: number
+          credit_generated: number
+          credit_note_counter: number
+          credit_note_date: string
+          credit_note_number: string
+          credit_note_prefix: string
+          credit_note_type: string
+          credit_note_year: number
+          credit_used: number
+          currency: string
+          id: string
+          invoice_id: string
+          net_amount: number
+          notes: string | null
+          organization_id: string
+          reason: string | null
+          stamp_duty_amount: number
+          status: string
+          subtotal_ht: number
+          total_ttc: number
+          total_vat: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          credit_available?: number
+          credit_blocked?: number
+          credit_generated?: number
+          credit_note_counter: number
+          credit_note_date?: string
+          credit_note_number: string
+          credit_note_prefix?: string
+          credit_note_type?: string
+          credit_note_year: number
+          credit_used?: number
+          currency?: string
+          id?: string
+          invoice_id: string
+          net_amount?: number
+          notes?: string | null
+          organization_id: string
+          reason?: string | null
+          stamp_duty_amount?: number
+          status?: string
+          subtotal_ht?: number
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          credit_available?: number
+          credit_blocked?: number
+          credit_generated?: number
+          credit_note_counter?: number
+          credit_note_date?: string
+          credit_note_number?: string
+          credit_note_prefix?: string
+          credit_note_type?: string
+          credit_note_year?: number
+          credit_used?: number
+          currency?: string
+          id?: string
+          invoice_id?: string
+          net_amount?: number
+          notes?: string | null
+          organization_id?: string
+          reason?: string | null
+          stamp_duty_amount?: number
+          status?: string
+          subtotal_ht?: number
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_tax_types: {
         Row: {
           application_order: string
@@ -994,6 +1176,7 @@ export type Database = {
           client_id: string
           client_type: string
           created_at: string
+          credit_note_count: number
           currency: string
           delivery_status: string | null
           due_date: string | null
@@ -1014,6 +1197,7 @@ export type Database = {
           stamp_duty_enabled: boolean
           status: Database["public"]["Enums"]["invoice_status"]
           subtotal_ht: number
+          total_credited: number
           total_discount: number
           total_ttc: number
           total_vat: number
@@ -1026,6 +1210,7 @@ export type Database = {
           client_id: string
           client_type: string
           created_at?: string
+          credit_note_count?: number
           currency?: string
           delivery_status?: string | null
           due_date?: string | null
@@ -1046,6 +1231,7 @@ export type Database = {
           stamp_duty_enabled?: boolean
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal_ht?: number
+          total_credited?: number
           total_discount?: number
           total_ttc?: number
           total_vat?: number
@@ -1058,6 +1244,7 @@ export type Database = {
           client_id?: string
           client_type?: string
           created_at?: string
+          credit_note_count?: number
           currency?: string
           delivery_status?: string | null
           due_date?: string | null
@@ -1078,6 +1265,7 @@ export type Database = {
           stamp_duty_enabled?: boolean
           status?: Database["public"]["Enums"]["invoice_status"]
           subtotal_ht?: number
+          total_credited?: number
           total_discount?: number
           total_ttc?: number
           total_vat?: number
@@ -2326,6 +2514,7 @@ export type Database = {
       }
       get_client_balance: { Args: { p_client_id: string }; Returns: number }
       has_organization: { Args: never; Returns: boolean }
+      is_credit_note_owner: { Args: { cn_id: string }; Returns: boolean }
       is_custom_tax_value_in_use: {
         Args: { value_id: string }
         Returns: boolean
