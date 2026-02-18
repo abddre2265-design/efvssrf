@@ -83,6 +83,9 @@ import {
   ArrowUpDown,
   Send,
   FileSearch,
+  ChevronDown,
+  ChevronRight,
+  Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -117,6 +120,21 @@ interface PurchasePayment {
   };
 }
 
+interface PurchaseLineItem {
+  id: string;
+  purchase_document_id: string;
+  reference: string | null;
+  name: string;
+  quantity: number;
+  unit_price_ht: number;
+  vat_rate: number;
+  discount_percent: number;
+  line_total_ht: number;
+  line_vat: number;
+  line_total_ttc: number;
+  line_order: number;
+}
+
 interface PurchaseDocument {
   id: string;
   invoice_number: string | null;
@@ -142,6 +160,7 @@ interface PurchaseDocument {
     company_name: string | null;
     supplier_type: string;
   };
+  lines?: PurchaseLineItem[];
 }
 
 const PAYMENT_METHODS = [
@@ -180,6 +199,7 @@ const PurchasePayments: React.FC = () => {
   
   // Payment dialog
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [selectedDocument, setSelectedDocument] = useState<PurchaseDocument | null>(null);
   
   // Payment request dialogs
@@ -251,7 +271,8 @@ const PurchasePayments: React.FC = () => {
           withholding_rate,
           withholding_amount,
           withholding_applied,
-          supplier:suppliers(id, first_name, last_name, company_name, supplier_type)
+          supplier:suppliers(id, first_name, last_name, company_name, supplier_type),
+          lines:purchase_lines(id, purchase_document_id, reference, name, quantity, unit_price_ht, vat_rate, discount_percent, line_total_ht, line_vat, line_total_ttc, line_order)
         `)
         .in('payment_status', ['unpaid', 'partial'])
         .eq('status', 'validated')
@@ -826,10 +847,11 @@ const PurchasePayments: React.FC = () => {
         {/* Unpaid Documents Tab */}
         <TabsContent value="unpaid" className="space-y-4">
           <Card>
-            <ScrollArea className="h-[500px]">
+            <ScrollArea className="h-[600px]">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-8"></TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>N° Facture</TableHead>
                     <TableHead>Fournisseur</TableHead>
@@ -843,7 +865,7 @@ const PurchasePayments: React.FC = () => {
                 <TableBody>
                   {unpaidDocuments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                         <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
                         Toutes les factures sont payées !
                       </TableCell>
@@ -851,68 +873,181 @@ const PurchasePayments: React.FC = () => {
                   ) : (
                     unpaidDocuments.map((doc) => {
                       const remaining = doc.net_payable - doc.paid_amount;
+                      const isExpanded = expandedDocs.has(doc.id);
+                      const lines = doc.lines || [];
                       return (
-                        <TableRow key={doc.id}>
-                          <TableCell>
-                            {doc.invoice_date ? format(new Date(doc.invoice_date), 'dd/MM/yyyy') : '-'}
-                          </TableCell>
-                          <TableCell className="font-mono">
-                            {doc.invoice_number || 'N/A'}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {getDocumentSupplierName(doc)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(doc.net_payable, doc.currency)}
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground">
-                            {formatCurrency(doc.paid_amount, doc.currency)}
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-orange-600">
-                            {formatCurrency(remaining, doc.currency)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={doc.payment_status === 'partial' ? 'secondary' : 'destructive'}>
-                              {doc.payment_status === 'partial' ? 'Partiel' : 'Non payé'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {(() => {
-                              const existingReq = getDocumentRequestStatus(doc.id);
-                              if (existingReq) {
-                                if (existingReq.status === 'awaiting_approval') {
+                        <React.Fragment key={doc.id}>
+                          <TableRow 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => {
+                              setExpandedDocs(prev => {
+                                const next = new Set(prev);
+                                if (next.has(doc.id)) next.delete(doc.id);
+                                else next.add(doc.id);
+                                return next;
+                              });
+                            }}
+                          >
+                            <TableCell className="w-8 px-2">
+                              {isExpanded ? (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {doc.invoice_date ? format(new Date(doc.invoice_date), 'dd/MM/yyyy') : '-'}
+                            </TableCell>
+                            <TableCell className="font-mono">
+                              {doc.invoice_number || 'N/A'}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {getDocumentSupplierName(doc)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatCurrency(doc.net_payable, doc.currency)}
+                            </TableCell>
+                            <TableCell className="text-right text-muted-foreground">
+                              {formatCurrency(doc.paid_amount, doc.currency)}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-orange-600">
+                              {formatCurrency(remaining, doc.currency)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={doc.payment_status === 'partial' ? 'secondary' : 'destructive'}>
+                                {doc.payment_status === 'partial' ? 'Partiel' : 'Non payé'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              {(() => {
+                                const existingReq = getDocumentRequestStatus(doc.id);
+                                if (existingReq) {
+                                  if (existingReq.status === 'awaiting_approval') {
+                                    return (
+                                      <Button 
+                                        size="sm" 
+                                        variant="secondary"
+                                        onClick={() => handleAnalyzeRequest(existingReq)}
+                                        className="gap-2"
+                                      >
+                                        <FileSearch className="h-4 w-4" />
+                                        Analyser
+                                      </Button>
+                                    );
+                                  }
                                   return (
-                                    <Button 
-                                      size="sm" 
-                                      variant="secondary"
-                                      onClick={() => handleAnalyzeRequest(existingReq)}
-                                      className="gap-2"
-                                    >
-                                      <FileSearch className="h-4 w-4" />
-                                      Analyser
-                                    </Button>
+                                    <Badge className="bg-yellow-100 text-yellow-800">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      En attente
+                                    </Badge>
                                   );
                                 }
                                 return (
-                                  <Badge className="bg-yellow-100 text-yellow-800">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    En attente
-                                  </Badge>
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => handleRequestPayment(doc)}
+                                    className="gap-2"
+                                  >
+                                    <Send className="h-4 w-4" />
+                                    Demande de paiement
+                                  </Button>
                                 );
-                              }
-                              return (
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleRequestPayment(doc)}
-                                  className="gap-2"
-                                >
-                                  <Send className="h-4 w-4" />
-                                  Demande de paiement
-                                </Button>
-                              );
-                            })()}
-                          </TableCell>
-                        </TableRow>
+                              })()}
+                            </TableCell>
+                          </TableRow>
+                          {/* Expanded Lines */}
+                          {isExpanded && lines.length > 0 && (
+                            <TableRow>
+                              <TableCell colSpan={9} className="p-0 border-b">
+                                <div className="bg-muted/30 px-6 py-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Package className="h-4 w-4 text-primary" />
+                                    <span className="text-sm font-semibold">Détail des lignes ({lines.length})</span>
+                                  </div>
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow className="text-xs">
+                                        <TableHead className="py-1 h-8">Réf</TableHead>
+                                        <TableHead className="py-1 h-8">Désignation</TableHead>
+                                        <TableHead className="py-1 h-8 text-right">Qté</TableHead>
+                                        <TableHead className="py-1 h-8 text-right">P.U HT</TableHead>
+                                        <TableHead className="py-1 h-8 text-right">Remise %</TableHead>
+                                        <TableHead className="py-1 h-8 text-right">Total HT</TableHead>
+                                        <TableHead className="py-1 h-8 text-right">TVA ({lines[0]?.vat_rate}%)</TableHead>
+                                        <TableHead className="py-1 h-8 text-right">Total TTC</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {lines
+                                        .sort((a, b) => a.line_order - b.line_order)
+                                        .map((line) => (
+                                        <TableRow key={line.id} className="text-xs">
+                                          <TableCell className="py-1 font-mono text-muted-foreground">
+                                            {line.reference || '-'}
+                                          </TableCell>
+                                          <TableCell className="py-1 max-w-[250px] truncate">
+                                            {line.name}
+                                          </TableCell>
+                                          <TableCell className="py-1 text-right">{line.quantity}</TableCell>
+                                          <TableCell className="py-1 text-right">
+                                            {formatCurrency(line.unit_price_ht, doc.currency)}
+                                          </TableCell>
+                                          <TableCell className="py-1 text-right">
+                                            {line.discount_percent > 0 ? `${line.discount_percent}%` : '-'}
+                                          </TableCell>
+                                          <TableCell className="py-1 text-right font-medium">
+                                            {formatCurrency(line.line_total_ht, doc.currency)}
+                                          </TableCell>
+                                          <TableCell className="py-1 text-right text-muted-foreground">
+                                            {formatCurrency(line.line_vat, doc.currency)}
+                                          </TableCell>
+                                          <TableCell className="py-1 text-right font-medium">
+                                            {formatCurrency(line.line_total_ttc, doc.currency)}
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                      {/* Totals row */}
+                                      <TableRow className="text-xs border-t-2 font-semibold">
+                                        <TableCell colSpan={5} className="py-2 text-right">Totaux</TableCell>
+                                        <TableCell className="py-2 text-right">{formatCurrency(doc.subtotal_ht, doc.currency)}</TableCell>
+                                        <TableCell className="py-2 text-right">{formatCurrency(doc.total_vat, doc.currency)}</TableCell>
+                                        <TableCell className="py-2 text-right">{formatCurrency(doc.total_ttc, doc.currency)}</TableCell>
+                                      </TableRow>
+                                      {/* Net payable */}
+                                      {(doc.stamp_duty_amount > 0 || doc.withholding_applied) && (
+                                        <>
+                                          {doc.stamp_duty_amount > 0 && (
+                                            <TableRow className="text-xs">
+                                              <TableCell colSpan={7} className="py-1 text-right text-muted-foreground">Timbre fiscal</TableCell>
+                                              <TableCell className="py-1 text-right">{formatCurrency(doc.stamp_duty_amount, doc.currency)}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          {doc.withholding_applied && doc.withholding_amount > 0 && (
+                                            <TableRow className="text-xs">
+                                              <TableCell colSpan={7} className="py-1 text-right text-muted-foreground">Retenue à la source ({doc.withholding_rate}%)</TableCell>
+                                              <TableCell className="py-1 text-right text-orange-600">-{formatCurrency(doc.withholding_amount, doc.currency)}</TableCell>
+                                            </TableRow>
+                                          )}
+                                          <TableRow className="text-sm font-bold border-t">
+                                            <TableCell colSpan={7} className="py-2 text-right">Net à payer</TableCell>
+                                            <TableCell className="py-2 text-right text-primary">{formatCurrency(doc.net_payable, doc.currency)}</TableCell>
+                                          </TableRow>
+                                        </>
+                                      )}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {isExpanded && lines.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={9} className="text-center py-4 text-muted-foreground text-sm bg-muted/30">
+                                Aucune ligne de produit pour cette facture
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
                       );
                     })
                   )}
