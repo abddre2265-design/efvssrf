@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,13 +20,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Send, Calculator, Percent } from 'lucide-react';
+import { Loader2, Send, Percent } from 'lucide-react';
 import { formatCurrency } from '@/components/invoices/types';
 import { useTaxRates } from '@/hooks/useTaxRates';
+
+interface PurchaseLine {
+  id: string;
+  vat_rate: number;
+  line_total_ht: number;
+  line_vat: number;
+  line_total_ttc: number;
+}
 
 interface PurchaseDocument {
   id: string;
   invoice_number: string | null;
+  subtotal_ht: number;
+  total_vat: number;
   total_ttc: number;
   stamp_duty_amount: number;
   net_payable: number;
@@ -39,6 +49,7 @@ interface PurchaseDocument {
     company_name: string | null;
     supplier_type: string;
   };
+  lines?: PurchaseLine[];
 }
 
 interface PaymentRequestCreateDialogProps {
@@ -72,12 +83,26 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
     fetchOrg();
   }, []);
 
+  // Group VAT by rate from lines
+  const vatBreakdown = useMemo(() => {
+    if (!document?.lines?.length) return [];
+    const grouped: Record<number, number> = {};
+    for (const line of document.lines) {
+      const rate = line.vat_rate;
+      grouped[rate] = (grouped[rate] || 0) + line.line_vat;
+    }
+    return Object.entries(grouped)
+      .map(([rate, amount]) => ({ rate: Number(rate), amount }))
+      .filter(v => v.amount !== 0)
+      .sort((a, b) => a.rate - b.rate);
+  }, [document?.lines]);
+
   if (!document) return null;
 
   const remainingAmount = document.net_payable - document.paid_amount;
   const withholdingRate = parseFloat(selectedWithholdingRate) || 0;
-  // Withholding calculated on total_ttc (excluding stamp duty)
   const withholdingAmount = document.total_ttc * (withholdingRate / 100);
+  // Net à payer = Total TTC - Retenue + Timbre fiscal (+ taxes supplémentaires incluses dans stamp_duty_amount)
   const netRequestedAmount = remainingAmount - withholdingAmount;
 
   const getSupplierName = () => {
@@ -94,13 +119,11 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
 
     setIsSubmitting(true);
     try {
-      // Generate request number
       const { data: requestNumber, error: numError } = await supabase
         .rpc('generate_payment_request_number', { org_id: organizationId });
 
       if (numError) throw numError;
 
-      // Create the payment request
       const { error } = await supabase
         .from('purchase_payment_requests')
         .insert({
@@ -175,12 +198,44 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
             </Select>
           </div>
 
-          {/* Calculation summary */}
+          {/* Detailed calculation summary */}
           <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
+            {/* Total facture */}
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">{t('amount_to_pay')}</span>
-              <span className="font-medium">{formatCurrency(remainingAmount, document.currency)}</span>
+              <span className="text-muted-foreground font-medium">{t('invoice_total')}</span>
+              <span className="font-semibold">{formatCurrency(document.net_payable, document.currency)}</span>
             </div>
+
+            <Separator className="my-1" />
+
+            {/* Total HT */}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">{t('total_ht')}</span>
+              <span className="font-medium">{formatCurrency(document.subtotal_ht, document.currency)}</span>
+            </div>
+
+            {/* TVA breakdown by rate */}
+            {vatBreakdown.length > 0 ? (
+              vatBreakdown.map(({ rate, amount }) => (
+                <div key={rate} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('vat')} ({rate}%)</span>
+                  <span className="font-medium">{formatCurrency(amount, document.currency)}</span>
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{t('total_vat')}</span>
+                <span className="font-medium">{formatCurrency(document.total_vat, document.currency)}</span>
+              </div>
+            )}
+
+            {/* Total TTC = HT + TVA */}
+            <div className="flex justify-between text-sm font-medium">
+              <span className="text-muted-foreground">{t('total_ttc')} (HT + TVA)</span>
+              <span>{formatCurrency(document.total_ttc, document.currency)}</span>
+            </div>
+
+            {/* Retenue */}
             {withholdingRate > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t('withholding')} ({withholdingRate}%)</span>
@@ -189,7 +244,18 @@ export const PaymentRequestCreateDialog: React.FC<PaymentRequestCreateDialogProp
                 </span>
               </div>
             )}
-            <Separator />
+
+            {/* Timbre fiscal + taxes supplémentaires */}
+            {document.stamp_duty_amount > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{t('stamp_duty')}</span>
+                <span className="font-medium">{formatCurrency(document.stamp_duty_amount, document.currency)}</span>
+              </div>
+            )}
+
+            <Separator className="my-1" />
+
+            {/* Net à payer */}
             <div className="flex justify-between">
               <span className="font-semibold">{t('net_to_pay')}</span>
               <span className="font-bold text-lg text-primary">
