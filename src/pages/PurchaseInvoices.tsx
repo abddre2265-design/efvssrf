@@ -190,10 +190,31 @@ const PurchaseInvoices: React.FC = () => {
   };
 
   const handleOpenPdf = async (pdfUrl: string | null) => {
-    if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
-    } else {
+    if (!pdfUrl) {
       toast.error(t('no_pdf_available') || 'Aucun PDF disponible');
+      return;
+    }
+
+    try {
+      // Extract storage path from the stored URL and generate a fresh signed URL
+      const urlObj = new URL(pdfUrl);
+      const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/(?:sign|public)\/purchase-documents\/(.+)/);
+
+      if (pathMatch) {
+        const storagePath = decodeURIComponent(pathMatch[1].split('?')[0]);
+        const { data, error } = await supabase.storage
+          .from('purchase-documents')
+          .createSignedUrl(storagePath, 3600);
+
+        if (!error && data?.signedUrl) {
+          window.open(data.signedUrl, '_blank');
+          return;
+        }
+      }
+      // Fallback: open original url
+      window.open(pdfUrl, '_blank');
+    } catch {
+      window.open(pdfUrl, '_blank');
     }
   };
 

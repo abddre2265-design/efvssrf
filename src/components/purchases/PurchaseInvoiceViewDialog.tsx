@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -246,7 +247,25 @@ export const PurchaseInvoiceViewDialog: React.FC<PurchaseInvoiceViewDialogProps>
             <Button
               variant="outline"
               className="w-full gap-2"
-              onClick={() => window.open(document.pdf_url!, '_blank')}
+              onClick={async () => {
+                try {
+                  const urlObj = new URL(document.pdf_url!);
+                  const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/(?:sign|public)\/purchase-documents\/(.+)/);
+                  if (pathMatch) {
+                    const storagePath = decodeURIComponent(pathMatch[1].split('?')[0]);
+                    const { data, error } = await supabase.storage
+                      .from('purchase-documents')
+                      .createSignedUrl(storagePath, 3600);
+                    if (!error && data?.signedUrl) {
+                      window.open(data.signedUrl, '_blank');
+                      return;
+                    }
+                  }
+                  window.open(document.pdf_url!, '_blank');
+                } catch {
+                  window.open(document.pdf_url!, '_blank');
+                }
+              }}
             >
               <ExternalLink className="h-4 w-4" />
               {t('view_pdf') || 'Voir PDF original'}
