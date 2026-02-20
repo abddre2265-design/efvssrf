@@ -126,11 +126,25 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         toast.success('Document d\'achat créé sans approvisionnement');
         onComplete(mode, purchaseDoc.id);
       } else {
-        // Redirect to supply tab
         toast.success('Document créé. Redirection vers l\'approvisionnement...');
         onComplete(mode, purchaseDoc.id);
-        // Navigate to purchases page with supply tab active
-        navigate('/purchases?tab=supply');
+        // Navigate to supply page with pre-loaded PDF and extracted data
+        navigate('/dashboard/supply', {
+          state: {
+            preloadedPdf: {
+              pdfUrl: workflowData.pdfUrl,
+              storagePath: workflowData.storagePath,
+              originalFilename: workflowData.originalFilename,
+              extractedSupplier: workflowData.extractedSupplier,
+              extractedProducts: workflowData.extractedProducts,
+              extractedTotals: workflowData.extractedTotals,
+              invoiceNumber: workflowData.invoiceNumber,
+              invoiceDate: workflowData.invoiceDate,
+              currency: workflowData.currency,
+              exchangeRate: workflowData.exchangeRate,
+            }
+          }
+        });
       }
     } catch (error) {
       console.error('Error creating purchase document:', error);
