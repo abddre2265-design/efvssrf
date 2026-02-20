@@ -34,27 +34,65 @@ import { TotalsStep, ConfirmedPurchase } from './TotalsStep';
 import { ConfirmationStep } from './ConfirmationStep';
 import { WorkflowStepper, WorkflowStep } from './WorkflowStepper';
 
+export interface PreloadedPdfData {
+  pdfUrl: string | null;
+  storagePath: string | null;
+  originalFilename: string;
+  extractedSupplier: any | null;
+  extractedProducts: any[];
+  extractedTotals: any;
+  invoiceNumber: string | null;
+  invoiceDate: string | null;
+  currency: string;
+  exchangeRate: number;
+}
+
 interface SupplyUploadBlockProps {
   onRefresh: () => void;
+  preloadedPdf?: PreloadedPdfData | null;
 }
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 export const SupplyUploadBlock: React.FC<SupplyUploadBlockProps> = ({
   onRefresh,
+  preloadedPdf,
 }) => {
   const { t, isRTL } = useLanguage();
-  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
+
+  // Build initial state from preloadedPdf if provided
+  const initialUploadedFile: UploadedFile | null = preloadedPdf?.pdfUrl
+    ? {
+        file: new File([], preloadedPdf.originalFilename || 'facture.pdf', { type: 'application/pdf' }),
+        url: preloadedPdf.pdfUrl,
+        storagePath: preloadedPdf.storagePath,
+        status: 'uploaded',
+      }
+    : null;
+
+  const initialExtractionResult: ExtractionResult | null = preloadedPdf
+    ? {
+        invoice_number: preloadedPdf.invoiceNumber,
+        invoice_date: preloadedPdf.invoiceDate,
+        supplier: preloadedPdf.extractedSupplier,
+        products: preloadedPdf.extractedProducts || [],
+        totals: preloadedPdf.extractedTotals || { subtotal_ht: 0, total_vat: 0, total_discount: 0, ht_after_discount: 0, total_ttc: 0, stamp_duty_amount: 0, net_payable: 0, currency: 'TND', vat_breakdown: [] },
+        is_duplicate: false,
+        duplicate_reason: null,
+      }
+    : null;
+
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(initialUploadedFile);
   const [isDragging, setIsDragging] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   
-  // Workflow state
-  const [currentStep, setCurrentStep] = useState<WorkflowStep>('upload');
+  // Workflow state - if preloaded, start directly at supplier step
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>(preloadedPdf?.pdfUrl ? 'supplier' : 'upload');
   const [confirmedSupplierId, setConfirmedSupplierId] = useState<string | null>(null);
   const [confirmedSupplierType, setConfirmedSupplierType] = useState<'individual_local' | 'business_local' | 'foreign' | null>(null);
-  const [confirmedProducts, setConfirmedProducts] = useState<ExtractedProduct[]>([]);
-  const [confirmedCurrency, setConfirmedCurrency] = useState<string>('TND');
-  const [confirmedExchangeRate, setConfirmedExchangeRate] = useState<number>(1.0);
+  const [confirmedProducts, setConfirmedProducts] = useState<ExtractedProduct[]>(preloadedPdf?.extractedProducts || []);
+  const [confirmedCurrency, setConfirmedCurrency] = useState<string>(preloadedPdf?.currency || 'TND');
+  const [confirmedExchangeRate, setConfirmedExchangeRate] = useState<number>(preloadedPdf?.exchangeRate || 1.0);
   const [confirmedProductDetails, setConfirmedProductDetails] = useState<ProductDetailData[]>([]);
   const [verifiedProducts, setVerifiedProducts] = useState<VerifiedProduct[]>([]);
   
@@ -65,8 +103,8 @@ export const SupplyUploadBlock: React.FC<SupplyUploadBlockProps> = ({
   const [lastConfirmedPurchase, setLastConfirmedPurchase] = useState<ConfirmedPurchase | null>(null);
   
   // Analysis states
-  const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('idle');
-  const [extractionResult, setExtractionResult] = useState<ExtractionResult | null>(null);
+  const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>(preloadedPdf?.pdfUrl ? 'success' : 'idle');
+  const [extractionResult, setExtractionResult] = useState<ExtractionResult | null>(initialExtractionResult);
   const [pdfHash, setPdfHash] = useState<string | null>(null);
 
   // Load organization on mount
@@ -254,6 +292,7 @@ export const SupplyUploadBlock: React.FC<SupplyUploadBlockProps> = ({
     setConfirmedCurrency('TND');
     setConfirmedExchangeRate(1.0);
     setConfirmedProductDetails([]);
+    setVerifiedProducts([]);
   };
 
   const handleSupplierConfirmed = (supplierId: string, isNew: boolean, supplierType?: 'individual_local' | 'business_local' | 'foreign') => {
@@ -361,12 +400,24 @@ export const SupplyUploadBlock: React.FC<SupplyUploadBlockProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        {preloadedPdf?.pdfUrl && currentStep !== 'confirm' && (
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-primary/30 bg-primary/5">
+            <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+            <div>
+              <p className="font-medium text-sm">Document d'achat créé avec succès</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Facture <span className="font-mono font-semibold">{preloadedPdf.originalFilename}</span> prête pour l'approvisionnement. Identifiez le fournisseur pour continuer.
+              </p>
+            </div>
+          </div>
+        )}
         {/* Workflow Stepper */}
-        <WorkflowStepper 
-          currentStep={currentStep} 
+        <WorkflowStepper
+          currentStep={currentStep}
           analysisComplete={analysisStatus === 'success'}
         />
-        {/* Upload Zone */}
+        {/* Upload Zone - hidden when PDF is preloaded from local purchase workflow */}
+        {!preloadedPdf?.pdfUrl && (
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -513,6 +564,7 @@ export const SupplyUploadBlock: React.FC<SupplyUploadBlockProps> = ({
             </label>
           )}
         </div>
+        )}
 
         {/* Duplicate Alert */}
         {analysisStatus === 'duplicate' && extractionResult && (
