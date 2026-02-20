@@ -438,7 +438,12 @@ const SimplifiedTotalsStep: React.FC<{
       totalTtc = extracted.total_ttc || 0;
     }
 
-    const netPayable = (extracted?.net_payable || totalTtc) + stampDuty;
+    // net_payable extrait inclut déjà le timbre fiscal - ne pas l'ajouter en double
+    // Si net_payable extrait est disponible, l'utiliser directement
+    // Sinon, calculer : TTC + timbre fiscal
+    const netPayable = extracted?.net_payable 
+      ? extracted.net_payable 
+      : totalTtc + stampDuty;
 
     return {
       subtotalHt,
