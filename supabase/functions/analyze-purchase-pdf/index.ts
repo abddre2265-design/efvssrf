@@ -271,7 +271,14 @@ Deno.serve(async (req) => {
     // Call Lovable AI Gateway for PDF analysis
     console.log('Calling AI for PDF analysis...');
     
-    const prompt = `Tu es un expert en extraction de données de factures d'achat tunisiennes et internationales. Analyse ce document PDF avec une attention EXTRÊME aux détails.
+    const prompt = `Tu es un expert en extraction de données de factures d'achat tunisiennes et internationales. Analyse CE DOCUMENT PDF COMPLET (TOUTES LES PAGES) avec une attention EXTRÊME aux détails.
+
+⚠️ IMPORTANT - DOCUMENT MULTI-PAGES:
+Ce PDF peut contenir PLUSIEURS PAGES. Tu dois analyser ABSOLUMENT TOUTES LES PAGES pour:
+- Extraire TOUS les produits/lignes présents sur toutes les pages
+- Utiliser les TOTAUX de la DERNIÈRE page (ou de la page récapitulative)
+- Les informations fournisseur sont généralement sur la PREMIÈRE page
+- Ne jamais s'arrêter à la première page si le document en contient plusieurs
 
 ═══════════════════════════════════════════════════════════════
 RÈGLE #1 - IDENTIFICATION FOURNISSEUR vs CLIENT (CRITIQUE!)
@@ -381,6 +388,7 @@ RÈGLES EXTRACTION:
 
     console.log('Prompt prepared, calling AI...');
 
+    // Use Gemini's native file part for multi-page PDF support
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -398,15 +406,18 @@ RÈGLES EXTRACTION:
                 text: prompt
               },
               {
+                // Use inline_data with application/pdf MIME type so Gemini
+                // processes ALL pages of the PDF, not just the first one.
                 type: 'image_url',
                 image_url: {
-                  url: `data:application/pdf;base64,${pdfBase64}`
+                  url: `data:application/pdf;base64,${pdfBase64}`,
+                  detail: 'high'
                 }
               }
             ]
           }
         ],
-        max_tokens: 8192,
+        max_tokens: 16384,
         temperature: 0.1,
       }),
     });
