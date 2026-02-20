@@ -248,6 +248,8 @@ export const PurchaseInvoiceViewDialog: React.FC<PurchaseInvoiceViewDialogProps>
               variant="outline"
               className="w-full gap-2"
               onClick={async () => {
+                // Open window immediately (synchronous with user click) to avoid popup blocker
+                const newWindow = window.open('', '_blank');
                 try {
                   const urlObj = new URL(document.pdf_url!);
                   const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/(?:sign|public)\/purchase-documents\/(.+)/);
@@ -257,13 +259,13 @@ export const PurchaseInvoiceViewDialog: React.FC<PurchaseInvoiceViewDialogProps>
                       .from('purchase-documents')
                       .createSignedUrl(storagePath, 3600);
                     if (!error && data?.signedUrl) {
-                      window.open(data.signedUrl, '_blank');
+                      if (newWindow) newWindow.location.href = data.signedUrl;
                       return;
                     }
                   }
-                  window.open(document.pdf_url!, '_blank');
+                  if (newWindow) newWindow.location.href = document.pdf_url!;
                 } catch {
-                  window.open(document.pdf_url!, '_blank');
+                  if (newWindow) newWindow.location.href = document.pdf_url!;
                 }
               }}
             >

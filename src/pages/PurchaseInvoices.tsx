@@ -195,8 +195,10 @@ const PurchaseInvoices: React.FC = () => {
       return;
     }
 
+    // Open window immediately (synchronous with user click) to avoid popup blocker
+    const newWindow = window.open('', '_blank');
+
     try {
-      // Extract storage path from the stored URL and generate a fresh signed URL
       const urlObj = new URL(pdfUrl);
       const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/(?:sign|public)\/purchase-documents\/(.+)/);
 
@@ -207,14 +209,14 @@ const PurchaseInvoices: React.FC = () => {
           .createSignedUrl(storagePath, 3600);
 
         if (!error && data?.signedUrl) {
-          window.open(data.signedUrl, '_blank');
+          if (newWindow) newWindow.location.href = data.signedUrl;
           return;
         }
       }
-      // Fallback: open original url
-      window.open(pdfUrl, '_blank');
+      // Fallback
+      if (newWindow) newWindow.location.href = pdfUrl;
     } catch {
-      window.open(pdfUrl, '_blank');
+      if (newWindow) newWindow.location.href = pdfUrl;
     }
   };
 
