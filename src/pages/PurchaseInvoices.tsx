@@ -40,6 +40,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { PurchaseDocument } from '@/components/purchases/types';
+import { PurchaseInvoiceViewDialog } from '@/components/purchases/PurchaseInvoiceViewDialog';
+import { PurchaseInvoiceLinesDialog } from '@/components/purchases/PurchaseInvoiceLinesDialog';
 
 // Extended type with supplier, folder, and family info
 interface PurchaseDocumentWithRelations extends PurchaseDocument {
@@ -65,6 +67,8 @@ const PurchaseInvoices: React.FC = () => {
   const [documents, setDocuments] = useState<PurchaseDocumentWithRelations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewDoc, setViewDoc] = useState<PurchaseDocumentWithRelations | null>(null);
+  const [linesDoc, setLinesDoc] = useState<PurchaseDocumentWithRelations | null>(null);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -337,7 +341,7 @@ const PurchaseInvoices: React.FC = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="gap-2">
+                            <DropdownMenuItem className="gap-2" onClick={() => setViewDoc(doc)}>
                               <Eye className="h-4 w-4" />
                               {t('view') || 'Consulter'}
                             </DropdownMenuItem>
@@ -372,10 +376,10 @@ const PurchaseInvoices: React.FC = () => {
                                 {t('add_payment') || 'Ajouter paiement'}
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem className="gap-2">
-                              <Package className="h-4 w-4" />
-                              {t('view_lines') || 'Voir lignes'}
-                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2" onClick={() => setLinesDoc(doc)}>
+                               <Package className="h-4 w-4" />
+                               {t('view_lines') || 'Voir lignes'}
+                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                         </TableCell>
@@ -388,6 +392,21 @@ const PurchaseInvoices: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialogs */}
+      <PurchaseInvoiceViewDialog
+        open={!!viewDoc}
+        onOpenChange={(open) => { if (!open) setViewDoc(null); }}
+        document={viewDoc}
+        language={language}
+      />
+      <PurchaseInvoiceLinesDialog
+        open={!!linesDoc}
+        onOpenChange={(open) => { if (!open) setLinesDoc(null); }}
+        documentId={linesDoc?.id ?? null}
+        invoiceNumber={linesDoc?.invoice_number ?? null}
+        currency={linesDoc?.currency ?? 'TND'}
+      />
     </motion.div>
   );
 };
