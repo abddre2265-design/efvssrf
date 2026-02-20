@@ -260,15 +260,7 @@ export const SupplyUploadBlock: React.FC<SupplyUploadBlockProps> = ({
         setPdfHash(data.pdf_hash);
       }
 
-      // Check for duplicate
-      if (data.data.is_duplicate) {
-        setAnalysisStatus('duplicate');
-        setExtractionResult(data.data);
-        toast.warning(t('duplicate_detected') || 'Document déjà traité');
-        return;
-      }
-
-      // Store extraction result
+      // Store extraction result (always continue, duplicate check happens at last step)
       setExtractionResult(data.data);
       setAnalysisStatus('success');
       toast.success(t('analysis_complete') || 'Analyse terminée avec succès');
@@ -566,18 +558,7 @@ export const SupplyUploadBlock: React.FC<SupplyUploadBlockProps> = ({
         </div>
         )}
 
-        {/* Duplicate Alert */}
-        {analysisStatus === 'duplicate' && extractionResult && (
-          <Alert variant="destructive">
-            <XCircle className="h-5 w-5" />
-            <AlertTitle className="font-semibold">
-              {t('duplicate_detected') || 'Document déjà traité'}
-            </AlertTitle>
-            <AlertDescription>
-              {extractionResult.duplicate_reason || t('document_already_processed') || 'Ce document a déjà été traité précédemment.'}
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Duplicate detection moved to last step (TotalsStep) */}
 
         {/* Analysis Error Alert */}
         {analysisStatus === 'error' && (
