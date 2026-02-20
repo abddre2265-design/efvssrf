@@ -6,27 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Calculator,
   CheckCircle2,
   Package,
   Loader2,
   ArrowRight,
+  FileText,
   Truck,
-  Globe,
-  AlertTriangle,
-  PackagePlus,
-  FileX
+  Globe
 } from 'lucide-react';
 import { VerifiedProduct } from './ProductVerificationStep';
 import { ExtractionResult } from './types';
@@ -73,9 +62,6 @@ interface TotalsStepProps {
   onConfirm: (confirmedPurchase: ConfirmedPurchase) => void;
 }
 
-// Dialog states
-type DialogState = 'none' | 'duplicate_found' | 'ask_add_invoice';
-
 export const TotalsStep: React.FC<TotalsStepProps> = ({
   verifiedProducts,
   extractionResult,
@@ -90,9 +76,7 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
 }) => {
   const { t, isRTL } = useLanguage();
   const [isConfirming, setIsConfirming] = useState(false);
-  const [dialogState, setDialogState] = useState<DialogState>('none');
-  const [existingDocumentInfo, setExistingDocumentInfo] = useState<{ id: string; invoiceNumber: string | null; invoiceDate: string | null } | null>(null);
-
+  
   // Calculate totals from verified products
   const calculatedTotals = useMemo(() => {
     let subtotalHt = 0;
@@ -157,7 +141,10 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
       minimumFractionDigits: 3,
       maximumFractionDigits: 3,
     });
-    if (currency === 'TND') return `${formatted} DT`;
+    
+    if (currency === 'TND') {
+      return `${formatted} DT`;
+    }
     return `${formatted} ${currency}`;
   };
   
@@ -178,128 +165,13 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
       </Badge>
     );
   };
-
-  // Core function: create the purchase document in DB
-  const createPurchaseDocument = async (supplierName: string): Promise<ConfirmedPurchase> => {
-    const { data: purchaseDoc, error: purchaseError } = await supabase
-      .from('purchase_documents')
-      .insert({
-        organization_id: organizationId,
-        supplier_id: supplierId,
-        invoice_number: extractionResult.invoice_number,
-        invoice_date: extractionResult.invoice_date,
-        currency,
-        exchange_rate: exchangeRate,
-        subtotal_ht: calculatedTotals.subtotalHt,
-        total_vat: calculatedTotals.totalVat,
-        total_discount: calculatedTotals.totalDiscount,
-        total_ttc: calculatedTotals.totalTtc,
-        stamp_duty_amount: calculatedTotals.stampDuty,
-        net_payable: calculatedTotals.netPayable,
-        pdf_url: pdfUrl,
-        pdf_hash: pdfHash,
-        status: 'validated',
-        payment_status: 'unpaid',
-      })
-      .select()
-      .single();
-    
-    if (purchaseError) throw purchaseError;
-    
-    // Create purchase lines
-    const purchaseLines = verifiedProducts.map((vp, index) => ({
-      purchase_document_id: purchaseDoc.id,
-      product_id: vp.existingProductId,
-      reference: vp.productDetails.reference,
-      ean: vp.productDetails.ean,
-      name: vp.productDetails.name,
-      product_type: vp.productDetails.product_type || 'physical',
-      quantity: vp.productDetails.quantity,
-      unit_price_ht: vp.productDetails.unit_price_ht,
-      vat_rate: vp.productDetails.vat_rate,
-      discount_percent: vp.productDetails.discount_percent || 0,
-      line_total_ht: vp.productDetails.line_total_ht,
-      line_vat: vp.productDetails.line_vat,
-      line_total_ttc: vp.productDetails.line_total_ttc,
-      is_new_product: vp.decision === 'create_new',
-      is_existing_product: vp.decision !== 'create_new',
-      line_order: index,
-    }));
-    
-    const { error: linesError } = await supabase
-      .from('purchase_lines')
-      .insert(purchaseLines);
-    
-    if (linesError) throw linesError;
-    
-    return {
-      id: purchaseDoc.id,
-      supplierId,
-      supplierName,
-      supplierType,
-      invoiceNumber: extractionResult.invoice_number,
-      invoiceDate: extractionResult.invoice_date,
-      currency,
-      exchangeRate,
-      subtotalHt: calculatedTotals.subtotalHt,
-      totalVat: calculatedTotals.totalVat,
-      totalDiscount: calculatedTotals.totalDiscount,
-      totalTtc: calculatedTotals.totalTtc,
-      stampDutyAmount: calculatedTotals.stampDuty,
-      netPayable: calculatedTotals.netPayable,
-      productCount: verifiedProducts.length,
-      pdfUrl,
-      pdfHash,
-      createdAt: purchaseDoc.created_at,
-    };
-  };
-
-  // Handle confirm button click: first check for existing purchase document
+  
+  // Handle confirmation
   const handleConfirm = async () => {
     setIsConfirming(true);
     
     try {
-      // Build duplicate check query
-      let query = supabase
-        .from('purchase_documents')
-        .select('id, invoice_number, invoice_date')
-        .eq('organization_id', organizationId)
-        .eq('supplier_id', supplierId);
-      
-      // Match by invoice number if available
-      if (extractionResult.invoice_number) {
-        query = query.eq('invoice_number', extractionResult.invoice_number);
-      }
-      // Match by invoice date if available
-      if (extractionResult.invoice_date) {
-        query = query.eq('invoice_date', extractionResult.invoice_date);
-      }
-      
-      const { data: existingDocs } = await query.limit(1);
-      
-      setIsConfirming(false);
-
-      if (existingDocs && existingDocs.length > 0) {
-        // Invoice already exists in purchase documents → show "duplicate found" dialog
-        const doc = existingDocs[0];
-        setExistingDocumentInfo({ id: doc.id, invoiceNumber: doc.invoice_number, invoiceDate: doc.invoice_date });
-        setDialogState('duplicate_found');
-      } else {
-        // Invoice does NOT exist → ask user if they want supply only or supply + invoice
-        setDialogState('ask_add_invoice');
-      }
-    } catch (error) {
-      console.error('Check error:', error);
-      setIsConfirming(false);
-      toast.error(t('purchase_confirmation_error') || 'Erreur lors de la vérification');
-    }
-  };
-
-  // User chose: supply ONLY (no invoice creation)
-  const handleSupplyOnly = async () => {
-    setDialogState('none');
-    setIsConfirming(true);
-    try {
+      // Get supplier name
       const { data: supplierData } = await supabase
         .from('suppliers')
         .select('company_name, first_name, last_name')
@@ -308,11 +180,63 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
       
       const supplierName = supplierData?.company_name || 
         `${supplierData?.first_name || ''} ${supplierData?.last_name || ''}`.trim() ||
-        (t('purchase_unknown_supplier') || 'Fournisseur inconnu');
-
-      // Build a minimal ConfirmedPurchase without inserting into DB
+        t('purchase_unknown_supplier');
+      
+      // Create purchase document
+      const { data: purchaseDoc, error: purchaseError } = await supabase
+        .from('purchase_documents')
+        .insert({
+          organization_id: organizationId,
+          supplier_id: supplierId,
+          invoice_number: extractionResult.invoice_number,
+          invoice_date: extractionResult.invoice_date,
+          currency,
+          exchange_rate: exchangeRate,
+          subtotal_ht: calculatedTotals.subtotalHt,
+          total_vat: calculatedTotals.totalVat,
+          total_discount: calculatedTotals.totalDiscount,
+          total_ttc: calculatedTotals.totalTtc,
+          stamp_duty_amount: calculatedTotals.stampDuty,
+          net_payable: calculatedTotals.netPayable,
+          pdf_url: pdfUrl,
+          pdf_hash: pdfHash,
+          status: 'validated',
+          payment_status: 'unpaid',
+        })
+        .select()
+        .single();
+      
+      if (purchaseError) throw purchaseError;
+      
+      // Create purchase lines
+      const purchaseLines = verifiedProducts.map((vp, index) => ({
+        purchase_document_id: purchaseDoc.id,
+        product_id: vp.existingProductId,
+        reference: vp.productDetails.reference,
+        ean: vp.productDetails.ean,
+        name: vp.productDetails.name,
+        product_type: vp.productDetails.product_type || 'physical',
+        quantity: vp.productDetails.quantity,
+        unit_price_ht: vp.productDetails.unit_price_ht,
+        vat_rate: vp.productDetails.vat_rate,
+        discount_percent: vp.productDetails.discount_percent || 0,
+        line_total_ht: vp.productDetails.line_total_ht,
+        line_vat: vp.productDetails.line_vat,
+        line_total_ttc: vp.productDetails.line_total_ttc,
+        is_new_product: vp.decision === 'create_new',
+        is_existing_product: vp.decision !== 'create_new',
+        line_order: index,
+      }));
+      
+      const { error: linesError } = await supabase
+        .from('purchase_lines')
+        .insert(purchaseLines);
+      
+      if (linesError) throw linesError;
+      
+      // Build confirmed purchase object
       const confirmedPurchase: ConfirmedPurchase = {
-        id: crypto.randomUUID(),
+        id: purchaseDoc.id,
         supplierId,
         supplierName,
         supplierType,
@@ -329,290 +253,167 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
         productCount: verifiedProducts.length,
         pdfUrl,
         pdfHash,
-        createdAt: new Date().toISOString(),
+        createdAt: purchaseDoc.created_at,
       };
       
-      toast.success(t('purchase_confirmed') || 'Approvisionnement confirmé');
+      toast.success(t('purchase_confirmed'));
       onConfirm(confirmedPurchase);
-    } catch (error) {
-      console.error('Supply only error:', error);
-      toast.error(t('purchase_confirmation_error') || 'Erreur lors de la confirmation');
-    }
-    setIsConfirming(false);
-  };
-
-  // User chose: supply + add invoice to purchase documents
-  const handleSupplyAndAddInvoice = async () => {
-    setDialogState('none');
-    setIsConfirming(true);
-    try {
-      const { data: supplierData } = await supabase
-        .from('suppliers')
-        .select('company_name, first_name, last_name')
-        .eq('id', supplierId)
-        .single();
       
-      const supplierName = supplierData?.company_name || 
-        `${supplierData?.first_name || ''} ${supplierData?.last_name || ''}`.trim() ||
-        (t('purchase_unknown_supplier') || 'Fournisseur inconnu');
-
-      const confirmedPurchase = await createPurchaseDocument(supplierName);
-      toast.success(t('purchase_confirmed') || 'Approvisionnement et facture créés');
-      onConfirm(confirmedPurchase);
     } catch (error) {
       console.error('Confirmation error:', error);
-      toast.error(t('purchase_confirmation_error') || 'Erreur lors de la confirmation');
+      toast.error(t('purchase_confirmation_error'));
     }
+    
     setIsConfirming(false);
   };
-
+  
   const productCount = verifiedProducts.length;
   const newProductsCount = verifiedProducts.filter(vp => vp.decision === 'create_new').length;
   const existingProductsCount = productCount - newProductsCount;
   
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Calculator className="h-5 w-5" />
-                {t('purchase_totals_summary')}
-              </CardTitle>
-              <CardDescription>
-                {t('purchase_totals_description')}
-              </CardDescription>
-            </div>
-            {getPurchaseTypeBadge()}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              {t('purchase_totals_summary')}
+            </CardTitle>
+            <CardDescription>
+              {t('purchase_totals_description')}
+            </CardDescription>
           </div>
-        </CardHeader>
+          {getPurchaseTypeBadge()}
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Purchase info */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">{t('purchase_invoice_number')}</p>
+            <p className="font-medium">{extractionResult.invoice_number || '-'}</p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">{t('purchase_invoice_date')}</p>
+            <p className="font-medium">{extractionResult.invoice_date || '-'}</p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">{t('purchase_currency')}</p>
+            <p className="font-medium">{currency}</p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">{t('purchase_exchange_rate')}</p>
+            <p className="font-medium">{exchangeRate.toFixed(4)}</p>
+          </div>
+        </div>
         
-        <CardContent className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
-          {/* Purchase info */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">{t('purchase_invoice_number')}</p>
-              <p className="font-medium">{extractionResult.invoice_number || '-'}</p>
-            </div>
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">{t('purchase_invoice_date')}</p>
-              <p className="font-medium">{extractionResult.invoice_date || '-'}</p>
-            </div>
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">{t('purchase_currency')}</p>
-              <p className="font-medium">{currency}</p>
-            </div>
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <p className="text-xs text-muted-foreground">{t('purchase_exchange_rate')}</p>
-              <p className="font-medium">{exchangeRate.toFixed(4)}</p>
+        {/* Products summary */}
+        <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-lg">
+          <Package className="h-8 w-8 text-muted-foreground" />
+          <div className="flex-1">
+            <p className="font-medium">{productCount} {t('purchase_products')}</p>
+            <div className="flex gap-3 text-sm text-muted-foreground">
+              {existingProductsCount > 0 && (
+                <span>{existingProductsCount} {t('purchase_existing')}</span>
+              )}
+              {newProductsCount > 0 && (
+                <span>{newProductsCount} {t('purchase_new_created')}</span>
+              )}
             </div>
           </div>
-          
-          {/* Products summary */}
-          <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-lg">
-            <Package className="h-8 w-8 text-muted-foreground" />
-            <div className="flex-1">
-              <p className="font-medium">{productCount} {t('purchase_products')}</p>
-              <div className="flex gap-3 text-sm text-muted-foreground">
-                {existingProductsCount > 0 && (
-                  <span>{existingProductsCount} {t('purchase_existing')}</span>
-                )}
-                {newProductsCount > 0 && (
-                  <span>{newProductsCount} {t('purchase_new_created')}</span>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <Separator />
-          
-          {/* VAT breakdown */}
-          {calculatedTotals.vatBreakdown.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">
-                {t('purchase_vat_breakdown')}
-              </h4>
-              <div className="border rounded-lg divide-y">
-                {calculatedTotals.vatBreakdown.map((vat, index) => (
-                  <div key={index} className="flex items-center justify-between p-3">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline">{vat.rate}%</Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {t('purchase_base_ht')}: {formatAmount(vat.baseHt)}
-                      </span>
-                    </div>
-                    <span className="font-medium">{formatAmount(vat.vatAmount)}</span>
+        </div>
+        
+        <Separator />
+        
+        {/* VAT breakdown */}
+        {calculatedTotals.vatBreakdown.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground">
+              {t('purchase_vat_breakdown')}
+            </h4>
+            <div className="border rounded-lg divide-y">
+              {calculatedTotals.vatBreakdown.map((vat, index) => (
+                <div key={index} className="flex items-center justify-between p-3">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">{vat.rate}%</Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {t('purchase_base_ht')}: {formatAmount(vat.baseHt)}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Totals */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="bg-muted/30 px-4 py-2">
-              <h4 className="font-medium">{t('purchase_amounts')}</h4>
-            </div>
-            <div className="divide-y">
-              <div className="flex items-center justify-between p-4">
-                <span className="text-muted-foreground">{t('purchase_subtotal_ht')}</span>
-                <span className="font-medium">{formatAmount(calculatedTotals.subtotalHt)}</span>
-              </div>
-              
-              {calculatedTotals.totalDiscount > 0 && (
-                <div className="flex items-center justify-between p-4">
-                  <span className="text-muted-foreground">{t('purchase_total_discount')}</span>
-                  <span className="font-medium text-orange-600">-{formatAmount(calculatedTotals.totalDiscount)}</span>
+                  <span className="font-medium">{formatAmount(vat.vatAmount)}</span>
                 </div>
-              )}
-              
-              <div className="flex items-center justify-between p-4">
-                <span className="text-muted-foreground">{t('purchase_total_vat')}</span>
-                <span className="font-medium">{formatAmount(calculatedTotals.totalVat)}</span>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-muted/20">
-                <span className="font-medium">{t('purchase_total_ttc')}</span>
-                <span className="font-bold text-lg">{formatAmount(calculatedTotals.totalTtc)}</span>
-              </div>
-              
-              {calculatedTotals.stampDuty > 0 && (
-                <div className="flex items-center justify-between p-4">
-                  <span className="text-muted-foreground">{t('purchase_stamp_duty')}</span>
-                  <span className="font-medium">{formatAmount(calculatedTotals.stampDuty)}</span>
-                </div>
-              )}
-              
-              <div className="flex items-center justify-between p-4 bg-primary/5 border-t-2 border-primary">
-                <span className="font-bold text-primary">{t('purchase_net_payable')}</span>
-                <span className="font-bold text-xl text-primary">{formatAmount(calculatedTotals.netPayable)}</span>
-              </div>
+              ))}
             </div>
           </div>
-          
-          {/* Confirm button */}
-          <div className="flex justify-end pt-4">
-            <Button
-              size="lg"
-              onClick={handleConfirm}
-              disabled={isConfirming}
-              className="gap-2"
-            >
-              {isConfirming ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t('purchase_confirming') || 'Vérification...'}
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  {t('purchase_confirm_purchase')}
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
+        )}
+        
+        {/* Totals */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-muted/30 px-4 py-2">
+            <h4 className="font-medium">{t('purchase_amounts')}</h4>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Dialog: Duplicate invoice found → supply only possible */}
-      <AlertDialog open={dialogState === 'duplicate_found'} onOpenChange={(open) => !open && setDialogState('none')}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              Facture déjà existante
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3 text-left">
-              <p>
-                Cette facture existe déjà dans les <strong>Factures d'achat</strong> avec les mêmes informations :
-              </p>
-              <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
-                {existingDocumentInfo?.invoiceNumber && (
-                  <p><span className="text-muted-foreground">Numéro :</span> <strong>{existingDocumentInfo.invoiceNumber}</strong></p>
-                )}
-                {existingDocumentInfo?.invoiceDate && (
-                  <p><span className="text-muted-foreground">Date :</span> <strong>{existingDocumentInfo.invoiceDate}</strong></p>
-                )}
+          <div className="divide-y">
+            <div className="flex items-center justify-between p-4">
+              <span className="text-muted-foreground">{t('purchase_subtotal_ht')}</span>
+              <span className="font-medium">{formatAmount(calculatedTotals.subtotalHt)}</span>
+            </div>
+            
+            {calculatedTotals.totalDiscount > 0 && (
+              <div className="flex items-center justify-between p-4">
+                <span className="text-muted-foreground">{t('purchase_total_discount')}</span>
+                <span className="font-medium text-orange-600">-{formatAmount(calculatedTotals.totalDiscount)}</span>
               </div>
-              <p className="text-muted-foreground text-sm">
-                L'approvisionnement sera créé <strong>sans dupliquer</strong> cette facture dans les factures d'achat.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel onClick={() => setDialogState('none')}>
-              Annuler
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleSupplyOnly}
-              className="gap-2"
-            >
-              <PackagePlus className="h-4 w-4" />
-              Créer l'approvisionnement uniquement
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Dialog: Invoice NOT found → ask user what to do */}
-      <AlertDialog open={dialogState === 'ask_add_invoice'} onOpenChange={(open) => !open && setDialogState('none')}>
-        <AlertDialogContent className="max-w-lg">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <FileX className="h-5 w-5 text-amber-500" />
-              Facture non trouvée dans les achats
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3 text-left">
-              <p>
-                Cette facture <strong>n'existe pas encore</strong> dans les Factures d'achat. Que souhaitez-vous faire ?
-              </p>
-              {(extractionResult.invoice_number || extractionResult.invoice_date) && (
-                <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
-                  {extractionResult.invoice_number && (
-                    <p><span className="text-muted-foreground">Numéro :</span> <strong>{extractionResult.invoice_number}</strong></p>
-                  )}
-                  {extractionResult.invoice_date && (
-                    <p><span className="text-muted-foreground">Date :</span> <strong>{extractionResult.invoice_date}</strong></p>
-                  )}
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
-            <Button
-              onClick={handleSupplyAndAddInvoice}
-              disabled={isConfirming}
-              className="gap-2 w-full"
-            >
-              {isConfirming ? (
+            )}
+            
+            <div className="flex items-center justify-between p-4">
+              <span className="text-muted-foreground">{t('purchase_total_vat')}</span>
+              <span className="font-medium">{formatAmount(calculatedTotals.totalVat)}</span>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-muted/20">
+              <span className="font-medium">{t('purchase_total_ttc')}</span>
+              <span className="font-bold text-lg">{formatAmount(calculatedTotals.totalTtc)}</span>
+            </div>
+            
+            {calculatedTotals.stampDuty > 0 && (
+              <div className="flex items-center justify-between p-4">
+                <span className="text-muted-foreground">{t('purchase_stamp_duty')}</span>
+                <span className="font-medium">{formatAmount(calculatedTotals.stampDuty)}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between p-4 bg-primary/5 border-t-2 border-primary">
+              <span className="font-bold text-primary">{t('purchase_net_payable')}</span>
+              <span className="font-bold text-xl text-primary">{formatAmount(calculatedTotals.netPayable)}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Confirm button */}
+        <div className="flex justify-end pt-4">
+          <Button
+            size="lg"
+            onClick={handleConfirm}
+            disabled={isConfirming}
+            className="gap-2"
+          >
+            {isConfirming ? (
+              <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+                {t('purchase_confirming')}
+              </>
+            ) : (
+              <>
                 <CheckCircle2 className="h-4 w-4" />
-              )}
-              Créer l'approvisionnement + ajouter aux factures d'achat
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleSupplyOnly}
-              disabled={isConfirming}
-              className="gap-2 w-full"
-            >
-              <PackagePlus className="h-4 w-4" />
-              Créer l'approvisionnement uniquement
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setDialogState('none')}
-              disabled={isConfirming}
-              className="w-full"
-            >
-              Annuler
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+                {t('purchase_confirm_purchase')}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
