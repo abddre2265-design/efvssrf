@@ -2461,6 +2461,155 @@ export type Database = {
           },
         ]
       }
+      supply_lines: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          ean: string | null
+          id: string
+          is_existing_product: boolean
+          is_new_product: boolean
+          line_order: number
+          line_total_ht: number
+          line_total_ttc: number
+          line_vat: number
+          name: string
+          product_id: string | null
+          product_type: string
+          quantity: number
+          reference: string | null
+          supply_record_id: string
+          unit_price_ht: number
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          ean?: string | null
+          id?: string
+          is_existing_product?: boolean
+          is_new_product?: boolean
+          line_order?: number
+          line_total_ht?: number
+          line_total_ttc?: number
+          line_vat?: number
+          name: string
+          product_id?: string | null
+          product_type?: string
+          quantity?: number
+          reference?: string | null
+          supply_record_id: string
+          unit_price_ht?: number
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          ean?: string | null
+          id?: string
+          is_existing_product?: boolean
+          is_new_product?: boolean
+          line_order?: number
+          line_total_ht?: number
+          line_total_ttc?: number
+          line_vat?: number
+          name?: string
+          product_id?: string | null
+          product_type?: string
+          quantity?: number
+          reference?: string | null
+          supply_record_id?: string
+          unit_price_ht?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supply_lines_supply_record_id_fkey"
+            columns: ["supply_record_id"]
+            isOneToOne: false
+            referencedRelation: "supply_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supply_records: {
+        Row: {
+          created_at: string
+          currency: string
+          exchange_rate: number
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          net_payable: number
+          notes: string | null
+          organization_id: string
+          paid_amount: number
+          payment_status: string
+          pdf_hash: string | null
+          pdf_url: string | null
+          stamp_duty_amount: number
+          status: string
+          subtotal_ht: number
+          supplier_id: string
+          supplier_name: string
+          supplier_type: string
+          total_discount: number
+          total_ttc: number
+          total_vat: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          exchange_rate?: number
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          net_payable?: number
+          notes?: string | null
+          organization_id: string
+          paid_amount?: number
+          payment_status?: string
+          pdf_hash?: string | null
+          pdf_url?: string | null
+          stamp_duty_amount?: number
+          status?: string
+          subtotal_ht?: number
+          supplier_id: string
+          supplier_name: string
+          supplier_type?: string
+          total_discount?: number
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          exchange_rate?: number
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          net_payable?: number
+          notes?: string | null
+          organization_id?: string
+          paid_amount?: number
+          payment_status?: string
+          pdf_hash?: string | null
+          pdf_url?: string | null
+          stamp_duty_amount?: number
+          status?: string
+          subtotal_ht?: number
+          supplier_id?: string
+          supplier_name?: string
+          supplier_type?: string
+          total_discount?: number
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vat_rates: {
         Row: {
           created_at: string

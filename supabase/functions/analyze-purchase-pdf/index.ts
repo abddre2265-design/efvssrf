@@ -230,22 +230,22 @@ Deno.serve(async (req) => {
 
     console.log('PDF hash:', pdfHash);
 
-    // Check for duplicate PDF by hash
-    const { data: existingDocs } = await supabase
-      .from('purchase_documents')
+    // Check for duplicate PDF by hash in supply_records (independent from purchase_documents)
+    const { data: existingSupplyByHash } = await supabase
+      .from('supply_records')
       .select('id, invoice_number')
       .eq('pdf_hash', pdfHash)
       .eq('organization_id', organization_id)
       .limit(1);
 
-    if (existingDocs && existingDocs.length > 0) {
-      console.log('Duplicate PDF detected by hash');
+    if (existingSupplyByHash && existingSupplyByHash.length > 0) {
+      console.log('Duplicate PDF detected by hash in supply_records');
       return new Response(
         JSON.stringify({
           success: true,
           data: {
             is_duplicate: true,
-            duplicate_reason: `Ce document a déjà été traité (Facture: ${existingDocs[0].invoice_number || 'Sans numéro'})`,
+            duplicate_reason: `Cet approvisionnement a déjà été effectué (Facture: ${existingSupplyByHash[0].invoice_number || 'Sans numéro'})`,
             invoice_number: null,
             invoice_date: null,
             supplier: null,
@@ -750,80 +750,60 @@ RÈGLES EXTRACTION:
       };
     }
 
-    // Check for duplicate based on supplier + invoice_number + invoice_date combination
+    // Check for duplicate based on supplier + invoice_number + invoice_date in supply_records only
     if (extractedData.invoice_number && extractedData.invoice_date && extractedData.supplier) {
-      console.log('Checking for duplicate by supplier + invoice_number + date...');
+      console.log('Checking for duplicate supply by supplier + invoice_number + date...');
       
       const supplierName = extractedData.supplier.name;
-      const supplierIdentifier = extractedData.supplier.identifier_value;
       
-      let supplierQuery = supabase
-        .from('suppliers')
-        .select('id, company_name, first_name, last_name, identifier_value')
-        .eq('organization_id', organization_id);
+      // Check directly in supply_records (which stores supplier_name)
+      const { data: duplicateSupplies } = await supabase
+        .from('supply_records')
+        .select('id, invoice_number, invoice_date, supplier_name')
+        .eq('organization_id', organization_id)
+        .eq('invoice_number', extractedData.invoice_number)
+        .eq('invoice_date', extractedData.invoice_date)
+        .limit(10);
       
-      const conditions: string[] = [];
-      if (supplierName) {
-        conditions.push(`company_name.ilike.%${supplierName}%`);
-        const nameParts = supplierName.split(' ');
-        if (nameParts.length >= 1) {
-          conditions.push(`first_name.ilike.%${nameParts[0]}%`);
-        }
-      }
-      if (supplierIdentifier) {
-        conditions.push(`identifier_value.eq.${supplierIdentifier}`);
-      }
-      
-      if (conditions.length > 0) {
-        const { data: matchingSuppliers } = await supplierQuery.or(conditions.join(','));
+      if (duplicateSupplies && duplicateSupplies.length > 0) {
+        // Check if any match the supplier name
+        const matchingSupply = duplicateSupplies.find(s => {
+          const existingName = (s.supplier_name || '').toLowerCase().trim();
+          const extractedName = (supplierName || '').toLowerCase().trim();
+          return existingName === extractedName || 
+                 existingName.includes(extractedName) || 
+                 extractedName.includes(existingName);
+        });
         
-        if (matchingSuppliers && matchingSuppliers.length > 0) {
-          const supplierIds = matchingSuppliers.map(s => s.id);
+        if (matchingSupply) {
+          console.log('Duplicate supply found by supplier + invoice_number + date');
           
-          const { data: duplicateDocs } = await supabase
-            .from('purchase_documents')
-            .select('id, invoice_number, invoice_date, supplier_id, suppliers!inner(company_name, first_name, last_name)')
-            .eq('organization_id', organization_id)
-            .eq('invoice_number', extractedData.invoice_number)
-            .eq('invoice_date', extractedData.invoice_date)
-            .in('supplier_id', supplierIds)
-            .limit(1);
-          
-          if (duplicateDocs && duplicateDocs.length > 0) {
-            const existingDoc = duplicateDocs[0];
-            const existingSupplier = existingDoc.suppliers as any;
-            const supplierDisplayName = existingSupplier?.company_name || 
-              `${existingSupplier?.first_name || ''} ${existingSupplier?.last_name || ''}`.trim();
-            
-            console.log('Duplicate found by supplier + invoice_number + date');
-            
-            return new Response(
-              JSON.stringify({
-                success: true,
-                data: {
-                  is_duplicate: true,
-                  duplicate_reason: `Ce document existe déjà: Facture N° ${existingDoc.invoice_number} du ${existingDoc.invoice_date} pour le fournisseur "${supplierDisplayName}"`,
-                  invoice_number: extractedData.invoice_number,
-                  invoice_date: extractedData.invoice_date,
-                  supplier: extractedData.supplier,
-                  products: [],
-                  totals: {
-                    subtotal_ht: 0,
-                    total_vat: 0,
-                    total_discount: 0,
-                    ht_after_discount: 0,
-                    total_ttc: 0,
-                    stamp_duty_amount: 0,
-                    net_payable: 0,
-                    currency: 'TND',
-                    vat_breakdown: []
-                  }
-                },
-                pdf_hash: pdfHash
-              }),
-              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-          }
+          return new Response(
+            JSON.stringify({
+              success: true,
+              data: {
+                is_duplicate: true,
+                duplicate_reason: `Cet approvisionnement existe déjà: Facture N° ${matchingSupply.invoice_number} du ${matchingSupply.invoice_date} pour le fournisseur "${matchingSupply.supplier_name}"`,
+                invoice_number: extractedData.invoice_number,
+                invoice_date: extractedData.invoice_date,
+                supplier: extractedData.supplier,
+                products: [],
+                totals: {
+                  subtotal_ht: 0,
+                  total_vat: 0,
+                  total_discount: 0,
+                  ht_after_discount: 0,
+                  total_ttc: 0,
+                  stamp_duty_amount: 0,
+                  net_payable: 0,
+                  currency: 'TND',
+                  vat_breakdown: []
+                }
+              },
+              pdf_hash: pdfHash
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
       }
     }

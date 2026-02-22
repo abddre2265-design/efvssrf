@@ -182,12 +182,14 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
         `${supplierData?.first_name || ''} ${supplierData?.last_name || ''}`.trim() ||
         t('purchase_unknown_supplier');
       
-      // Create purchase document
-      const { data: purchaseDoc, error: purchaseError } = await supabase
-        .from('purchase_documents')
+      // Create supply record (independent from purchase_documents)
+      const { data: supplyRecord, error: supplyError } = await supabase
+        .from('supply_records')
         .insert({
           organization_id: organizationId,
           supplier_id: supplierId,
+          supplier_name: supplierName,
+          supplier_type: supplierType,
           invoice_number: extractionResult.invoice_number,
           invoice_date: extractionResult.invoice_date,
           currency,
@@ -206,11 +208,11 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
         .select()
         .single();
       
-      if (purchaseError) throw purchaseError;
+      if (supplyError) throw supplyError;
       
-      // Create purchase lines
-      const purchaseLines = verifiedProducts.map((vp, index) => ({
-        purchase_document_id: purchaseDoc.id,
+      // Create supply lines
+      const supplyLines = verifiedProducts.map((vp, index) => ({
+        supply_record_id: supplyRecord.id,
         product_id: vp.existingProductId,
         reference: vp.productDetails.reference,
         ean: vp.productDetails.ean,
@@ -229,14 +231,14 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
       }));
       
       const { error: linesError } = await supabase
-        .from('purchase_lines')
-        .insert(purchaseLines);
+        .from('supply_lines')
+        .insert(supplyLines);
       
       if (linesError) throw linesError;
       
       // Build confirmed purchase object
       const confirmedPurchase: ConfirmedPurchase = {
-        id: purchaseDoc.id,
+        id: supplyRecord.id,
         supplierId,
         supplierName,
         supplierType,
@@ -253,7 +255,7 @@ export const TotalsStep: React.FC<TotalsStepProps> = ({
         productCount: verifiedProducts.length,
         pdfUrl,
         pdfHash,
-        createdAt: purchaseDoc.created_at,
+        createdAt: supplyRecord.created_at,
       };
       
       toast.success(t('purchase_confirmed'));
