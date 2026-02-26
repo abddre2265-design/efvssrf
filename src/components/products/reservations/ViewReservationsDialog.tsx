@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Calendar, Loader2, ShoppingBag, User, X, AlertTriangle } from 'lucide-react';
+import { Calendar, Loader2, ShoppingBag, User, X, AlertTriangle, Check } from 'lucide-react';
 import { format, isPast, parseISO } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Product } from '../types';
 import { ProductReservation } from './types';
+import { UseReservationChoiceDialog } from './UseReservationChoiceDialog';
+import { ClientOtherReservationsDialog, SelectedReservationForInvoice } from './ClientOtherReservationsDialog';
 
 interface ViewReservationsDialogProps {
   product: Product | null;
@@ -27,10 +30,18 @@ export const ViewReservationsDialog: React.FC<ViewReservationsDialogProps> = ({
   onUpdated,
 }) => {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [reservations, setReservations] = useState<ProductReservation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [cancelReservation, setCancelReservation] = useState<ProductReservation | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+
+  // Use flow state
+  const [selectedForInvoice, setSelectedForInvoice] = useState<SelectedReservationForInvoice[]>([]);
+  const [choiceDialogOpen, setChoiceDialogOpen] = useState(false);
+  const [otherReservationsOpen, setOtherReservationsOpen] = useState(false);
+  const [activeClientId, setActiveClientId] = useState<string | null>(null);
+  const [activeClientName, setActiveClientName] = useState('');
 
   const getDateLocale = () => {
     switch (language) {
@@ -45,6 +56,7 @@ export const ViewReservationsDialog: React.FC<ViewReservationsDialogProps> = ({
     const fetchReservations = async () => {
       if (!open || !product) return;
       setIsLoading(true);
+      setSelectedForInvoice([]);
 
       try {
         const { data, error } = await supabase
@@ -85,7 +97,6 @@ export const ViewReservationsDialog: React.FC<ViewReservationsDialogProps> = ({
 
     setIsCancelling(true);
     try {
-      // Update reservation status
       const { error: reservationError } = await supabase
         .from('product_reservations')
         .update({ status: 'cancelled' })
@@ -93,33 +104,18 @@ export const ViewReservationsDialog: React.FC<ViewReservationsDialogProps> = ({
 
       if (reservationError) throw reservationError;
 
-      // Update product reserved_stock (only if not unlimited)
       if (!product.unlimited_stock) {
         const newReservedStock = Math.max(0, (product.reserved_stock ?? 0) - cancelReservation.quantity);
-        
         const { error: productError } = await supabase
           .from('products')
           .update({ reserved_stock: newReservedStock })
           .eq('id', product.id);
-
         if (productError) throw productError;
       }
 
       toast.success(t('reservation_cancelled'));
       setCancelReservation(null);
-      
-      // Refresh reservations
-      const { data } = await supabase
-        .from('product_reservations')
-        .select(`
-          *,
-          client:clients(id, first_name, last_name, company_name, client_type)
-        `)
-        .eq('product_id', product.id)
-        .in('status', ['active', 'expired'])
-        .order('created_at', { ascending: false });
-
-      setReservations(data as ProductReservation[]);
+      setReservations(prev => prev.filter(r => r.id !== cancelReservation.id));
       onUpdated();
     } catch (error: any) {
       console.error('Cancel reservation error:', error);
@@ -129,7 +125,66 @@ export const ViewReservationsDialog: React.FC<ViewReservationsDialogProps> = ({
     }
   };
 
+  const handleUseReservation = (reservation: ProductReservation) => {
+    if (!product) return;
+    
+    const selected: SelectedReservationForInvoice = {
+      reservationId: reservation.id,
+      productId: product.id,
+      productName: product.name,
+      productReference: product.reference,
+      priceHt: product.price_ht,
+      vatRate: product.vat_rate,
+      maxDiscount: product.max_discount,
+      quantity: reservation.quantity,
+      currentStock: product.current_stock,
+      unlimitedStock: product.unlimited_stock,
+      allowOutOfStockSale: product.allow_out_of_stock_sale,
+      reservedStock: product.reserved_stock,
+    };
+
+    setSelectedForInvoice(prev => [...prev, selected]);
+    setActiveClientId(reservation.client_id);
+    setActiveClientName(getClientName(reservation.client));
+    
+    // Remove from list
+    setReservations(prev => prev.filter(r => r.id !== reservation.id));
+    
+    // Show choice dialog
+    setChoiceDialogOpen(true);
+  };
+
+  const handleGoToInvoice = () => {
+    setChoiceDialogOpen(false);
+    setOtherReservationsOpen(false);
+    onOpenChange(false);
+
+    // Navigate to invoices with state
+    navigate('/dashboard/invoices', {
+      state: {
+        fromReservations: true,
+        clientId: activeClientId,
+        reservations: selectedForInvoice,
+      },
+    });
+  };
+
+  const handleAddMore = () => {
+    setChoiceDialogOpen(false);
+    setOtherReservationsOpen(true);
+  };
+
+  const handleOtherReservationUsed = (r: SelectedReservationForInvoice) => {
+    setSelectedForInvoice(prev => [...prev, r]);
+  };
+
+  const handleOtherReservationCancelled = (reservationId: string) => {
+    onUpdated();
+  };
+
   if (!product) return null;
+
+  const alreadySelectedIds = selectedForInvoice.map(s => s.reservationId);
 
   return (
     <>
@@ -206,14 +261,26 @@ export const ViewReservationsDialog: React.FC<ViewReservationsDialogProps> = ({
                             </div>
                           </div>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => setCancelReservation(reservation)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          <div className="flex flex-col gap-1 ml-2 shrink-0">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="h-8 gap-1"
+                              onClick={() => handleUseReservation(reservation)}
+                            >
+                              <Check className="h-3 w-3" />
+                              {t('use')}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-destructive hover:text-destructive gap-1"
+                              onClick={() => setCancelReservation(reservation)}
+                            >
+                              <X className="h-3 w-3" />
+                              {t('cancel')}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -257,6 +324,28 @@ export const ViewReservationsDialog: React.FC<ViewReservationsDialogProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Choice dialog */}
+      <UseReservationChoiceDialog
+        open={choiceDialogOpen}
+        onOpenChange={setChoiceDialogOpen}
+        onGoToInvoice={handleGoToInvoice}
+        onAddMore={handleAddMore}
+        selectedCount={selectedForInvoice.length}
+      />
+
+      {/* Other client reservations */}
+      <ClientOtherReservationsDialog
+        clientId={activeClientId}
+        clientName={activeClientName}
+        open={otherReservationsOpen}
+        onOpenChange={setOtherReservationsOpen}
+        alreadySelectedIds={alreadySelectedIds}
+        onUseReservation={handleOtherReservationUsed}
+        onCancelReservation={handleOtherReservationCancelled}
+        onGoToInvoice={handleGoToInvoice}
+        selectedCount={selectedForInvoice.length}
+      />
     </>
   );
 };
