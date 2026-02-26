@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from './types';
-import { Loader2, Package, FileText, ShoppingCart, RotateCcw, TrendingUp, TrendingDown, Calendar, Clock, CalendarCheck, Bookmark } from 'lucide-react';
+import { Loader2, Package, FileText, ShoppingCart, RotateCcw, TrendingUp, TrendingDown, Calendar, Clock, CalendarCheck, Bookmark, PlusCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, ar } from 'date-fns/locale';
 
@@ -18,7 +18,7 @@ interface ProductHistoryDialogProps {
 
 interface HistoryEntry {
   id: string;
-  type: 'stock_movement' | 'invoice' | 'purchase' | 'reservation';
+  type: 'stock_movement' | 'invoice' | 'purchase' | 'reservation' | 'creation';
   date: string;
   description: string;
   details: string;
@@ -232,6 +232,15 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
         }
       });
 
+      // Add product creation entry
+      entries.push({
+        id: `creation-${product.id}`,
+        type: 'creation',
+        date: product.created_at,
+        description: t('productCreatedOn'),
+        details: product.name,
+      });
+
       // Sort all entries by date descending
       entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
@@ -249,6 +258,7 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
       case 'invoice': return <FileText className="h-4 w-4" />;
       case 'purchase': return <ShoppingCart className="h-4 w-4" />;
       case 'reservation': return <Bookmark className="h-4 w-4" />;
+      case 'creation': return <PlusCircle className="h-4 w-4" />;
     }
   };
 
@@ -262,6 +272,8 @@ export const ProductHistoryDialog: React.FC<ProductHistoryDialogProps> = ({
         return <Badge variant="secondary">{t('purchase')}</Badge>;
       case 'reservation':
         return <Badge variant="outline" className="text-amber-600 border-amber-500">{t('reservation')}</Badge>;
+      case 'creation':
+        return <Badge variant="outline" className="text-emerald-600 border-emerald-500">{t('productCreatedOn')}</Badge>;
     }
   };
 
