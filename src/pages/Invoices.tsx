@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -28,10 +29,16 @@ import { toast } from 'sonner';
 
 const Invoices: React.FC = () => {
   const { t, isRTL } = useLanguage();
+  const location = useLocation();
+  const navigateFn = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Reservation-to-invoice flow
+  const [reservationClientId, setReservationClientId] = useState<string | null>(null);
+  const [initialReservations, setInitialReservations] = useState<any[] | null>(null);
   
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -95,6 +102,18 @@ const Invoices: React.FC = () => {
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  // Handle reservation-to-invoice navigation state
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.fromReservations && state?.clientId && state?.reservations) {
+      setReservationClientId(state.clientId);
+      setInitialReservations(state.reservations);
+      setCreateDialogOpen(true);
+      // Clear state to prevent re-trigger
+      navigateFn(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   const handleView = (invoice: Invoice) => {
     setSelectedInvoiceId(invoice.id);
@@ -378,8 +397,16 @@ const Invoices: React.FC = () => {
       {/* Create Dialog */}
       <InvoiceCreateDialog
         open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
+        onOpenChange={(open) => {
+          setCreateDialogOpen(open);
+          if (!open) {
+            setReservationClientId(null);
+            setInitialReservations(null);
+          }
+        }}
         onCreated={fetchInvoices}
+        preselectedClientId={reservationClientId}
+        initialReservations={initialReservations}
       />
 
       {/* View Dialog */}

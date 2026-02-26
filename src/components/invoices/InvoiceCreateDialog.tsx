@@ -64,6 +64,20 @@ interface InvoiceCreateDialogProps {
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
   preselectedClientId?: string | null;
+  initialReservations?: Array<{
+    reservationId: string;
+    productId: string;
+    productName: string;
+    productReference: string | null;
+    priceHt: number;
+    vatRate: number;
+    maxDiscount: number | null;
+    quantity: number;
+    currentStock: number | null;
+    unlimitedStock: boolean;
+    allowOutOfStockSale: boolean | null;
+    reservedStock: number;
+  }> | null;
 }
 
 export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
@@ -71,6 +85,7 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
   onOpenChange,
   onCreated,
   preselectedClientId = null,
+  initialReservations = null,
 }) => {
   const { t, language, isRTL } = useLanguage();
   
@@ -195,10 +210,36 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
     if (open && preselectedClientId && clients.length > 0) {
       const clientExists = clients.some(c => c.id === preselectedClientId);
       if (clientExists && !selectedClientId) {
-        handleClientChange(preselectedClientId);
+        // Set client directly without checking reservations (they're already provided)
+        setSelectedClientId(preselectedClientId);
       }
     }
   }, [open, preselectedClientId, clients]);
+
+  // Populate lines from initialReservations
+  useEffect(() => {
+    if (open && initialReservations && initialReservations.length > 0 && lines.length === 0) {
+      const reservationLines: InvoiceLineFormData[] = initialReservations.map(r => ({
+        product_id: r.productId,
+        product_name: r.productName,
+        product_reference: r.productReference,
+        description: '',
+        quantity: r.quantity,
+        unit_price_ht: r.priceHt,
+        vat_rate: r.vatRate,
+        discount_percent: 0,
+        max_discount: r.maxDiscount || 100,
+        current_stock: r.currentStock,
+        unlimited_stock: r.unlimitedStock,
+        allow_out_of_stock_sale: r.allowOutOfStockSale || false,
+        fromReservation: true,
+        reservationId: r.reservationId,
+        reservationQuantity: r.quantity,
+        reserved_stock: r.reservedStock,
+      }));
+      setLines(reservationLines);
+    }
+  }, [open, initialReservations]);
 
   // Stock bubbles calculation
   const stockBubbles = useMemo<StockBubble[]>(() => {

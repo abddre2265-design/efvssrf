@@ -1194,6 +1194,16 @@ export const translations: Translations = {
   show_shortcuts: { fr: 'Afficher les raccourcis', en: 'Show Shortcuts', ar: 'عرض الاختصارات' },
   
   // Reservations
+  reservation_cancelled: { fr: 'Réservation annulée', en: 'Reservation cancelled', ar: 'تم إلغاء الحجز' },
+  cancel_reservation: { fr: 'Annuler la réservation', en: 'Cancel reservation', ar: 'إلغاء الحجز' },
+  cancel_reservation_confirm: { fr: 'Êtes-vous sûr de vouloir annuler cette réservation ?', en: 'Are you sure you want to cancel this reservation?', ar: 'هل أنت متأكد من إلغاء هذا الحجز؟' },
+  reserved_quantities: { fr: 'Quantités réservées', en: 'Reserved quantities', ar: 'الكميات المحجوزة' },
+  no_reservations: { fr: 'Aucune réservation', en: 'No reservations', ar: 'لا توجد حجوزات' },
+  yes_cancel: { fr: 'Oui, annuler', en: 'Yes, cancel', ar: 'نعم، إلغاء' },
+  cancelling: { fr: 'Annulation...', en: 'Cancelling...', ar: 'جارٍ الإلغاء...' },
+  reservation_created: { fr: 'Réservation créée', en: 'Reservation created', ar: 'تم إنشاء الحجز' },
+  no_expiration: { fr: 'Sans expiration', en: 'No expiration', ar: 'بدون انتهاء' },
+  total_reserved: { fr: 'Total réservé', en: 'Total reserved', ar: 'إجمالي المحجوز' },
   client_reservations: { fr: 'Réservations du client', en: 'Client Reservations', ar: 'حجوزات العميل' },
   no_reservations_for_client: { fr: 'Aucune réservation pour ce client', en: 'No reservations for this client', ar: 'لا توجد حجوزات لهذا العميل' },
   quantity_to_invoice: { fr: 'Quantité à facturer', en: 'Quantity to invoice', ar: 'الكمية للفوترة' },
@@ -1207,6 +1217,15 @@ export const translations: Translations = {
   reservationUsed: { fr: 'Réservation utilisée', en: 'Reservation used', ar: 'تم استخدام الحجز' },
   reservationCancelled: { fr: 'Réservation annulée', en: 'Reservation cancelled', ar: 'تم إلغاء الحجز' },
   reservationExpired: { fr: 'Réservation expirée', en: 'Reservation expired', ar: 'انتهى الحجز' },
+  use: { fr: 'Utiliser', en: 'Use', ar: 'استخدام' },
+  reservation_action: { fr: 'Action sur la réservation', en: 'Reservation action', ar: 'إجراء الحجز' },
+  reservations_selected: { fr: 'Réservations sélectionnées', en: 'Reservations selected', ar: 'الحجوزات المحددة' },
+  go_to_invoice_creation: { fr: 'Passer à la création de facture', en: 'Go to invoice creation', ar: 'الانتقال لإنشاء الفاتورة' },
+  go_to_invoice_creation_desc: { fr: 'Créer une facture avec les réservations sélectionnées', en: 'Create an invoice with selected reservations', ar: 'إنشاء فاتورة بالحجوزات المحددة' },
+  add_other_reserved_products: { fr: 'Ajouter d\'autres produits réservés', en: 'Add other reserved products', ar: 'إضافة منتجات محجوزة أخرى' },
+  add_other_reserved_products_desc: { fr: 'Voir les autres réservations du même client', en: 'View other reservations from the same client', ar: 'عرض الحجوزات الأخرى لنفس العميل' },
+  other_reservations_of: { fr: 'Autres réservations de', en: 'Other reservations of', ar: 'حجوزات أخرى لـ' },
+  no_other_reservations: { fr: 'Aucune autre réservation disponible', en: 'No other reservations available', ar: 'لا توجد حجوزات أخرى متاحة' },
   
   // Invoice creation from client
   for_client: { fr: 'Pour le client', en: 'For client', ar: 'للعميل' },
