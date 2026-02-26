@@ -249,6 +249,7 @@ export const translations: Translations = {
   cannotDeleteProductWithRelations: { fr: 'Impossible de supprimer un produit lié à des opérations', en: 'Cannot delete a product linked to operations', ar: 'لا يمكن حذف منتج مرتبط بعمليات' },
   history: { fr: 'Historique', en: 'History', ar: 'السجل' },
   productHistory: { fr: 'Historique du produit', en: 'Product History', ar: 'سجل المنتج' },
+  productCreatedOn: { fr: 'Produit créé', en: 'Product created', ar: 'تم إنشاء المنتج' },
   noHistoryFound: { fr: 'Aucun historique trouvé', en: 'No history found', ar: 'لم يتم العثور على سجل' },
   stockMovement: { fr: 'Mouvement de stock', en: 'Stock Movement', ar: 'حركة المخزون' },
   stockAdded: { fr: 'Stock ajouté', en: 'Stock added', ar: 'تمت إضافة المخزون' },
