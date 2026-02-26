@@ -55,19 +55,19 @@ export const ProductReservationDialog: React.FC<ProductReservationDialogProps> =
     }
   };
 
-  // Calculate available stock
+  // Calculate available stock (current_stock minus already reserved)
   const availableStock = useMemo(() => {
     if (!product) return 0;
     if (product.unlimited_stock) return Infinity;
     return (product.current_stock ?? 0) - (product.reserved_stock ?? 0);
   }, [product]);
 
-  // Maximum quantity allowed
+  // Maximum quantity allowed for NEW reservation
   const maxQuantity = useMemo(() => {
     if (!product) return 1;
     if (product.unlimited_stock) return Infinity;
     if (product.allow_out_of_stock_sale) return Infinity;
-    return Math.max(1, availableStock);
+    return Math.max(0, availableStock);
   }, [product, availableStock]);
 
   // Fetch clients
@@ -126,6 +126,11 @@ export const ProductReservationDialog: React.FC<ProductReservationDialogProps> =
 
     if (quantity < 1) {
       toast.error(t('quantity_must_be_positive'));
+      return;
+    }
+
+    if (maxQuantity !== Infinity && maxQuantity <= 0) {
+      toast.error(t('quantity_exceeds_available_stock'));
       return;
     }
 
@@ -310,7 +315,7 @@ export const ProductReservationDialog: React.FC<ProductReservationDialogProps> =
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t('cancel')}
           </Button>
-          <Button onClick={handleSubmit} disabled={isSaving || !clientId}>
+          <Button onClick={handleSubmit} disabled={isSaving || !clientId || (maxQuantity !== Infinity && maxQuantity <= 0)}>
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
