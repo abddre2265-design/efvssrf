@@ -85,7 +85,7 @@ const Products: React.FC = () => {
     }
   }, [t]);
 
-  // Check if products have any relationships (invoices, credit notes, purchases)
+  // Check if products have any history operations (invoices, purchases, stock movements, reservations, etc.)
   const checkProductRelationships = async (productIds: string[]) => {
     if (productIds.length === 0) return;
 
@@ -108,6 +108,24 @@ const Products: React.FC = () => {
         .select('product_id')
         .in('product_id', productIds);
 
+      // Check product_reservations (any status)
+      const { data: reservations } = await supabase
+        .from('product_reservations')
+        .select('product_id')
+        .in('product_id', productIds);
+
+      // Check delivery_note_lines
+      const { data: deliveryLines } = await supabase
+        .from('delivery_note_lines')
+        .select('product_id')
+        .in('product_id', productIds);
+
+      // Check credit_note_lines
+      const { data: creditNoteLines } = await supabase
+        .from('credit_note_lines')
+        .select('product_id')
+        .in('product_id', productIds);
+
       // Build relationship map
       const hasRelationship: Record<string, boolean> = {};
       
@@ -115,8 +133,11 @@ const Products: React.FC = () => {
         const hasInvoice = invoiceLines?.some(il => il.product_id === id) || false;
         const hasPurchase = purchaseLines?.some(pl => pl.product_id === id) || false;
         const hasStock = stockMovements?.some(sm => sm.product_id === id) || false;
+        const hasReservation = reservations?.some(r => r.product_id === id) || false;
+        const hasDelivery = deliveryLines?.some(dl => dl.product_id === id) || false;
+        const hasCreditNote = creditNoteLines?.some(cl => cl.product_id === id) || false;
         
-        hasRelationship[id] = hasInvoice || hasPurchase || hasStock;
+        hasRelationship[id] = hasInvoice || hasPurchase || hasStock || hasReservation || hasDelivery || hasCreditNote;
       });
 
       setProductRelationships(hasRelationship);
