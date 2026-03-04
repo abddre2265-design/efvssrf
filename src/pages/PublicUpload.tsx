@@ -143,21 +143,21 @@ const STEPS_AUTRE = [
 const PublicUpload: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  
+
   const [isVerifying, setIsVerifying] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [linkData, setLinkData] = useState<any>(null);
-  
+
   const [accessCodeInput, setAccessCodeInput] = useState('');
   const [isCheckingCode, setIsCheckingCode] = useState(false);
-  
+
   // Document type and import context
   const [documentType, setDocumentType] = useState<DocumentType | null>(null);
   const [selectedImportFolder, setSelectedImportFolder] = useState<string | null>(null);
   const [documentCategory, setDocumentCategory] = useState<DocumentCategory | null>(null);
   const [importFolders, setImportFolders] = useState<ImportFolder[]>([]);
   const [isLoadingFolders, setIsLoadingFolders] = useState(false);
-  
+
   const [currentStep, setCurrentStep] = useState(0);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -181,10 +181,10 @@ const PublicUpload: React.FC = () => {
   };
 
   const STEPS = getSteps();
-  
+
   // Check if current workflow is for quittance
   const isQuittanceWorkflow = documentType === 'import' && documentCategory === 'quittance_douaniere';
-  
+
   // Check if current workflow is for "Autre" documents
   const isAutreWorkflow = documentType === 'import' && documentCategory === 'autre';
 
@@ -235,7 +235,7 @@ const PublicUpload: React.FC = () => {
   useEffect(() => {
     const loadImportFolders = async () => {
       if (documentType !== 'import' || !linkData?.organization_id) return;
-      
+
       setIsLoadingFolders(true);
       try {
         const { data, error } = await supabase
@@ -254,15 +254,41 @@ const PublicUpload: React.FC = () => {
         setIsLoadingFolders(false);
       }
     };
-
     loadImportFolders();
   }, [documentType, linkData?.organization_id]);
 
+  // Normalizes document date to YYYY-MM-DD format
+  const normalizeDate = (dateStr: string | undefined): string | null => {
+    if (!dateStr || !dateStr.trim()) return null;
+
+    // Clean string
+    const cleaned = dateStr.trim();
+
+    // If already YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) return cleaned;
+
+    // Handle DD/MM/YYYY or DD-MM-YYYY
+    const dmyMatch = cleaned.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (dmyMatch) {
+      const [, day, month, year] = dmyMatch;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    // Handle YYYY/MM/DD
+    const ymdMatch = cleaned.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+    if (ymdMatch) {
+      const [, year, month, day] = ymdMatch;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+
+    return cleaned; // Return as is if no match, let DB try parsing or fail gracefully
+  };
+
   const verifyAccessCode = async () => {
     if (!accessCodeInput.trim() || !linkData) return;
-    
+
     setIsCheckingCode(true);
-    
+
     // Simple comparison (case-insensitive)
     if (accessCodeInput.toUpperCase() === linkData.access_code.toUpperCase()) {
       setIsAuthorized(true);
@@ -270,7 +296,7 @@ const PublicUpload: React.FC = () => {
     } else {
       toast.error('Code incorrect');
     }
-    
+
     setIsCheckingCode(false);
   };
 
@@ -288,10 +314,10 @@ const PublicUpload: React.FC = () => {
     if (!files) return;
 
     const prefix = linkData?.file_prefix || '';
-    
+
     // Create file entries with pending hash calculation
     const newFiles: UploadedFile[] = [];
-    
+
     for (const file of Array.from(files)) {
       const fileHash = await calculateFileHash(file);
       newFiles.push({
@@ -315,22 +341,22 @@ const PublicUpload: React.FC = () => {
 
   const analyzeDocuments = async () => {
     setIsAnalyzing(true);
-    
+
     // Determine which endpoint to use based on document category
     const isQuittance = documentCategory === 'quittance_douaniere';
-    const endpoint = isQuittance 
+    const endpoint = isQuittance
       ? 'https://uzrkeuweietxkwubhbym.supabase.co/functions/v1/analyze-customs-receipt'
       : 'https://uzrkeuweietxkwubhbym.supabase.co/functions/v1/analyze-public-upload';
-    
+
     for (const file of uploadedFiles) {
-      setUploadedFiles(prev => prev.map(f => 
+      setUploadedFiles(prev => prev.map(f =>
         f.id === file.id ? { ...f, status: 'analyzing' as const } : f
       ));
 
       try {
         // Create object URL for preview
         const previewUrl = URL.createObjectURL(file.file);
-        
+
         // Call the OCR edge function
         const formData = new FormData();
         formData.append('file', file.file);
@@ -345,19 +371,19 @@ const PublicUpload: React.FC = () => {
         }
 
         const result = await response.json();
-        
+
         if (isQuittance) {
           // Handle quittance-specific OCR result
           const newFilename = `Douane Tunisie_Quittance_${result.documentNumber || 'N-A'}_${result.documentDate || 'N-A'}.pdf`;
-          
-          setUploadedFiles(prev => prev.map(f => 
+
+          setUploadedFiles(prev => prev.map(f =>
             f.id === file.id ? {
               ...f,
               status: 'analyzed' as const,
               quittanceType: result.quittanceType || 'droits_taxes_importation',
               customsOffice: result.customsOffice || '',
               documentNumber: result.documentNumber || '',
-              documentDate: result.documentDate || '',
+              documentDate: normalizeDate(result.documentDate) || '',
               customsDeclarationNumber: result.customsDeclarationNumber || '',
               importerName: result.importerName || '',
               totalAmount: result.totalAmount || 0,
@@ -367,13 +393,13 @@ const PublicUpload: React.FC = () => {
           ));
         } else {
           // Handle regular document OCR result
-          setUploadedFiles(prev => prev.map(f => 
+          setUploadedFiles(prev => prev.map(f =>
             f.id === file.id ? {
               ...f,
               status: 'analyzed' as const,
               supplier: result.supplier || '',
               documentNumber: result.documentNumber || '',
-              documentDate: result.documentDate || '',
+              documentDate: normalizeDate(result.documentDate) || '',
               newFilename: `${result.supplier || 'Unknown'}_${result.documentNumber || 'N/A'}_${result.documentDate || 'N/A'}.pdf`,
               previewUrl,
             } : f
@@ -381,9 +407,9 @@ const PublicUpload: React.FC = () => {
         }
       } catch (error) {
         console.error('Error analyzing file:', error);
-        
+
         if (isQuittance) {
-          setUploadedFiles(prev => prev.map(f => 
+          setUploadedFiles(prev => prev.map(f =>
             f.id === file.id ? {
               ...f,
               status: 'analyzed' as const,
@@ -399,7 +425,7 @@ const PublicUpload: React.FC = () => {
             } : f
           ));
         } else {
-          setUploadedFiles(prev => prev.map(f => 
+          setUploadedFiles(prev => prev.map(f =>
             f.id === file.id ? {
               ...f,
               status: 'analyzed' as const,
@@ -413,7 +439,7 @@ const PublicUpload: React.FC = () => {
         }
       }
     }
-    
+
     setIsAnalyzing(false);
     setCurrentStep(currentStep + 1);
   };
@@ -421,10 +447,15 @@ const PublicUpload: React.FC = () => {
   const updateFileField = (id: string, field: string, value: string | number) => {
     setUploadedFiles(prev => prev.map(f => {
       if (f.id !== id) return f;
-      
-      const updated = { ...f, [field]: value };
+
+      let finalValue = value;
+      if (field === 'documentDate' && typeof value === 'string') {
+        finalValue = normalizeDate(value) || value;
+      }
+
+      const updated = { ...f, [field]: finalValue };
       const folderDetails = getSelectedFolderDetails();
-      
+
       // Recalculate new filename based on document type
       if (documentCategory === 'quittance_douaniere') {
         updated.newFilename = `Douane Tunisie_Quittance_${updated.documentNumber || 'N-A'}_${updated.documentDate || 'N-A'}.pdf`;
@@ -436,7 +467,7 @@ const PublicUpload: React.FC = () => {
       } else {
         updated.newFilename = `${updated.supplier || 'Unknown'}_${updated.documentNumber || 'N/A'}_${updated.documentDate || 'N/A'}.pdf`;
       }
-      
+
       return updated;
     }));
   };
@@ -460,9 +491,9 @@ const PublicUpload: React.FC = () => {
 
   const checkDuplicates = async () => {
     const isQuittance = documentCategory === 'quittance_douaniere';
-    
+
     for (const file of uploadedFiles) {
-      setUploadedFiles(prev => prev.map(f => 
+      setUploadedFiles(prev => prev.map(f =>
         f.id === file.id ? { ...f, status: 'validating' as const } : f
       ));
 
@@ -520,8 +551,8 @@ const PublicUpload: React.FC = () => {
 
             if (!pendingError && pendingQuittances && pendingQuittances.length > 0) {
               // Check if date AND customs office match
-              if (pendingQuittances.some(doc => 
-                doc.document_date === docDate && 
+              if (pendingQuittances.some(doc =>
+                doc.document_date === docDate &&
                 doc.customs_office?.toLowerCase() === customsOffice.toLowerCase()
               )) {
                 isDuplicate = true;
@@ -556,8 +587,8 @@ const PublicUpload: React.FC = () => {
 
               if (!pendingError && pendingDocs && pendingDocs.length > 0) {
                 // Check if date and supplier also match
-                if (pendingDocs.some(doc => 
-                  doc.document_date === docDate && 
+                if (pendingDocs.some(doc =>
+                  doc.document_date === docDate &&
                   doc.supplier_detected?.toLowerCase() === supplier.toLowerCase()
                 )) {
                   isDuplicate = true;
@@ -567,8 +598,8 @@ const PublicUpload: React.FC = () => {
             }
           }
         }
-        
-        setUploadedFiles(prev => prev.map(f => 
+
+        setUploadedFiles(prev => prev.map(f =>
           f.id === file.id ? {
             ...f,
             status: isDuplicate ? 'duplicate' as const : 'valid' as const,
@@ -577,12 +608,12 @@ const PublicUpload: React.FC = () => {
         ));
       } catch (error) {
         console.error('Error checking duplicates:', error);
-        setUploadedFiles(prev => prev.map(f => 
+        setUploadedFiles(prev => prev.map(f =>
           f.id === file.id ? { ...f, status: 'valid' as const } : f
         ));
       }
     }
-    
+
     setCurrentStep(currentStep + 1);
   };
 
@@ -590,27 +621,37 @@ const PublicUpload: React.FC = () => {
 
   const transferDocuments = async () => {
     setIsTransferring(true);
-    
+
     try {
       const folderDetails = getSelectedFolderDetails();
       const isQuittance = documentCategory === 'quittance_douaniere';
       const isAutre = documentCategory === 'autre';
-      
+
       // Upload files to storage and create pending records
-      for (const file of uploadedFiles.filter(f => f.status === 'valid')) {
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+        if (file.status !== 'valid') continue;
+
         // Upload to storage
-        const storagePath = `${linkData.organization_id}/${Date.now()}_${file.newFilename}`;
-        
+        // Add random suffix to avoid collisions when multiple files are uploaded at the same time
+        const randomSuffix = Math.random().toString(36).substring(2, 7);
+        const storagePath = `${linkData.organization_id}/${Date.now()}_${randomSuffix}_${file.newFilename}`;
+
+        console.log(`Uploading file ${i + 1}/${uploadedFiles.length}: ${file.newFilename} to ${storagePath}`);
+
         const { error: uploadError } = await supabase.storage
           .from('public-uploads')
           .upload(storagePath, file.file);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error(`Upload error for ${file.name}:`, uploadError);
+          throw uploadError;
+        }
 
         // Create pending upload record with hash and import info
         // Handle empty date strings - convert to null for database
-        const documentDate = file.documentDate?.trim() || null;
-        
+        const documentDate = normalizeDate(file.documentDate);
+
         const insertData: any = {
           organization_id: linkData.organization_id,
           original_filename: file.name,
@@ -625,7 +666,7 @@ const PublicUpload: React.FC = () => {
           import_folder_id: documentType === 'import' ? selectedImportFolder : null,
           document_category: documentType === 'import' ? documentCategory : null,
         };
-        
+
         // Add quittance-specific fields
         if (isQuittance) {
           insertData.quittance_type = file.quittanceType;
@@ -634,7 +675,7 @@ const PublicUpload: React.FC = () => {
           insertData.importer_name = file.importerName;
           insertData.total_amount = file.totalAmount;
         }
-        
+
         insertData.analysis_data = {
           supplier: isQuittance ? file.importerName : file.supplier,
           documentNumber: file.documentNumber,
@@ -745,8 +786,8 @@ const PublicUpload: React.FC = () => {
                   onKeyDown={(e) => e.key === 'Enter' && verifyAccessCode()}
                 />
               </div>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 onClick={verifyAccessCode}
                 disabled={isCheckingCode || !accessCodeInput.trim()}
               >
@@ -806,14 +847,13 @@ const PublicUpload: React.FC = () => {
               const Icon = step.icon;
               const isActive = index === currentStep;
               const isComplete = index < currentStep;
-              
+
               return (
                 <React.Fragment key={step.id}>
-                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                    isActive ? 'bg-primary text-primary-foreground' : 
-                    isComplete ? 'bg-primary/10 text-primary' : 
-                    'bg-muted text-muted-foreground'
-                  }`}>
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-primary text-primary-foreground' :
+                      isComplete ? 'bg-primary/10 text-primary' :
+                        'bg-muted text-muted-foreground'
+                    }`}>
                     {isComplete ? (
                       <Check className="h-4 w-4" />
                     ) : (
@@ -833,8 +873,8 @@ const PublicUpload: React.FC = () => {
         {/* CamScanner Link */}
         <Card className="border-dashed">
           <CardContent className="pt-6 text-center">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => window.open('https://www.camscanner.com/file/recent', '_blank')}
               className="gap-2"
             >
@@ -860,15 +900,15 @@ const PublicUpload: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <RadioGroup 
-                value={documentType || ''} 
+              <RadioGroup
+                value={documentType || ''}
                 onValueChange={(value) => setDocumentType(value as DocumentType)}
                 className="grid grid-cols-1 md:grid-cols-2 gap-4"
               >
                 <div className="relative">
                   <RadioGroupItem value="local" id="local" className="peer sr-only" />
-                  <Label 
-                    htmlFor="local" 
+                  <Label
+                    htmlFor="local"
                     className="flex flex-col items-center justify-center p-6 rounded-lg border-2 cursor-pointer transition-all
                       peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5
                       hover:border-primary/50 hover:bg-muted/50"
@@ -880,11 +920,11 @@ const PublicUpload: React.FC = () => {
                     </span>
                   </Label>
                 </div>
-                
+
                 <div className="relative">
                   <RadioGroupItem value="import" id="import" className="peer sr-only" />
-                  <Label 
-                    htmlFor="import" 
+                  <Label
+                    htmlFor="import"
                     className="flex flex-col items-center justify-center p-6 rounded-lg border-2 cursor-pointer transition-all
                       peer-data-[state=checked]:border-purple-500 peer-data-[state=checked]:bg-purple-500/5
                       hover:border-purple-500/50 hover:bg-muted/50"
@@ -899,7 +939,7 @@ const PublicUpload: React.FC = () => {
               </RadioGroup>
 
               <div className="flex justify-end">
-                <Button 
+                <Button
                   onClick={() => {
                     if (documentType === 'local') {
                       // For local, skip to upload step (index 1 in STEPS_LOCAL)
@@ -908,7 +948,7 @@ const PublicUpload: React.FC = () => {
                       // For import, go to folder step (index 1 in STEPS_IMPORT)
                       setCurrentStep(1);
                     }
-                  }} 
+                  }}
                   disabled={!documentType}
                 >
                   Suivant
@@ -972,8 +1012,8 @@ const PublicUpload: React.FC = () => {
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Retour
                 </Button>
-                <Button 
-                  onClick={() => setCurrentStep(getStepNumber('category'))} 
+                <Button
+                  onClick={() => setCurrentStep(getStepNumber('category'))}
                   disabled={!selectedImportFolder}
                 >
                   Suivant
@@ -997,8 +1037,8 @@ const PublicUpload: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <RadioGroup 
-                value={documentCategory || ''} 
+              <RadioGroup
+                value={documentCategory || ''}
                 onValueChange={(value) => setDocumentCategory(value as DocumentCategory)}
                 className="grid grid-cols-1 md:grid-cols-2 gap-3"
               >
@@ -1007,8 +1047,8 @@ const PublicUpload: React.FC = () => {
                   return (
                     <div key={cat.value} className="relative">
                       <RadioGroupItem value={cat.value} id={cat.value} className="peer sr-only" />
-                      <Label 
-                        htmlFor={cat.value} 
+                      <Label
+                        htmlFor={cat.value}
                         className="flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
                           peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5
                           hover:border-primary/50 hover:bg-muted/50"
@@ -1026,8 +1066,8 @@ const PublicUpload: React.FC = () => {
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Retour
                 </Button>
-                <Button 
-                  onClick={() => setCurrentStep(getStepNumber('upload'))} 
+                <Button
+                  onClick={() => setCurrentStep(getStepNumber('upload'))}
                   disabled={!documentCategory}
                 >
                   Suivant
@@ -1092,8 +1132,8 @@ const PublicUpload: React.FC = () => {
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Retour
                 </Button>
-                <Button 
-                  onClick={() => setCurrentStep(getStepNumber('prefix'))} 
+                <Button
+                  onClick={() => setCurrentStep(getStepNumber('prefix'))}
                   disabled={uploadedFiles.length === 0}
                 >
                   Suivant
@@ -1121,9 +1161,8 @@ const PublicUpload: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 {uploadedFiles.map(file => (
-                  <div key={file.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                    file.prefixValid ? 'border-primary/30 bg-primary/5' : 'border-destructive/30 bg-destructive/5'
-                  }`}>
+                  <div key={file.id} className={`flex items-center justify-between p-3 rounded-lg border ${file.prefixValid ? 'border-primary/30 bg-primary/5' : 'border-destructive/30 bg-destructive/5'
+                    }`}>
                     <div className="flex items-center gap-3">
                       {file.prefixValid ? (
                         <Check className="h-5 w-5 text-primary" />
@@ -1153,7 +1192,7 @@ const PublicUpload: React.FC = () => {
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Retour
                 </Button>
-                <Button 
+                <Button
                   onClick={() => {
                     // For "Autre" category, skip OCR and go directly to edit step
                     if (isAutreWorkflow) {
@@ -1161,7 +1200,7 @@ const PublicUpload: React.FC = () => {
                     } else {
                       setCurrentStep(getStepNumber('analyze'));
                     }
-                  }} 
+                  }}
                   disabled={!allPrefixesValid}
                 >
                   Suivant
@@ -1239,8 +1278,8 @@ const PublicUpload: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                {isQuittanceWorkflow ? 'Édition des quittances douanières' : 
-                 isAutreWorkflow ? 'Saisie des informations' : 'Édition des informations'}
+                {isQuittanceWorkflow ? 'Édition des quittances douanières' :
+                  isAutreWorkflow ? 'Saisie des informations' : 'Édition des informations'}
               </CardTitle>
               {isQuittanceWorkflow && (
                 <CardDescription>
@@ -1269,7 +1308,7 @@ const PublicUpload: React.FC = () => {
                           </Button>
                         )}
                       </div>
-                      
+
                       {/* "Autre" document edit form - simplified, no OCR */}
                       {isAutreWorkflow ? (
                         <>
@@ -1279,8 +1318,8 @@ const PublicUpload: React.FC = () => {
                               <Tags className="h-3 w-3" />
                               Type de document
                             </Label>
-                            <Select 
-                              value={file.autreDocumentType || 'autre'} 
+                            <Select
+                              value={file.autreDocumentType || 'autre'}
                               onValueChange={(value) => updateFileField(file.id, 'autreDocumentType', value)}
                             >
                               <SelectTrigger className="w-full">
@@ -1335,8 +1374,8 @@ const PublicUpload: React.FC = () => {
                               <Tags className="h-3 w-3" />
                               Type de quittance
                             </Label>
-                            <Select 
-                              value={file.quittanceType || 'droits_taxes_importation'} 
+                            <Select
+                              value={file.quittanceType || 'droits_taxes_importation'}
                               onValueChange={(value) => updateFileField(file.id, 'quittanceType', value)}
                             >
                               <SelectTrigger className="w-full">
@@ -1462,7 +1501,7 @@ const PublicUpload: React.FC = () => {
                               />
                             </div>
                           </div>
-                          
+
                           <div className="p-2 bg-muted/50 rounded text-sm">
                             <span className="text-muted-foreground">Nouveau nom : </span>
                             <code className="font-mono">{file.newFilename}</code>
@@ -1487,8 +1526,8 @@ const PublicUpload: React.FC = () => {
                   Retour
                 </Button>
                 <Button onClick={checkDuplicates}>
-                  {isQuittanceWorkflow ? 'Vérifier les doublons (quittances)' : 
-                   isAutreWorkflow ? 'Vérifier et continuer' : 'Vérifier les doublons'}
+                  {isQuittanceWorkflow ? 'Vérifier les doublons (quittances)' :
+                    isAutreWorkflow ? 'Vérifier et continuer' : 'Vérifier les doublons'}
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
@@ -1508,11 +1547,10 @@ const PublicUpload: React.FC = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 {uploadedFiles.map(file => (
-                  <div key={file.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                    file.status === 'valid' ? 'border-primary/30 bg-primary/5' : 
-                    file.status === 'duplicate' ? 'border-destructive/30 bg-destructive/5' : 
-                    'border-muted'
-                  }`}>
+                  <div key={file.id} className={`flex items-center justify-between p-3 rounded-lg border ${file.status === 'valid' ? 'border-primary/30 bg-primary/5' :
+                      file.status === 'duplicate' ? 'border-destructive/30 bg-destructive/5' :
+                        'border-muted'
+                    }`}>
                     <div className="flex items-center gap-3">
                       {file.status === 'valid' ? (
                         <Check className="h-5 w-5 text-primary" />
@@ -1525,8 +1563,8 @@ const PublicUpload: React.FC = () => {
                         <span className="font-medium">{file.newFilename}</span>
                         {file.status === 'duplicate' && (
                           <p className="text-xs text-destructive">
-                            {file.duplicateReason === 'hash' 
-                              ? '🔒 Fichier identique déjà uploadé (même contenu)' 
+                            {file.duplicateReason === 'hash'
+                              ? '🔒 Fichier identique déjà uploadé (même contenu)'
                               : '📋 Même numéro et date de document'}
                           </p>
                         )}
@@ -1543,14 +1581,12 @@ const PublicUpload: React.FC = () => {
 
               {/* Import context summary */}
               {documentType === 'import' && (
-                <div className={`p-4 border rounded-lg ${
-                  isAutreWorkflow 
-                    ? 'bg-slate-500/5 border-slate-200' 
+                <div className={`p-4 border rounded-lg ${isAutreWorkflow
+                    ? 'bg-slate-500/5 border-slate-200'
                     : 'bg-purple-500/5 border-purple-200'
-                }`}>
-                  <p className={`text-sm font-medium mb-2 ${
-                    isAutreWorkflow ? 'text-slate-700' : 'text-purple-700'
                   }`}>
+                  <p className={`text-sm font-medium mb-2 ${isAutreWorkflow ? 'text-slate-700' : 'text-purple-700'
+                    }`}>
                     Contexte d'importation
                   </p>
                   <div className="flex flex-wrap gap-2">
