@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
+import {
   Package,
   ChevronRight,
   Hash,
@@ -51,21 +51,21 @@ const BARCODE_PATTERNS: Record<string, RegExp> = {
 // Validate barcode and return format if valid
 const validateBarcode = (code: string): { valid: boolean; format?: string } => {
   if (!code || code.trim() === '') return { valid: true }; // Empty is valid (optional)
-  
+
   const trimmedCode = code.trim();
-  
+
   for (const [format, pattern] of Object.entries(BARCODE_PATTERNS)) {
     if (pattern.test(trimmedCode)) {
       return { valid: true, format };
     }
   }
-  
+
   return { valid: false };
 };
 
 // Generate reference if missing
 const generateReference = (index: number, invoiceDate: string | null): string => {
-  const datePart = invoiceDate 
+  const datePart = invoiceDate
     ? new Date(invoiceDate).toISOString().slice(2, 10).replace(/-/g, '')
     : new Date().toISOString().slice(2, 10).replace(/-/g, '');
   return `REF-${datePart}-${String(index + 1).padStart(3, '0')}`;
@@ -138,25 +138,25 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
   onProductsDetailsConfirmed,
 }) => {
   const { t, isRTL } = useLanguage();
-  
+
   // Initialize product details from extracted products with pricing info
-  const [productDetails, setProductDetails] = useState<ProductDetailData[]>(() => 
+  const [productDetails, setProductDetails] = useState<ProductDetailData[]>(() =>
     extractedProducts.map((p, index) => {
       const unitPriceHt = p.unit_price_ht || 0;
       const quantity = p.quantity || 1;
       const vatRate = p.vat_rate || 19;
       const discountPercent = p.discount_percent || 0;
-      
+
       // Calculate line totals
       const lineTotalHtBeforeDiscount = unitPriceHt * quantity;
       const discountAmount = lineTotalHtBeforeDiscount * (discountPercent / 100);
       const lineTotalHt = lineTotalHtBeforeDiscount - discountAmount;
       const lineVat = lineTotalHt * (vatRate / 100);
       const lineTotalTtc = lineTotalHt + lineVat;
-      
+
       // Apply exchange rate for foreign suppliers
       const rate = isForeignSupplier ? exchangeRate : 1;
-      
+
       return {
         // Block 1: Basic Info
         reference: p.reference || generateReference(index, invoiceDate),
@@ -182,8 +182,8 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
         line_total_ht_converted: lineTotalHt * rate,
         line_vat_converted: lineVat * rate,
         line_total_ttc_converted: lineTotalTtc * rate,
-        // Block 3: Sale Pricing Info (all null by default)
-        sale_vat_rate: null,
+        // Block 3: Sale Pricing Info (pre-filled with purchase VAT by default)
+        sale_vat_rate: vatRate,
         sale_price_ht: null,
         sale_price_ttc: null,
         gain_rate: null,
@@ -191,12 +191,12 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
       };
     })
   );
-  
+
   // Available units from database + defaults
   const [availableUnits, setAvailableUnits] = useState<string[]>(UNITS);
   const [newUnit, setNewUnit] = useState<string>('');
   const [addingUnit, setAddingUnit] = useState<number | null>(null);
-  
+
   // Validation errors
   const [errors, setErrors] = useState<Record<number, Record<string, string>>>({});
 
@@ -209,17 +209,17 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
   // Recalculate line totals when pricing fields change
   const recalculatePricing = (index: number, updatedProduct: ProductDetailData): ProductDetailData => {
     const { quantity, unit_price_ht, vat_rate, discount_percent } = updatedProduct;
-    
+
     // Calculate line totals
     const lineTotalHtBeforeDiscount = unit_price_ht * quantity;
     const discountAmount = lineTotalHtBeforeDiscount * (discount_percent / 100);
     const lineTotalHt = lineTotalHtBeforeDiscount - discountAmount;
     const lineVat = lineTotalHt * (vat_rate / 100);
     const lineTotalTtc = lineTotalHt + lineVat;
-    
+
     // Apply exchange rate for foreign suppliers
     const rate = isForeignSupplier ? exchangeRate : 1;
-    
+
     return {
       ...updatedProduct,
       line_total_ht: lineTotalHt,
@@ -234,24 +234,24 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
 
   // Calculate sale prices based on what field changed
   const recalculateSalePricing = (
-    product: ProductDetailData, 
+    product: ProductDetailData,
     changedField: 'sale_vat_rate' | 'sale_price_ht' | 'sale_price_ttc' | 'gain_rate',
     newValue: number | null
   ): ProductDetailData => {
     const updated = { ...product };
-    
+
     // Get the purchase TTC (converted to TND if foreign supplier)
-    const purchaseTtcBase = isForeignSupplier 
-      ? product.line_total_ttc_converted 
+    const purchaseTtcBase = isForeignSupplier
+      ? product.line_total_ttc_converted
       : product.line_total_ttc;
-    
+
     // Unit purchase TTC
-    const unitPurchaseTtc = product.quantity > 0 
-      ? purchaseTtcBase / product.quantity 
+    const unitPurchaseTtc = product.quantity > 0
+      ? purchaseTtcBase / product.quantity
       : 0;
 
     const saleVatRate = changedField === 'sale_vat_rate' ? newValue : product.sale_vat_rate;
-    
+
     // If VAT rate is not selected, reset everything
     if (saleVatRate === null) {
       return {
@@ -270,15 +270,15 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
         // When VAT rate changes, recalculate based on existing values
         if (product.sale_price_ht !== null) {
           const ttc = product.sale_price_ht * (1 + saleVatRate / 100);
-          const gainRate = unitPurchaseTtc > 0 
-            ? ((ttc - unitPurchaseTtc) / unitPurchaseTtc) * 100 
+          const gainRate = unitPurchaseTtc > 0
+            ? ((ttc - unitPurchaseTtc) / unitPurchaseTtc) * 100
             : 0;
           updated.sale_price_ttc = parseFloat(ttc.toFixed(3));
           updated.gain_rate = parseFloat(gainRate.toFixed(2));
         } else if (product.sale_price_ttc !== null) {
           const ht = product.sale_price_ttc / (1 + saleVatRate / 100);
-          const gainRate = unitPurchaseTtc > 0 
-            ? ((product.sale_price_ttc - unitPurchaseTtc) / unitPurchaseTtc) * 100 
+          const gainRate = unitPurchaseTtc > 0
+            ? ((product.sale_price_ttc - unitPurchaseTtc) / unitPurchaseTtc) * 100
             : 0;
           updated.sale_price_ht = parseFloat(ht.toFixed(3));
           updated.gain_rate = parseFloat(gainRate.toFixed(2));
@@ -294,8 +294,8 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
         // HT changed: calculate TTC and gain rate
         if (newValue !== null) {
           const ttc = newValue * (1 + saleVatRate / 100);
-          const gainRate = unitPurchaseTtc > 0 
-            ? ((ttc - unitPurchaseTtc) / unitPurchaseTtc) * 100 
+          const gainRate = unitPurchaseTtc > 0
+            ? ((ttc - unitPurchaseTtc) / unitPurchaseTtc) * 100
             : 0;
           updated.sale_price_ht = newValue;
           updated.sale_price_ttc = parseFloat(ttc.toFixed(3));
@@ -307,8 +307,8 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
         // TTC changed: calculate HT and gain rate
         if (newValue !== null) {
           const ht = newValue / (1 + saleVatRate / 100);
-          const gainRate = unitPurchaseTtc > 0 
-            ? ((newValue - unitPurchaseTtc) / unitPurchaseTtc) * 100 
+          const gainRate = unitPurchaseTtc > 0
+            ? ((newValue - unitPurchaseTtc) / unitPurchaseTtc) * 100
             : 0;
           updated.sale_price_ht = parseFloat(ht.toFixed(3));
           updated.sale_price_ttc = newValue;
@@ -336,26 +336,34 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
     setProductDetails(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
-      
+
       // Recalculate purchase pricing if purchase-related field changed
       const purchasePricingFields: (keyof ProductDetailData)[] = ['quantity', 'unit_price_ht', 'vat_rate', 'discount_percent'];
       if (purchasePricingFields.includes(field)) {
         updated[index] = recalculatePricing(index, updated[index]);
+
+        // Pre-fill sale VAT with purchase VAT if it was changed
+        if (field === 'vat_rate') {
+          updated[index].sale_vat_rate = value;
+          // Trigger recalculation of sale prices based on new VAT
+          updated[index] = recalculateSalePricing(updated[index], 'sale_vat_rate', value);
+        }
+
         // Also recalculate sale pricing if gain_rate is set (to update based on new purchase price)
         if (updated[index].sale_vat_rate !== null && updated[index].gain_rate !== null) {
           updated[index] = recalculateSalePricing(updated[index], 'gain_rate', updated[index].gain_rate);
         }
       }
-      
+
       // Recalculate sale pricing if sale-related field changed
       const salePricingFields: (keyof ProductDetailData)[] = ['sale_vat_rate', 'sale_price_ht', 'sale_price_ttc', 'gain_rate'];
       if (salePricingFields.includes(field)) {
         updated[index] = recalculateSalePricing(updated[index], field as any, value);
       }
-      
+
       return updated;
     });
-    
+
     // Clear error for this field
     setErrors(prev => {
       const updated = { ...prev };
@@ -371,7 +379,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
 
   const handleEanChange = (index: number, value: string) => {
     updateProductDetail(index, 'ean', value);
-    
+
     // Validate EAN format
     if (value && value.trim() !== '') {
       const validation = validateBarcode(value);
@@ -386,9 +394,9 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
 
   const handleAddNewUnit = async (index: number) => {
     if (!newUnit.trim()) return;
-    
+
     const unitToAdd = newUnit.trim().toLowerCase();
-    
+
     if (availableUnits.includes(unitToAdd)) {
       toast.info(t('unit_already_exists') || 'Cette unité existe déjà');
       updateProductDetail(index, 'unit', unitToAdd);
@@ -396,7 +404,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
       setAddingUnit(null);
       return;
     }
-    
+
     // Add new unit to the list
     setAvailableUnits(prev => [...prev, unitToAdd]);
     updateProductDetail(index, 'unit', unitToAdd);
@@ -408,22 +416,22 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
   const validateAllProducts = (): boolean => {
     const newErrors: Record<number, Record<string, string>> = {};
     let isValid = true;
-    
+
     productDetails.forEach((product, index) => {
       const productErrors: Record<string, string> = {};
-      
+
       // Validate name
       if (!product.name || product.name.trim() === '') {
         productErrors.name = t('name_required') || 'Le nom est requis';
         isValid = false;
       }
-      
+
       // Validate reference
       if (!product.reference || product.reference.trim() === '') {
         productErrors.reference = t('reference_required') || 'La référence est requise';
         isValid = false;
       }
-      
+
       // Validate EAN if provided
       if (product.ean && product.ean.trim() !== '') {
         const validation = validateBarcode(product.ean);
@@ -432,30 +440,30 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
           isValid = false;
         }
       }
-      
+
       // Validate unit
       if (!product.unit || product.unit.trim() === '') {
         productErrors.unit = t('unit_required') || 'L\'unité est requise';
         isValid = false;
       }
-      
+
       // Validate purchase year
       if (!product.purchase_year || product.purchase_year < 2000 || product.purchase_year > 2100) {
         productErrors.purchase_year = t('invalid_year') || 'Année invalide';
         isValid = false;
       }
-      
+
       // Validate stock (must be >= 0)
       if (product.current_stock < 0) {
         productErrors.current_stock = t('stock_must_be_positive') || 'Le stock doit être positif';
         isValid = false;
       }
-      
+
       if (Object.keys(productErrors).length > 0) {
         newErrors[index] = productErrors;
       }
     });
-    
+
     setErrors(newErrors);
     return isValid;
   };
@@ -465,7 +473,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
       toast.error(t('fix_errors_before_continue') || 'Veuillez corriger les erreurs avant de continuer');
       return;
     }
-    
+
     onProductsDetailsConfirmed(productDetails);
   };
 
@@ -520,7 +528,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
         <ScrollArea className="h-[500px] pr-4">
           <div className="space-y-6">
             {productDetails.map((product, index) => (
-              <div 
+              <div
                 key={index}
                 className="border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow"
               >
@@ -536,7 +544,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
                     </span>
                   </div>
                   <Badge variant={product.product_type === 'physical' ? 'default' : 'secondary'}>
-                    {product.product_type === 'physical' 
+                    {product.product_type === 'physical'
                       ? (t('physical') || 'Physique')
                       : (t('service') || 'Service')
                     }
@@ -610,7 +618,7 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
                     </Label>
                     <Select
                       value={product.product_type}
-                      onValueChange={(value: 'physical' | 'service') => 
+                      onValueChange={(value: 'physical' | 'service') =>
                         updateProductDetail(index, 'product_type', value)
                       }
                     >
@@ -727,8 +735,8 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
                         onCheckedChange={(checked) => updateProductDetail(index, 'unlimited_stock', checked)}
                       />
                       <span className="text-sm text-muted-foreground">
-                        {product.unlimited_stock 
-                          ? (t('yes') || 'Oui') 
+                        {product.unlimited_stock
+                          ? (t('yes') || 'Oui')
                           : (t('no') || 'Non')
                         }
                       </span>
@@ -750,8 +758,8 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
                         onCheckedChange={(checked) => updateProductDetail(index, 'allow_out_of_stock_sale', checked)}
                       />
                       <span className="text-sm text-muted-foreground">
-                        {product.allow_out_of_stock_sale 
-                          ? (t('yes') || 'Oui') 
+                        {product.allow_out_of_stock_sale
+                          ? (t('yes') || 'Oui')
                           : (t('no') || 'Non')
                         }
                       </span>
@@ -959,173 +967,172 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
 
                 {/* Third Block: Sale Pricing Info */}
                 {!hideSalePricing && (
-                <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Tag className="h-4 w-4 text-green-600" />
-                    <span className="font-medium text-sm">
-                      {t('sale_pricing') || 'Prix de vente'}
-                    </span>
-                    {product.sale_vat_rate !== null && product.gain_rate !== null && (
-                      <Badge variant="outline" className={`ml-auto gap-1 text-xs ${product.gain_rate >= 0 ? 'text-green-600 border-green-600' : 'text-destructive border-destructive'}`}>
-                        {product.gain_rate >= 0 ? '+' : ''}{product.gain_rate?.toFixed(2)}% {t('gain') || 'marge'}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {/* Sale VAT Rate */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-1.5 text-xs">
-                        <Percent className="h-3 w-3" />
-                        {t('sale_vat_rate') || 'Taux TVA vente'} *
-                      </Label>
-                      <Select
-                        value={product.sale_vat_rate !== null ? String(product.sale_vat_rate) : ''}
-                        onValueChange={(value) => {
-                          const rate = value === '' ? null : parseFloat(value);
-                          updateProductDetail(index, 'sale_vat_rate', rate);
-                        }}
-                      >
-                        <SelectTrigger className={!product.sale_vat_rate && product.sale_vat_rate !== 0 ? 'text-muted-foreground' : ''}>
-                          <SelectValue placeholder={t('select_vat_rate') || 'Choisir TVA'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {VAT_RATES.map((rate) => (
-                            <SelectItem key={rate} value={String(rate)}>
-                              {rate}%
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        {t('required_for_sale_prices') || 'Requis pour les prix'}
-                      </p>
-                    </div>
-
-                    {/* Sale Price HT - Only enabled if VAT rate is selected */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-1.5 text-xs">
-                        <DollarSign className="h-3 w-3" />
-                        {t('sale_price_ht') || 'Prix HT'} (TND)
-                      </Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        step={0.001}
-                        value={product.sale_price_ht ?? ''}
-                        onChange={(e) => {
-                          const value = e.target.value === '' ? null : parseFloat(e.target.value);
-                          updateProductDetail(index, 'sale_price_ht', value);
-                        }}
-                        disabled={product.sale_vat_rate === null}
-                        placeholder={product.sale_vat_rate === null ? (t('select_vat_first') || 'Choisir TVA') : '0.000'}
-                        className={product.sale_vat_rate === null ? 'bg-muted' : ''}
-                      />
-                    </div>
-
-                    {/* Sale Price TTC - Only enabled if VAT rate is selected */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-1.5 text-xs">
-                        <DollarSign className="h-3 w-3" />
-                        {t('sale_price_ttc') || 'Prix TTC'} (TND)
-                      </Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        step={0.001}
-                        value={product.sale_price_ttc ?? ''}
-                        onChange={(e) => {
-                          const value = e.target.value === '' ? null : parseFloat(e.target.value);
-                          updateProductDetail(index, 'sale_price_ttc', value);
-                        }}
-                        disabled={product.sale_vat_rate === null}
-                        placeholder={product.sale_vat_rate === null ? (t('select_vat_first') || 'Choisir TVA') : '0.000'}
-                        className={product.sale_vat_rate === null ? 'bg-muted' : ''}
-                      />
-                    </div>
-
-                    {/* Gain Rate - Only enabled if VAT rate is selected */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-1.5 text-xs">
-                        <Percent className="h-3 w-3" />
-                        {t('gain_rate') || 'Taux de gain'} (%)
-                      </Label>
-                      <Input
-                        type="number"
-                        step={0.01}
-                        value={product.gain_rate ?? ''}
-                        onChange={(e) => {
-                          const value = e.target.value === '' ? null : parseFloat(e.target.value);
-                          updateProductDetail(index, 'gain_rate', value);
-                        }}
-                        disabled={product.sale_vat_rate === null}
-                        placeholder={product.sale_vat_rate === null ? (t('select_vat_first') || 'Choisir TVA') : '0.00'}
-                        className={`${product.sale_vat_rate === null ? 'bg-muted' : ''} ${
-                          product.gain_rate !== null && product.gain_rate < 0 ? 'text-destructive border-destructive' : ''
-                        }`}
-                      />
-                      {product.gain_rate !== null && product.gain_rate < 0 && (
-                        <p className="text-xs text-destructive">
-                          {t('negative_margin_warning') || 'Marge négative !'}
-                        </p>
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Tag className="h-4 w-4 text-green-600" />
+                      <span className="font-medium text-sm">
+                        {t('sale_pricing') || 'Prix de vente'}
+                      </span>
+                      {product.sale_vat_rate !== null && product.gain_rate !== null && (
+                        <Badge variant="outline" className={`ml-auto gap-1 text-xs ${product.gain_rate >= 0 ? 'text-green-600 border-green-600' : 'text-destructive border-destructive'}`}>
+                          {product.gain_rate >= 0 ? '+' : ''}{product.gain_rate?.toFixed(2)}% {t('gain') || 'marge'}
+                        </Badge>
                       )}
                     </div>
 
-                    {/* Sale Max Discount */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-1.5 text-xs">
-                        <Percent className="h-3 w-3" />
-                        {t('sale_max_discount') || 'Remise max'} (%)
-                      </Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        step={0.01}
-                        value={product.sale_max_discount ?? ''}
-                        onChange={(e) => {
-                          const value = e.target.value === '' ? null : Math.min(parseFloat(e.target.value) || 0, 100);
-                          updateProductDetail(index, 'sale_max_discount', value);
-                        }}
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      {/* Sale VAT Rate */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1.5 text-xs">
+                          <Percent className="h-3 w-3" />
+                          {t('sale_vat_rate') || 'Taux TVA vente'} *
+                        </Label>
+                        <Select
+                          value={product.sale_vat_rate !== null ? String(product.sale_vat_rate) : ''}
+                          onValueChange={(value) => {
+                            const rate = value === '' ? null : parseFloat(value);
+                            updateProductDetail(index, 'sale_vat_rate', rate);
+                          }}
+                        >
+                          <SelectTrigger className={!product.sale_vat_rate && product.sale_vat_rate !== 0 ? 'text-muted-foreground' : ''}>
+                            <SelectValue placeholder={t('select_vat_rate') || 'Choisir TVA'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {VAT_RATES.map((rate) => (
+                              <SelectItem key={rate} value={String(rate)}>
+                                {rate}%
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          {t('required_for_sale_prices') || 'Requis pour les prix'}
+                        </p>
+                      </div>
 
-                  {/* Sale Price Summary */}
-                  {product.sale_vat_rate !== null && product.sale_price_ttc !== null && (
-                    <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-muted-foreground text-xs">{t('unit_purchase_ttc') || 'Achat unit. TTC'}</span>
-                          <p className="font-medium">
-                            {(product.quantity > 0 
-                              ? (isForeignSupplier 
-                                  ? product.line_total_ttc_converted 
-                                  : product.line_total_ttc
-                                ) / product.quantity 
-                              : 0
-                            ).toFixed(3)} TND
+                      {/* Sale Price HT - Only enabled if VAT rate is selected */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1.5 text-xs">
+                          <DollarSign className="h-3 w-3" />
+                          {t('sale_price_ht') || 'Prix HT'} (TND)
+                        </Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.001}
+                          value={product.sale_price_ht ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                            updateProductDetail(index, 'sale_price_ht', value);
+                          }}
+                          disabled={product.sale_vat_rate === null}
+                          placeholder={product.sale_vat_rate === null ? (t('select_vat_first') || 'Choisir TVA') : '0.000'}
+                          className={product.sale_vat_rate === null ? 'bg-muted' : ''}
+                        />
+                      </div>
+
+                      {/* Sale Price TTC - Only enabled if VAT rate is selected */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1.5 text-xs">
+                          <DollarSign className="h-3 w-3" />
+                          {t('sale_price_ttc') || 'Prix TTC'} (TND)
+                        </Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.001}
+                          value={product.sale_price_ttc ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                            updateProductDetail(index, 'sale_price_ttc', value);
+                          }}
+                          disabled={product.sale_vat_rate === null}
+                          placeholder={product.sale_vat_rate === null ? (t('select_vat_first') || 'Choisir TVA') : '0.000'}
+                          className={product.sale_vat_rate === null ? 'bg-muted' : ''}
+                        />
+                      </div>
+
+                      {/* Gain Rate - Only enabled if VAT rate is selected */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1.5 text-xs">
+                          <Percent className="h-3 w-3" />
+                          {t('gain_rate') || 'Taux de gain'} (%)
+                        </Label>
+                        <Input
+                          type="number"
+                          step={0.01}
+                          value={product.gain_rate ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                            updateProductDetail(index, 'gain_rate', value);
+                          }}
+                          disabled={product.sale_vat_rate === null}
+                          placeholder={product.sale_vat_rate === null ? (t('select_vat_first') || 'Choisir TVA') : '0.00'}
+                          className={`${product.sale_vat_rate === null ? 'bg-muted' : ''} ${product.gain_rate !== null && product.gain_rate < 0 ? 'text-destructive border-destructive' : ''
+                            }`}
+                        />
+                        {product.gain_rate !== null && product.gain_rate < 0 && (
+                          <p className="text-xs text-destructive">
+                            {t('negative_margin_warning') || 'Marge négative !'}
                           </p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground text-xs">{t('sale_price_ht') || 'Prix HT'}</span>
-                          <p className="font-medium">{product.sale_price_ht?.toFixed(3) ?? '-'} TND</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground text-xs">{t('sale_price_ttc') || 'Prix TTC'}</span>
-                          <p className="font-semibold text-green-600">{product.sale_price_ttc?.toFixed(3) ?? '-'} TND</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground text-xs">{t('margin') || 'Marge'}</span>
-                          <p className={`font-semibold ${product.gain_rate !== null && product.gain_rate >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                            {product.gain_rate !== null ? `${product.gain_rate >= 0 ? '+' : ''}${product.gain_rate.toFixed(2)}%` : '-'}
-                          </p>
-                        </div>
+                        )}
+                      </div>
+
+                      {/* Sale Max Discount */}
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-1.5 text-xs">
+                          <Percent className="h-3 w-3" />
+                          {t('sale_max_discount') || 'Remise max'} (%)
+                        </Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={0.01}
+                          value={product.sale_max_discount ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value === '' ? null : Math.min(parseFloat(e.target.value) || 0, 100);
+                            updateProductDetail(index, 'sale_max_discount', value);
+                          }}
+                          placeholder="0"
+                        />
                       </div>
                     </div>
-                  )}
-                </div>
+
+                    {/* Sale Price Summary */}
+                    {product.sale_vat_rate !== null && product.sale_price_ttc !== null && (
+                      <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground text-xs">{t('unit_purchase_ttc') || 'Achat unit. TTC'}</span>
+                            <p className="font-medium">
+                              {(product.quantity > 0
+                                ? (isForeignSupplier
+                                  ? product.line_total_ttc_converted
+                                  : product.line_total_ttc
+                                ) / product.quantity
+                                : 0
+                              ).toFixed(3)} TND
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">{t('sale_price_ht') || 'Prix HT'}</span>
+                            <p className="font-medium">{product.sale_price_ht?.toFixed(3) ?? '-'} TND</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">{t('sale_price_ttc') || 'Prix TTC'}</span>
+                            <p className="font-semibold text-green-600">{product.sale_price_ttc?.toFixed(3) ?? '-'} TND</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">{t('margin') || 'Marge'}</span>
+                            <p className={`font-semibold ${product.gain_rate !== null && product.gain_rate >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                              {product.gain_rate !== null ? `${product.gain_rate >= 0 ? '+' : ''}${product.gain_rate.toFixed(2)}%` : '-'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
