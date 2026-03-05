@@ -264,24 +264,47 @@ const PublicUpload: React.FC = () => {
     // Clean string
     const cleaned = dateStr.trim();
 
-    // If already YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) return cleaned;
+    // If already YYYY-MM-DD, verify it's a real date
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+      const date = new Date(cleaned);
+      return isNaN(date.getTime()) ? null : cleaned;
+    }
 
     // Handle DD/MM/YYYY or DD-MM-YYYY
     const dmyMatch = cleaned.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
     if (dmyMatch) {
       const [, day, month, year] = dmyMatch;
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      const formatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      const date = new Date(formatted);
+      return isNaN(date.getTime()) ? null : formatted;
     }
 
     // Handle YYYY/MM/DD
     const ymdMatch = cleaned.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
     if (ymdMatch) {
       const [, year, month, day] = ymdMatch;
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      const formatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      const date = new Date(formatted);
+      return isNaN(date.getTime()) ? null : formatted;
     }
 
-    return cleaned; // Return as is if no match, let DB try parsing or fail gracefully
+    // Attempt native parsing as last resort
+    const date = new Date(cleaned);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+
+    return null; // Return null if invalid to avoid DB constraint errors
+  };
+
+  // Helper to sanitize filenames for storage
+  const sanitizeFilename = (name: string): string => {
+    if (!name) return 'document';
+    // Remove special characters that might break storage paths
+    return name
+      .replace(/[<>:"/\\|?*#%]/g, '_') // basic path-unsafe characters
+      .replace(/\s+/g, '_') // spaces to underscores
+      .trim();
   };
 
   const verifyAccessCode = async () => {
@@ -374,7 +397,9 @@ const PublicUpload: React.FC = () => {
 
         if (isQuittance) {
           // Handle quittance-specific OCR result
-          const newFilename = `Douane Tunisie_Quittance_${result.documentNumber || 'N-A'}_${result.documentDate || 'N-A'}.pdf`;
+          const safeNum = sanitizeFilename(result.documentNumber || 'N-A');
+          const safeDate = sanitizeFilename(result.documentDate || 'N-A');
+          const newFilename = `Douane Tunisie_Quittance_${safeNum}_${safeDate}.pdf`;
 
           setUploadedFiles(prev => prev.map(f =>
             f.id === file.id ? {
@@ -393,6 +418,10 @@ const PublicUpload: React.FC = () => {
           ));
         } else {
           // Handle regular document OCR result
+          const safeSupplier = sanitizeFilename(result.supplier || 'Unknown');
+          const safeNum = sanitizeFilename(result.documentNumber || 'N/A');
+          const safeDate = sanitizeFilename(result.documentDate || 'N/A');
+
           setUploadedFiles(prev => prev.map(f =>
             f.id === file.id ? {
               ...f,
@@ -400,7 +429,7 @@ const PublicUpload: React.FC = () => {
               supplier: result.supplier || '',
               documentNumber: result.documentNumber || '',
               documentDate: normalizeDate(result.documentDate) || '',
-              newFilename: `${result.supplier || 'Unknown'}_${result.documentNumber || 'N/A'}_${result.documentDate || 'N/A'}.pdf`,
+              newFilename: `${safeSupplier}_${safeNum}_${safeDate}.pdf`,
               previewUrl,
             } : f
           ));
@@ -458,14 +487,20 @@ const PublicUpload: React.FC = () => {
 
       // Recalculate new filename based on document type
       if (documentCategory === 'quittance_douaniere') {
-        updated.newFilename = `Douane Tunisie_Quittance_${updated.documentNumber || 'N-A'}_${updated.documentDate || 'N-A'}.pdf`;
+        const safeNum = sanitizeFilename(updated.documentNumber || 'N-A');
+        const safeDate = sanitizeFilename(updated.documentDate || 'N-A');
+        updated.newFilename = `Douane Tunisie_Quittance_${safeNum}_${safeDate}.pdf`;
       } else if (documentCategory === 'autre') {
         // For "Autre" documents, generate a simple filename with folder number
         const docType = updated.autreDocumentType === 'importation' ? 'Import' : 'Autre';
         const timestamp = Date.now().toString().slice(-6);
-        updated.newFilename = `${docType}_Dossier${folderDetails?.folder_number || 'N-A'}_${timestamp}.pdf`;
+        const safeFolderNum = sanitizeFilename(folderDetails?.folder_number || 'N-A');
+        updated.newFilename = `${docType}_Dossier${safeFolderNum}_${timestamp}.pdf`;
       } else {
-        updated.newFilename = `${updated.supplier || 'Unknown'}_${updated.documentNumber || 'N/A'}_${updated.documentDate || 'N/A'}.pdf`;
+        const safeSupplier = sanitizeFilename(updated.supplier || 'Unknown');
+        const safeNum = sanitizeFilename(updated.documentNumber || 'N/A');
+        const safeDate = sanitizeFilename(updated.documentDate || 'N/A');
+        updated.newFilename = `${safeSupplier}_${safeNum}_${safeDate}.pdf`;
       }
 
       return updated;
@@ -477,11 +512,12 @@ const PublicUpload: React.FC = () => {
     const folderDetails = getSelectedFolderDetails();
     setUploadedFiles(prev => prev.map((f, index) => {
       const timestamp = Date.now().toString().slice(-6);
+      const safeFolderNum = sanitizeFilename(folderDetails?.folder_number || 'N-A');
       return {
         ...f,
         status: 'analyzed' as const,
         autreDocumentType: 'autre' as const,
-        newFilename: `Autre_Dossier${folderDetails?.folder_number || 'N-A'}_${timestamp}_${index + 1}.pdf`,
+        newFilename: `Autre_Dossier${safeFolderNum}_${timestamp}_${index + 1}.pdf`,
         previewUrl: URL.createObjectURL(f.file),
       };
     }));
@@ -706,9 +742,10 @@ const PublicUpload: React.FC = () => {
 
       toast.success('Documents transférés avec succès!');
       setCurrentStep(currentStep + 1);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error transferring:', error);
-      toast.error('Erreur lors du transfert');
+      const detail = error.message || error.details || 'Erreur technique';
+      toast.error(`Erreur lors du transfert : ${detail}`);
     } finally {
       setIsTransferring(false);
     }
@@ -851,8 +888,8 @@ const PublicUpload: React.FC = () => {
               return (
                 <React.Fragment key={step.id}>
                   <div className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-primary text-primary-foreground' :
-                      isComplete ? 'bg-primary/10 text-primary' :
-                        'bg-muted text-muted-foreground'
+                    isComplete ? 'bg-primary/10 text-primary' :
+                      'bg-muted text-muted-foreground'
                     }`}>
                     {isComplete ? (
                       <Check className="h-4 w-4" />
@@ -1548,8 +1585,8 @@ const PublicUpload: React.FC = () => {
               <div className="space-y-2">
                 {uploadedFiles.map(file => (
                   <div key={file.id} className={`flex items-center justify-between p-3 rounded-lg border ${file.status === 'valid' ? 'border-primary/30 bg-primary/5' :
-                      file.status === 'duplicate' ? 'border-destructive/30 bg-destructive/5' :
-                        'border-muted'
+                    file.status === 'duplicate' ? 'border-destructive/30 bg-destructive/5' :
+                      'border-muted'
                     }`}>
                     <div className="flex items-center gap-3">
                       {file.status === 'valid' ? (
@@ -1582,8 +1619,8 @@ const PublicUpload: React.FC = () => {
               {/* Import context summary */}
               {documentType === 'import' && (
                 <div className={`p-4 border rounded-lg ${isAutreWorkflow
-                    ? 'bg-slate-500/5 border-slate-200'
-                    : 'bg-purple-500/5 border-purple-200'
+                  ? 'bg-slate-500/5 border-slate-200'
+                  : 'bg-purple-500/5 border-purple-200'
                   }`}>
                   <p className={`text-sm font-medium mb-2 ${isAutreWorkflow ? 'text-slate-700' : 'text-purple-700'
                     }`}>
