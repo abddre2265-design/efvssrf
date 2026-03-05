@@ -300,10 +300,16 @@ const PublicUpload: React.FC = () => {
   // Helper to sanitize filenames for storage
   const sanitizeFilename = (name: string): string => {
     if (!name) return 'document';
-    // Remove special characters that might break storage paths
-    return name
-      .replace(/[<>:"/\\|?*#%]/g, '_') // basic path-unsafe characters
-      .replace(/\s+/g, '_') // spaces to underscores
+
+    // 1. Remove accents (normalize to NFD and remove diacritics)
+    const normalized = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    // 2. Keep only alphanumeric characters, dots, and hyphens
+    // Replace everything else with underscores
+    return normalized
+      .replace(/[^a-zA-Z0-9.-]/g, '_')
+      .replace(/_+/g, '_') // consolidate multiple underscores
+      .replace(/^_+|_+$/g, '') // remove leading/trailing underscores
       .trim();
   };
 
@@ -397,9 +403,9 @@ const PublicUpload: React.FC = () => {
 
         if (isQuittance) {
           // Handle quittance-specific OCR result
-          const safeNum = sanitizeFilename(result.documentNumber || 'N-A');
-          const safeDate = sanitizeFilename(result.documentDate || 'N-A');
-          const newFilename = `Douane Tunisie_Quittance_${safeNum}_${safeDate}.pdf`;
+          const safeNum = result.documentNumber || 'N-A';
+          const safeDate = result.documentDate || 'N-A';
+          const newFilename = sanitizeFilename(`Douane_Tunisie_Quittance_${safeNum}_${safeDate}.pdf`);
 
           setUploadedFiles(prev => prev.map(f =>
             f.id === file.id ? {
@@ -418,9 +424,9 @@ const PublicUpload: React.FC = () => {
           ));
         } else {
           // Handle regular document OCR result
-          const safeSupplier = sanitizeFilename(result.supplier || 'Unknown');
-          const safeNum = sanitizeFilename(result.documentNumber || 'N/A');
-          const safeDate = sanitizeFilename(result.documentDate || 'N/A');
+          const safeSupplier = result.supplier || 'Unknown';
+          const safeNum = result.documentNumber || 'N/A';
+          const safeDate = result.documentDate || 'N/A';
 
           setUploadedFiles(prev => prev.map(f =>
             f.id === file.id ? {
@@ -429,7 +435,7 @@ const PublicUpload: React.FC = () => {
               supplier: result.supplier || '',
               documentNumber: result.documentNumber || '',
               documentDate: normalizeDate(result.documentDate) || '',
-              newFilename: `${safeSupplier}_${safeNum}_${safeDate}.pdf`,
+              newFilename: sanitizeFilename(`${safeSupplier}_${safeNum}_${safeDate}.pdf`),
               previewUrl,
             } : f
           ));
@@ -449,7 +455,7 @@ const PublicUpload: React.FC = () => {
               customsDeclarationNumber: '',
               importerName: '',
               totalAmount: 0,
-              newFilename: file.name,
+              newFilename: sanitizeFilename(file.name),
               previewUrl: URL.createObjectURL(file.file),
             } : f
           ));
@@ -461,7 +467,7 @@ const PublicUpload: React.FC = () => {
               supplier: '',
               documentNumber: '',
               documentDate: '',
-              newFilename: file.name,
+              newFilename: sanitizeFilename(file.name),
               previewUrl: URL.createObjectURL(file.file),
             } : f
           ));
@@ -487,20 +493,20 @@ const PublicUpload: React.FC = () => {
 
       // Recalculate new filename based on document type
       if (documentCategory === 'quittance_douaniere') {
-        const safeNum = sanitizeFilename(updated.documentNumber || 'N-A');
-        const safeDate = sanitizeFilename(updated.documentDate || 'N-A');
-        updated.newFilename = `Douane Tunisie_Quittance_${safeNum}_${safeDate}.pdf`;
+        const safeNum = updated.documentNumber || 'N-A';
+        const safeDate = updated.documentDate || 'N-A';
+        updated.newFilename = sanitizeFilename(`Douane_Tunisie_Quittance_${safeNum}_${safeDate}.pdf`);
       } else if (documentCategory === 'autre') {
         // For "Autre" documents, generate a simple filename with folder number
         const docType = updated.autreDocumentType === 'importation' ? 'Import' : 'Autre';
         const timestamp = Date.now().toString().slice(-6);
-        const safeFolderNum = sanitizeFilename(folderDetails?.folder_number || 'N-A');
-        updated.newFilename = `${docType}_Dossier${safeFolderNum}_${timestamp}.pdf`;
+        const folderNum = folderDetails?.folder_number || 'N-A';
+        updated.newFilename = sanitizeFilename(`${docType}_Dossier${folderNum}_${timestamp}.pdf`);
       } else {
-        const safeSupplier = sanitizeFilename(updated.supplier || 'Unknown');
-        const safeNum = sanitizeFilename(updated.documentNumber || 'N/A');
-        const safeDate = sanitizeFilename(updated.documentDate || 'N/A');
-        updated.newFilename = `${safeSupplier}_${safeNum}_${safeDate}.pdf`;
+        const safeSupplier = updated.supplier || 'Unknown';
+        const safeNum = updated.documentNumber || 'N/A';
+        const safeDate = updated.documentDate || 'N/A';
+        updated.newFilename = sanitizeFilename(`${safeSupplier}_${safeNum}_${safeDate}.pdf`);
       }
 
       return updated;
@@ -512,12 +518,12 @@ const PublicUpload: React.FC = () => {
     const folderDetails = getSelectedFolderDetails();
     setUploadedFiles(prev => prev.map((f, index) => {
       const timestamp = Date.now().toString().slice(-6);
-      const safeFolderNum = sanitizeFilename(folderDetails?.folder_number || 'N-A');
+      const folderNum = folderDetails?.folder_number || 'N-A';
       return {
         ...f,
         status: 'analyzed' as const,
         autreDocumentType: 'autre' as const,
-        newFilename: `Autre_Dossier${safeFolderNum}_${timestamp}_${index + 1}.pdf`,
+        newFilename: sanitizeFilename(`Autre_Dossier${folderNum}_${timestamp}_${index + 1}.pdf`),
         previewUrl: URL.createObjectURL(f.file),
       };
     }));
