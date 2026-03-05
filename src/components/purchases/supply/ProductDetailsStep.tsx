@@ -17,6 +17,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Package,
   ChevronRight,
   Hash,
@@ -31,7 +37,8 @@ import {
   Percent,
   Calculator,
   RefreshCw,
-  ArrowRight
+  ArrowRight,
+  AlertCircle
 } from 'lucide-react';
 import { ExtractedProduct } from './types';
 import { UNITS, VAT_RATES } from '@/components/products/types';
@@ -199,6 +206,39 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
 
   // Validation errors
   const [errors, setErrors] = useState<Record<number, Record<string, string>>>({});
+
+  // Global pricing controls
+  const [globalGainRate, setGlobalGainRate] = useState<number | null>(null);
+  const [globalMaxDiscount, setGlobalMaxDiscount] = useState<number | null>(null);
+
+  // Apply global gain rate to all products
+  const handleGlobalGainChange = (rate: number | null) => {
+    setGlobalGainRate(rate);
+    if (rate !== null) {
+      setProductDetails(prev => prev.map(p => {
+        // Only recalculate if VAT is set, otherwise just store the gain rate
+        if (p.sale_vat_rate !== null) {
+          return recalculateSalePricing(p, 'gain_rate', rate);
+        }
+        return { ...p, gain_rate: rate };
+      }));
+    }
+  };
+
+  // Apply global max discount to all products
+  const handleGlobalDiscountChange = (discount: number | null) => {
+    setGlobalMaxDiscount(discount);
+    if (discount !== null) {
+      setProductDetails(prev => prev.map(p => ({
+        ...p,
+        sale_max_discount: discount
+      })));
+    }
+  };
+
+  // Check if any product has a specific field overridden
+  const isGainOverridden = globalGainRate !== null && productDetails.some(p => p.gain_rate !== globalGainRate);
+  const isDiscountOverridden = globalMaxDiscount !== null && productDetails.some(p => p.sale_max_discount !== globalMaxDiscount);
 
   // Load any custom units from organization
   useEffect(() => {
@@ -516,6 +556,86 @@ export const ProductDetailsStep: React.FC<ProductDetailsStepProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Global Controls Section */}
+        {!hideSalePricing && (
+          <div className="p-4 bg-muted/30 border rounded-lg space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Tag className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-sm">
+                {t('global_pricing_settings') || 'Paramètres de prix globaux'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Global Gain Rate */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs font-medium">
+                    {t('global_gain_rate') || 'Taux de gain général (%)'}
+                  </Label>
+                  {isGainOverridden && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <AlertCircle className="h-4 w-4 text-amber-500 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('fields_modified_individually') || 'un ou plusieurs champs sont modifiés individuellement'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={globalGainRate ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? null : parseFloat(e.target.value);
+                    handleGlobalGainChange(val);
+                  }}
+                  placeholder="0.00"
+                  className="bg-background"
+                />
+              </div>
+
+              {/* Global Max Discount */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs font-medium">
+                    {t('global_max_discount') || 'Taux de remise max général (%)'}
+                  </Label>
+                  {isDiscountOverridden && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <AlertCircle className="h-4 w-4 text-amber-500 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{t('fields_modified_individually') || 'un ou plusieurs champs sont modifiés individuellement'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={globalMaxDiscount ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? null : parseFloat(e.target.value);
+                    handleGlobalDiscountChange(val);
+                  }}
+                  placeholder="0.00"
+                  className="bg-background"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Products Count */}
         <div className="flex items-center gap-3">
           <Badge variant="secondary" className="gap-2">
