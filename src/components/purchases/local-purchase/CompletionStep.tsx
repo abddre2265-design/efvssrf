@@ -109,21 +109,42 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         .from('purchase_lines')
         .insert(purchaseLines);
 
-      if (linesError) throw linesError;
+      if (linesError) {
+        console.error('Error creating purchase lines:', linesError);
+        throw linesError;
+      }
 
-      // Delete the pending upload
-      await supabase
-        .from('pending_public_uploads')
-        .delete()
-        .eq('id', pendingUploadId);
+      // Beyond this point, the document is created.
+      // We wrap cleanup in a try-catch so it doesn't break the success flow.
+      try {
+        // Delete the pending upload from database
+        console.log('Cleaning up pending upload record:', pendingUploadId);
+        const { error: deleteError } = await supabase
+          .from('pending_public_uploads')
+          .delete()
+          .eq('id', pendingUploadId);
 
-      // Also delete from public-uploads storage
-      await supabase.storage
-        .from('public-uploads')
-        .remove([workflowData.storagePath]);
+        if (deleteError) {
+          console.warn('Silent error deleting pending record:', deleteError);
+        }
+
+        // Also delete from public-uploads storage
+        if (workflowData.storagePath) {
+          console.log('Cleaning up file from storage:', workflowData.storagePath);
+          const { error: storageError } = await supabase.storage
+            .from('public-uploads')
+            .remove([workflowData.storagePath]);
+
+          if (storageError) {
+            console.warn('Silent error deleting storage file:', storageError);
+          }
+        }
+      } catch (cleanupError) {
+        console.warn('Non-blocking cleanup error:', cleanupError);
+      }
 
       if (mode === 'without_supply') {
-        toast.success('Document d\'achat créé sans approvisionnement');
+        toast.success('Document d\'achat créé avec succès');
         onComplete(mode, purchaseDoc.id);
       } else {
         toast.success('Document créé. Redirection vers l\'approvisionnement...');
