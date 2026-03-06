@@ -22,8 +22,18 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { 
-  RefreshCw, 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  RefreshCw,
   Search,
   MoreHorizontal,
   Eye,
@@ -37,7 +47,8 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 import { PurchaseDocument } from '@/components/purchases/types';
 import { PurchaseInvoiceViewDialog } from '@/components/purchases/PurchaseInvoiceViewDialog';
@@ -69,6 +80,10 @@ const PurchaseInvoices: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewDoc, setViewDoc] = useState<PurchaseDocumentWithRelations | null>(null);
   const [linesDoc, setLinesDoc] = useState<PurchaseDocumentWithRelations | null>(null);
+
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState<PurchaseDocumentWithRelations | null>(null);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -114,8 +129,8 @@ const PurchaseInvoices: React.FC = () => {
 
   const getSupplierName = (doc: PurchaseDocumentWithRelations): string => {
     if (!doc.supplier) return '—';
-    return doc.supplier.company_name || 
-      `${doc.supplier.first_name || ''} ${doc.supplier.last_name || ''}`.trim() || 
+    return doc.supplier.company_name ||
+      `${doc.supplier.first_name || ''} ${doc.supplier.last_name || ''}`.trim() ||
       '—';
   };
 
@@ -137,7 +152,7 @@ const PurchaseInvoices: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const config: Record<string, { className: string; icon: React.ComponentType<{className?: string}>; label: string }> = {
+    const config: Record<string, { className: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
       pending: { className: 'bg-orange-500/20 text-orange-700 dark:text-orange-400', icon: Clock, label: t('status_created') || 'Créée' },
       validated: { className: 'bg-green-500/20 text-green-700 dark:text-green-400', icon: CheckCircle2, label: t('status_validated') || 'Validée' },
       cancelled: { className: 'bg-red-500/20 text-red-700 dark:text-red-400', icon: XCircle, label: t('status_cancelled') || 'Annulée' },
@@ -217,6 +232,41 @@ const PurchaseInvoices: React.FC = () => {
       if (newWindow) newWindow.location.href = pdfUrl;
     } catch {
       if (newWindow) newWindow.location.href = pdfUrl;
+    }
+  };
+
+  const handleDeleteRequest = (doc: PurchaseDocumentWithRelations) => {
+    setDocToDelete(doc);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!docToDelete) return;
+
+    try {
+      // 1. Delete purchase lines first (foreign key constraint)
+      const { error: linesError } = await supabase
+        .from('purchase_lines')
+        .delete()
+        .eq('purchase_document_id', docToDelete.id);
+
+      if (linesError) throw linesError;
+
+      // 2. Delete the purchase document
+      const { error } = await supabase
+        .from('purchase_documents')
+        .delete()
+        .eq('id', docToDelete.id);
+
+      if (error) throw error;
+
+      toast.success(t('document_deleted') || 'Document supprimé');
+      setDeleteDialogOpen(false);
+      setDocToDelete(null);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error deleting purchase document:', error);
+      toast.error(t('error_deleting_document') || 'Erreur lors de la suppression');
     }
   };
 
@@ -314,16 +364,16 @@ const PurchaseInvoices: React.FC = () => {
                           {doc.invoice_number || '—'}
                         </TableCell>
                         <TableCell>
-                          {doc.invoice_date 
+                          {doc.invoice_date
                             ? new Date(doc.invoice_date).toLocaleDateString(language === 'ar' ? 'ar-TN' : 'fr-TN')
                             : '—'}
                         </TableCell>
                         <TableCell>{getSupplierName(doc)}</TableCell>
                         <TableCell>
-                          <Badge 
-                            variant="secondary" 
-                            className={docType.variant === 'import' 
-                              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-400' 
+                          <Badge
+                            variant="secondary"
+                            className={docType.variant === 'import'
+                              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-400'
                               : 'bg-primary/10 text-primary'}
                           >
                             {docType.label}
@@ -356,55 +406,63 @@ const PurchaseInvoices: React.FC = () => {
                             {t('no') || 'Non'}
                           </Badge>
                         </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="gap-2" onClick={() => setViewDoc(doc)}>
-                              <Eye className="h-4 w-4" />
-                              {t('view') || 'Consulter'}
-                            </DropdownMenuItem>
-                            {doc.status === 'pending' && (
-                              <DropdownMenuItem 
-                                className="gap-2"
-                                onClick={() => handleValidate(doc.id)}
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem className="gap-2" onClick={() => setViewDoc(doc)}>
+                                <Eye className="h-4 w-4" />
+                                {t('view') || 'Consulter'}
+                              </DropdownMenuItem>
+                              {doc.status === 'pending' && (
+                                <DropdownMenuItem
+                                  className="gap-2"
+                                  onClick={() => handleValidate(doc.id)}
+                                >
+                                  <Check className="h-4 w-4" />
+                                  {t('validate') || 'Valider'}
+                                </DropdownMenuItem>
+                              )}
+                              {doc.status === 'pending' && (
+                                <DropdownMenuItem className="gap-2">
+                                  <Edit className="h-4 w-4" />
+                                  {t('edit') || 'Modifier'}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              {doc.pdf_url && (
+                                <DropdownMenuItem
+                                  className="gap-2"
+                                  onClick={() => handleOpenPdf(doc.pdf_url)}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                  {t('view_pdf') || 'Voir PDF'}
+                                </DropdownMenuItem>
+                              )}
+                              {doc.status === 'validated' && doc.payment_status !== 'paid' && (
+                                <DropdownMenuItem className="gap-2">
+                                  <Wallet className="h-4 w-4" />
+                                  {t('add_payment') || 'Ajouter paiement'}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem className="gap-2" onClick={() => setLinesDoc(doc)}>
+                                <Package className="h-4 w-4" />
+                                {t('view_lines') || 'Voir lignes'}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="gap-2 text-destructive focus:text-destructive"
+                                onClick={() => handleDeleteRequest(doc)}
                               >
-                                <Check className="h-4 w-4" />
-                                {t('validate') || 'Valider'}
+                                <Trash2 className="h-4 w-4" />
+                                {t('delete') || 'Supprimer'}
                               </DropdownMenuItem>
-                            )}
-                            {doc.status === 'pending' && (
-                              <DropdownMenuItem className="gap-2">
-                                <Edit className="h-4 w-4" />
-                                {t('edit') || 'Modifier'}
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            {doc.pdf_url && (
-                              <DropdownMenuItem 
-                                className="gap-2"
-                                onClick={() => handleOpenPdf(doc.pdf_url)}
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                                {t('view_pdf') || 'Voir PDF'}
-                              </DropdownMenuItem>
-                            )}
-                            {doc.status === 'validated' && doc.payment_status !== 'paid' && (
-                              <DropdownMenuItem className="gap-2">
-                                <Wallet className="h-4 w-4" />
-                                {t('add_payment') || 'Ajouter paiement'}
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem className="gap-2" onClick={() => setLinesDoc(doc)}>
-                               <Package className="h-4 w-4" />
-                               {t('view_lines') || 'Voir lignes'}
-                             </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
@@ -430,6 +488,33 @@ const PurchaseInvoices: React.FC = () => {
         invoiceNumber={linesDoc?.invoice_number ?? null}
         currency={linesDoc?.currency ?? 'TND'}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('delete_document') || 'Supprimer le document'}</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>{t('confirm_delete_document') || 'Êtes-vous sûr de vouloir supprimer ce document ?'}</p>
+              <p className="text-sm text-muted-foreground">{t('delete_document_warning') || 'Cette action est irréversible.'}</p>
+              {docToDelete && (
+                <p className="font-mono font-medium text-foreground">
+                  {docToDelete.invoice_number || 'Sans numéro'}
+                </p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel') || 'Annuler'}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('confirm') || 'Confirmer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
