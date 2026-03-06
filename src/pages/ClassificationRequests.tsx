@@ -16,7 +16,7 @@ const ClassificationRequests: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Data states
-  const [pendingDocuments, setPendingDocuments] = useState<PurchaseDocument[]>([]);
+  const [pendingUploadsCount, setPendingUploadsCount] = useState(0);
   const [validatedDocuments, setValidatedDocuments] = useState<PurchaseDocument[]>([]);
 
   const fetchData = async () => {
@@ -32,19 +32,28 @@ const ClassificationRequests: React.FC = () => {
         return;
       }
 
-      const { data: docs, error } = await supabase
-        .from('purchase_documents')
-        .select('*')
-        .eq('organization_id', org.id)
-        .order('created_at', { ascending: false });
+      // Fetch pending uploads and validated purchase documents in parallel
+      const [uploadsResult, docsResult] = await Promise.all([
+        supabase
+          .from('pending_public_uploads')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', org.id)
+          .eq('status', 'pending'),
+        supabase
+          .from('purchase_documents')
+          .select('*')
+          .eq('organization_id', org.id)
+          .eq('status', 'validated')
+          .order('created_at', { ascending: false })
+      ]);
 
-      if (error) throw error;
+      if (uploadsResult.error) throw uploadsResult.error;
+      if (docsResult.error) throw docsResult.error;
 
-      const allDocs = (docs || []) as PurchaseDocument[];
-      setPendingDocuments(allDocs.filter(d => d.status === 'pending'));
-      setValidatedDocuments(allDocs.filter(d => d.status === 'validated'));
+      setPendingUploadsCount(uploadsResult.count || 0);
+      setValidatedDocuments((docsResult.data || []) as PurchaseDocument[]);
     } catch (error) {
-      console.error('Error fetching purchases data:', error);
+      console.error('Error fetching classification data:', error);
       toast.error(t('error_loading_data'));
     } finally {
       setIsLoading(false);
@@ -94,7 +103,7 @@ const ClassificationRequests: React.FC = () => {
             <Clock className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingDocuments.length}</div>
+            <div className="text-2xl font-bold">{pendingUploadsCount}</div>
           </CardContent>
         </Card>
         <Card>
