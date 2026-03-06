@@ -92,7 +92,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
           ean: pd.ean || null,
           name: pd.name || `Produit ${index + 1}`,
           product_type: pd.product_type || 'physical',
-          quantity: Number(pd.quantity) || 1,
+          quantity: Math.round(Number(pd.quantity)) || 1,
           unit_price_ht: Number(pd.unit_price_ht) || 0,
           vat_rate: Math.round(Number(pd.vat_rate)) || 19,
           discount_percent: Number(pd.discount_percent) || 0,
