@@ -58,15 +58,15 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
           import_folder_id: workflowData.importFolderId || null,
           document_family_id: workflowData.documentFamilyId || null,
           invoice_number: workflowData.invoiceNumber || null,
-          invoice_date: (workflowData.invoiceDate && workflowData.invoiceDate.trim() !== "") ? workflowData.invoiceDate : null,
-          currency: workflowData.currency,
-          exchange_rate: workflowData.exchangeRate,
-          subtotal_ht: workflowData.subtotalHt,
-          total_vat: workflowData.totalVat,
-          total_discount: workflowData.totalDiscount,
-          total_ttc: workflowData.totalTtc,
-          stamp_duty_amount: workflowData.stampDutyAmount,
-          net_payable: workflowData.netPayable,
+          invoice_date: isValidDate(workflowData.invoiceDate) ? workflowData.invoiceDate : null,
+          currency: workflowData.currency || 'TND',
+          exchange_rate: workflowData.exchangeRate || 1.0,
+          subtotal_ht: workflowData.subtotalHt || 0,
+          total_vat: workflowData.totalVat || 0,
+          total_discount: workflowData.totalDiscount || 0,
+          total_ttc: workflowData.totalTtc || 0,
+          stamp_duty_amount: workflowData.stampDutyAmount || 0,
+          net_payable: workflowData.netPayable || 0,
           pdf_url: workflowData.pdfUrl || null,
           pdf_hash: workflowData.pdfHash || null,
           // Status: 'pending' means created without supply validation
@@ -87,18 +87,18 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         const pd = vp.productDetails || vp;
         return {
           purchase_document_id: purchaseDoc.id,
-          product_id: vp.existingProductId || null,
+          product_id: (vp.existingProductId && vp.existingProductId.trim() !== "") ? vp.existingProductId : null,
           reference: pd.reference || null,
           ean: pd.ean || null,
           name: pd.name || `Produit ${index + 1}`,
           product_type: pd.product_type || 'physical',
-          quantity: pd.quantity || 1,
-          unit_price_ht: pd.unit_price_ht || 0,
-          vat_rate: pd.vat_rate || 19,
-          discount_percent: pd.discount_percent || 0,
-          line_total_ht: pd.line_total_ht || 0,
-          line_vat: pd.line_vat || 0,
-          line_total_ttc: pd.line_total_ttc || 0,
+          quantity: Number(pd.quantity) || 1,
+          unit_price_ht: Number(pd.unit_price_ht) || 0,
+          vat_rate: Number(pd.vat_rate) || 19,
+          discount_percent: Number(pd.discount_percent) || 0,
+          line_total_ht: Number(pd.line_total_ht) || 0,
+          line_vat: Number(pd.line_vat) || 0,
+          line_total_ttc: Number(pd.line_total_ttc) || 0,
           is_new_product: vp.decision === 'create_new',
           is_existing_product: vp.decision !== 'create_new',
           line_order: index,
@@ -146,13 +146,21 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
           }
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating purchase document:', error);
-      toast.error('Erreur lors de la création du document');
+      const errorMessage = error.message || error.details || 'Erreur technique';
+      toast.error(`Erreur lors de la création du document : ${errorMessage}`);
     } finally {
       setIsCreating(false);
       setCreatingMode(null);
     }
+  };
+
+  // Helper to check if a string is a valid ISO date
+  const isValidDate = (dateStr: string | null): boolean => {
+    if (!dateStr || dateStr.trim() === "" || dateStr === "N/A" || dateStr === "null") return false;
+    const date = new Date(dateStr);
+    return !isNaN(date.getTime());
   };
 
   return (
