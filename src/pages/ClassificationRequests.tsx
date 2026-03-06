@@ -8,14 +8,13 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, Clock, CheckCircle2 } from 'lucide-react';
 import { PublicUploadLinkBlock } from '@/components/purchases/PublicUploadLinkBlock';
 import { PendingPublicUploadsBlock } from '@/components/purchases/PendingPublicUploadsBlock';
-import { PurchaseDocumentsBlock } from '@/components/purchases/PurchaseDocumentsBlock';
 import { PurchaseDocument } from '@/components/purchases/types';
 
 const ClassificationRequests: React.FC = () => {
   const { t, isRTL } = useLanguage();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Data states
   const [pendingDocuments, setPendingDocuments] = useState<PurchaseDocument[]>([]);
   const [validatedDocuments, setValidatedDocuments] = useState<PurchaseDocument[]>([]);
@@ -109,13 +108,6 @@ const ClassificationRequests: React.FC = () => {
         </Card>
       </div>
 
-      {/* Purchase Documents Block */}
-      <PurchaseDocumentsBlock
-        pendingDocuments={pendingDocuments}
-        validatedDocuments={validatedDocuments}
-        isLoading={isLoading}
-        onRefresh={handleRefresh}
-      />
     </motion.div>
   );
 };
