@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  CheckCircle2, 
+import {
+  CheckCircle2,
   Package,
   FileText,
   Loader2,
@@ -54,11 +54,11 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         .from('purchase_documents')
         .insert({
           organization_id: organizationId,
-          supplier_id: workflowData.supplierId,
-          import_folder_id: workflowData.importFolderId,
-          document_family_id: workflowData.documentFamilyId,
-          invoice_number: workflowData.invoiceNumber,
-          invoice_date: workflowData.invoiceDate,
+          supplier_id: workflowData.supplierId || null,
+          import_folder_id: workflowData.importFolderId || null,
+          document_family_id: workflowData.documentFamilyId || null,
+          invoice_number: workflowData.invoiceNumber || null,
+          invoice_date: (workflowData.invoiceDate && workflowData.invoiceDate.trim() !== "") ? workflowData.invoiceDate : null,
           currency: workflowData.currency,
           exchange_rate: workflowData.exchangeRate,
           subtotal_ht: workflowData.subtotalHt,
@@ -67,10 +67,10 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
           total_ttc: workflowData.totalTtc,
           stamp_duty_amount: workflowData.stampDutyAmount,
           net_payable: workflowData.netPayable,
-          pdf_url: workflowData.pdfUrl,
-          pdf_hash: workflowData.pdfHash,
+          pdf_url: workflowData.pdfUrl || null,
+          pdf_hash: workflowData.pdfHash || null,
           // Status: 'pending' means created without supply validation
-          status: mode === 'without_supply' ? 'pending' : 'pending',
+          status: 'pending',
           payment_status: 'unpaid',
         })
         .select()
@@ -79,7 +79,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
       if (purchaseError) throw purchaseError;
 
       // Create purchase lines from productDetails or verifiedProducts
-      const products = workflowData.productDetails.length > 0 
+      const products = workflowData.productDetails.length > 0
         ? workflowData.productDetails.map(pd => ({ productDetails: pd, decision: 'create_new', existingProductId: null }))
         : workflowData.verifiedProducts;
 
@@ -211,7 +211,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
         {/* Action Buttons */}
         <div className="space-y-4">
           <h4 className="font-medium">Choisissez une option :</h4>
-          
+
           {/* Create without supply */}
           <div className="p-4 border rounded-lg hover:border-primary/50 transition-colors">
             <div className="flex items-start gap-4">
@@ -221,7 +221,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
               <div className="flex-1">
                 <h5 className="font-medium">Créer sans approvisionnement</h5>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Le document sera créé avec le statut "Créé sans approvisionnement". 
+                  Le document sera créé avec le statut "Créé sans approvisionnement".
                   Les stocks ne seront pas mis à jour.
                 </p>
                 <Button
@@ -260,7 +260,7 @@ export const CompletionStep: React.FC<CompletionStepProps> = ({
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Le document sera créé et vous serez redirigé vers la page d'approvisionnement 
+                  Le document sera créé et vous serez redirigé vers la page d'approvisionnement
                   pour mettre à jour les stocks avec les nouveaux produits.
                 </p>
                 <Button
