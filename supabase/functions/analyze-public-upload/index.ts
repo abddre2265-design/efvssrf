@@ -10,12 +10,12 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = '';
   const chunkSize = 0x8000; // 32KB chunks to avoid stack overflow
-  
+
   for (let i = 0; i < bytes.length; i += chunkSize) {
     const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
     binary += String.fromCharCode.apply(null, Array.from(chunk));
   }
-  
+
   return btoa(binary);
 }
 
@@ -27,7 +27,7 @@ serve(async (req) => {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    
+
     if (!file) {
       return new Response(
         JSON.stringify({ error: 'No file provided' }),
@@ -44,13 +44,13 @@ serve(async (req) => {
     console.log('Base64 conversion complete, length:', base64.length);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
+
     if (!LOVABLE_API_KEY) {
       console.log('No LOVABLE_API_KEY found, using fallback extraction');
       // Fallback: extract from filename
       const filename = file.name.replace('.pdf', '');
       const parts = filename.split('_');
-      
+
       return new Response(
         JSON.stringify({
           supplier: parts[0] || '',
@@ -71,7 +71,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-1.5-flash',
         messages: [
           {
             role: 'user',
@@ -81,7 +81,9 @@ serve(async (req) => {
                 text: `Tu es un expert en OCR et extraction de données de documents comptables (factures, bons de livraison, etc.).
 Analyse le document PDF fourni et extrait les informations suivantes avec précision:
 
-1. **Fournisseur (supplier)**: Le nom de l'entreprise ou la personne qui émet le document. Cherche en haut du document, dans l'en-tête, le logo ou les coordonnées de l'émetteur.
+1. **Fournisseur (supplier)**: Le nom de l'entreprise ou la personne qui émet le document (VENDEUR). 
+   - Cherche en haut du document, dans l'en-tête principal, le logo ou les coordonnées de l'émetteur.
+   - ⚠️ IMPORTANT: Ignore le destinataire (Client, Facturé à, Destinataire). Nous sommes l'acheteur, donc ne prends pas notre nom comme fournisseur.
 
 2. **Numéro du document (documentNumber)**: Le numéro de facture, bon de livraison, ou référence du document. Cherche des termes comme "N°", "Facture N°", "BL N°", "Réf:", "Invoice N°", etc.
 
@@ -89,27 +91,27 @@ Analyse le document PDF fourni et extrait les informations suivantes avec préci
 
 Réponds UNIQUEMENT en JSON valide avec ce format exact, sans aucun texte avant ou après:
 {
-  "supplier": "Nom exact du fournisseur",
+  "supplier": "Nom exact du fournisseur (Émetteur)",
   "documentNumber": "Numéro exact du document",
   "documentDate": "YYYY-MM-DD"
 }
 
 IMPORTANT: 
-- Ne mets pas de markdown ni de backticks, juste le JSON pur.
 - Si tu ne peux pas extraire une information, utilise une chaîne vide "".
-- Pour la date, convertis toujours au format YYYY-MM-DD (ex: 15/01/2026 devient 2026-01-15).
-- Pour le fournisseur, prends le nom commercial principal visible sur le document.`,
+- Pour la date, convertis toujours au format YYYY-MM-DD.
+- Pour le fournisseur, prends le nom commercial principal de l'émetteur visible sur le document.`,
               },
               {
                 type: 'image_url',
                 image_url: {
                   url: `data:application/pdf;base64,${base64}`,
+                  detail: 'high'
                 },
               },
             ],
           },
         ],
-        max_tokens: 500,
+        max_tokens: 1000,
         temperature: 0.1,
       }),
     });
@@ -122,9 +124,9 @@ IMPORTANT:
 
     const aiResult = await aiResponse.json();
     const content = aiResult.choices?.[0]?.message?.content || '{}';
-    
+
     console.log('AI response content:', content);
-    
+
     // Parse JSON from AI response
     let extractedData;
     try {
@@ -133,13 +135,13 @@ IMPORTANT:
         .replace(/```json\n?/gi, '')
         .replace(/```\n?/g, '')
         .trim();
-      
+
       // Find JSON object in the response
       const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         cleanContent = jsonMatch[0];
       }
-      
+
       extractedData = JSON.parse(cleanContent);
       console.log('Extracted data:', extractedData);
     } catch (e) {
@@ -159,7 +161,7 @@ IMPORTANT:
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error:', errorMessage);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: errorMessage,
         supplier: '',
         documentNumber: '',

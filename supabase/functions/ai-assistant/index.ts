@@ -32,7 +32,7 @@ serve(async (req) => {
   try {
     const { messages, language, context } = await req.json() as AssistantRequest;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
+
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
@@ -97,7 +97,7 @@ Sois proactif et offre des suggestions pertinentes. Tu es l'intelligence central
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-1.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
@@ -109,32 +109,32 @@ Sois proactif et offre des suggestions pertinentes. Tu es l'intelligence central
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
           error: "rate_limit",
-          message: language === 'fr' 
-            ? "Je suis temporairement indisponible. Réessayez dans un moment." 
+          message: language === 'fr'
+            ? "Je suis temporairement indisponible. Réessayez dans un moment."
             : language === 'ar'
-            ? "أنا غير متاح مؤقتًا. حاول مرة أخرى لاحقًا."
-            : "I'm temporarily unavailable. Please try again in a moment."
+              ? "أنا غير متاح مؤقتًا. حاول مرة أخرى لاحقًا."
+              : "I'm temporarily unavailable. Please try again in a moment."
         }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
           error: "payment_required",
           message: language === 'fr'
             ? "Crédits IA épuisés. Veuillez recharger."
             : language === 'ar'
-            ? "رصيد الذكاء الاصطناعي منتهي. يرجى إعادة الشحن."
-            : "AI credits depleted. Please top up."
+              ? "رصيد الذكاء الاصطناعي منتهي. يرجى إعادة الشحن."
+              : "AI credits depleted. Please top up."
         }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      
+
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
       throw new Error(`AI gateway error: ${response.status}`);
@@ -147,8 +147,8 @@ Sois proactif et offre des suggestions pertinentes. Tu es l'intelligence central
 
   } catch (error) {
     console.error("AI Assistant error:", error);
-    
-    return new Response(JSON.stringify({ 
+
+    return new Response(JSON.stringify({
       error: "internal_error",
       message: error instanceof Error ? error.message : "Unknown error"
     }), {
