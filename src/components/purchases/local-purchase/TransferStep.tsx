@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  Upload, 
+import {
+  Upload,
   FileText,
   Loader2,
   CheckCircle2,
@@ -70,7 +70,7 @@ export const TransferStep: React.FC<TransferStepProps> = ({
       const url = signedUrlData?.signedUrl || null;
       setPdfUrl(url);
       setTransferComplete(true);
-      
+
       toast.success('Fichier transféré avec succès');
     } catch (error) {
       console.error('Transfer error:', error);
@@ -93,6 +93,7 @@ export const TransferStep: React.FC<TransferStepProps> = ({
         body: {
           pdf_url: pdfUrl,
           organization_id: organizationId,
+          supplier_hint: pendingUpload.supplier_detected,
         },
       });
 
@@ -109,7 +110,7 @@ export const TransferStep: React.FC<TransferStepProps> = ({
       }
 
       setAnalysisResult(data.data);
-      
+
       // Pass data to parent (don't navigate yet - user will click Continue)
       onAnalysisComplete({
         pdfUrl,
@@ -274,7 +275,7 @@ export const TransferStep: React.FC<TransferStepProps> = ({
                     Les données ont été extraites. Cliquez sur Continuer pour passer à l'étape suivante.
                   </AlertDescription>
                 </Alert>
-                
+
                 <div className="flex justify-end">
                   <Button
                     onClick={onContinue}

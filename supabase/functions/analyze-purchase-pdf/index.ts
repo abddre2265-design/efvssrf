@@ -90,7 +90,7 @@ const generateReference = (): string => {
 // Validate barcode format
 const validateBarcode = (code: string): { valid: boolean; format: string | null } => {
   if (!code) return { valid: false, format: null };
-  
+
   const formats: Record<string, RegExp> = {
     'EAN-13': /^\d{13}$/,
     'EAN-8': /^\d{8}$/,
@@ -101,7 +101,7 @@ const validateBarcode = (code: string): { valid: boolean; format: string | null 
     'Code39': /^[0-9A-Z\-.$/+% ]{3,}$/,
     'Code93': /^[0-9A-Z\-.$/+% ]{3,}$/,
   };
-  
+
   for (const [format, regex] of Object.entries(formats)) {
     if (regex.test(code)) {
       return { valid: true, format };
@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { pdf_url, organization_id } = await req.json();
+    const { pdf_url, organization_id, supplier_hint } = await req.json();
 
     if (!pdf_url || !organization_id) {
       return new Response(
@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
     }
 
     console.log('PDF size:', pdfBuffer.byteLength, 'bytes');
-    
+
     // Convert to base64 - handle large files in chunks
     const uint8Array = new Uint8Array(pdfBuffer);
     let pdfBase64 = '';
@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
 
     // Call Lovable AI Gateway for PDF analysis
     console.log('Calling AI for PDF analysis...');
-    
+
     const prompt = `Tu es un expert en extraction de données de factures d'achat tunisiennes et internationales. Analyse CE DOCUMENT PDF COMPLET (TOUTES LES PAGES) avec une attention EXTRÊME aux détails.
 
 ⚠️ IMPORTANT - DOCUMENT MULTI-PAGES:
@@ -285,19 +285,21 @@ RÈGLE #1 - IDENTIFICATION FOURNISSEUR vs CLIENT (CRITIQUE!)
 ═══════════════════════════════════════════════════════════════
 
 Cette facture est une FACTURE D'ACHAT. Nous sommes l'ACHETEUR (celui qui paie).
-Tu dois extraire les informations du FOURNISSEUR/VENDEUR (celui qui encaisse).
+Tu dois extraire les informations du FOURNISSEUR/VENDEUR (celui qui émet la facture et encaisse le paiement).
+
+${supplier_hint ? `💡 INDICE SUR LE FOURNISSEUR: Le document a été initialement identifié comme provenant de "${supplier_hint}". Utilise cet indice pour confirmer l'émetteur.` : ''}
 
 COMMENT IDENTIFIER LE FOURNISSEUR (VENDEUR):
-✅ En HAUT de la facture, dans l'en-tête
-✅ À côté du LOGO de l'entreprise
-✅ Celui qui ÉMET la facture (mentionné comme "De:", "From:", "Vendeur:", "Émetteur:")
-✅ Son matricule fiscal (MF) est généralement le PREMIER visible
-✅ Ses coordonnées bancaires (RIB/IBAN) sont présentes pour recevoir le paiement
-✅ Son nom apparaît dans le titre de la facture ou numéro de facture
+✅ En HAUT de la facture, dans l'en-tête principal.
+✅ À côté du LOGO de l'entreprise (l'entité dont c'est le papier à en-tête).
+✅ Celui qui ÉMET la facture (mentionné comme "De:", "From:", "Vendeur:", "Émetteur:").
+✅ Ses coordonnées bancaires (RIB/IBAN) sont présentes pour recevoir le paiement de NOTRE part.
+✅ Son tampon ou sa signature en bas de document.
 
 À IGNORER (C'EST NOUS LE CLIENT/ACHETEUR):
-❌ Tout ce qui est après "Facturé à:", "À:", "Client:", "Destinataire:", "Bill to:", "Livré à:", "Delivery to:"
-❌ L'entité qui REÇOIT la facture
+❌ Tout ce qui est après "Facturé à:", "À:", "Client:", "Destinataire:", "Bill to:", "Buyer:".
+❌ L'entité qui REÇOIT ou DOIT PAYER la facture.
+❌ Si tu vois "Client: [Nom]", ne prends surtout pas ce nom comme fournisseur !
 
 ═══════════════════════════════════════════════════════════════
 RÈGLE #2 - MATRICULE FISCAL (IDENTIFIANT) - OBLIGATOIRE!
@@ -425,7 +427,7 @@ RÈGLES EXTRACTION:
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('AI API error:', errorText);
-      
+
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ success: false, error: 'Rate limit exceeded. Please try again later.' }),
@@ -438,7 +440,7 @@ RÈGLES EXTRACTION:
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
+
       throw new Error(`AI API error: ${aiResponse.status}`);
     }
 
@@ -454,12 +456,12 @@ RÈGLES EXTRACTION:
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        
+
         // Get invoice year for purchase_year default
-        const invoiceYear = parsed.invoice_date 
-          ? new Date(parsed.invoice_date).getFullYear() 
+        const invoiceYear = parsed.invoice_date
+          ? new Date(parsed.invoice_date).getFullYear()
           : new Date().getFullYear();
-        
+
         // Process and validate products
         const products: ExtractedProduct[] = (parsed.products || []).map((p: any) => {
           // Validate and clean EAN
@@ -471,26 +473,26 @@ RÈGLES EXTRACTION:
               cleanEan = null; // Reject invalid barcodes
             }
           }
-          
+
           // Calculate prices if missing
           const vatRate = p.vat_rate ?? 19;
           let unitPriceHt = p.unit_price_ht || 0;
           let unitPriceTtc = p.unit_price_ttc || 0;
-          
+
           if (unitPriceHt && !unitPriceTtc) {
             unitPriceTtc = unitPriceHt * (1 + vatRate / 100);
           } else if (unitPriceTtc && !unitPriceHt) {
             unitPriceHt = unitPriceTtc / (1 + vatRate / 100);
           }
-          
+
           const quantity = p.quantity || 1;
           const discountPercent = p.discount_percent || 0;
           const discountMultiplier = 1 - discountPercent / 100;
-          
+
           const lineTotalHt = p.line_total_ht || (quantity * unitPriceHt * discountMultiplier);
           const lineVat = p.line_vat || (lineTotalHt * vatRate / 100);
           const lineTotalTtc = p.line_total_ttc || (lineTotalHt + lineVat);
-          
+
           return {
             name: p.name || 'Produit sans nom',
             reference: p.reference || null,
@@ -511,13 +513,13 @@ RÈGLES EXTRACTION:
             purchase_year: p.purchase_year || invoiceYear,
           };
         });
-        
+
         // Process totals
         const isForeign = parsed.supplier?.supplier_type === 'foreign';
         const totals: ExtractedTotals = {
           subtotal_ht: parsed.totals?.subtotal_ht || 0,
           total_discount: parsed.totals?.total_discount || 0,
-          ht_after_discount: parsed.totals?.ht_after_discount || 
+          ht_after_discount: parsed.totals?.ht_after_discount ||
             (parsed.totals?.subtotal_ht || 0) - (parsed.totals?.total_discount || 0),
           total_vat: parsed.totals?.total_vat || 0,
           total_ttc: parsed.totals?.total_ttc || 0,
@@ -526,12 +528,12 @@ RÈGLES EXTRACTION:
           currency: parsed.totals?.currency || 'USD',
           vat_breakdown: parsed.totals?.vat_breakdown || [],
         };
-        
+
         // Recalculate net_payable if needed
         if (!totals.net_payable) {
           totals.net_payable = totals.total_ttc + (isForeign ? 0 : totals.stamp_duty_amount);
         }
-        
+
         // Build VAT breakdown from products if not provided
         if (totals.vat_breakdown.length === 0 && products.length > 0) {
           const vatMap = new Map<number, { base_ht: number; vat_amount: number }>();
@@ -547,11 +549,11 @@ RÈGLES EXTRACTION:
             vat_amount: data.vat_amount,
           }));
         }
-        
+
         // Process supplier
         let supplier: ExtractedSupplier | null = parsed.supplier ? {
-          name: parsed.supplier.name || parsed.supplier.company_name || 
-                `${parsed.supplier.first_name || ''} ${parsed.supplier.last_name || ''}`.trim() || 'Fournisseur inconnu',
+          name: parsed.supplier.name || parsed.supplier.company_name ||
+            `${parsed.supplier.first_name || ''} ${parsed.supplier.last_name || ''}`.trim() || 'Fournisseur inconnu',
           company_name: parsed.supplier.company_name || null,
           first_name: parsed.supplier.first_name || null,
           last_name: parsed.supplier.last_name || null,
@@ -572,36 +574,36 @@ RÈGLES EXTRACTION:
           match_confidence: null,
           match_reason: null,
         } : null;
-        
+
         // Intelligent supplier matching
         if (supplier) {
           console.log('Searching for existing supplier match...');
-          
+
           const supplierName = supplier.name?.toLowerCase().trim() || '';
           const supplierCompanyName = supplier.company_name?.toLowerCase().trim() || '';
           const supplierIdentifier = supplier.identifier_value?.trim() || '';
           const supplierFirstName = supplier.first_name?.toLowerCase().trim() || '';
           const supplierLastName = supplier.last_name?.toLowerCase().trim() || '';
-          
+
           // Fetch all active suppliers for the organization
           const { data: existingSuppliers, error: suppliersError } = await supabase
             .from('suppliers')
             .select('id, company_name, first_name, last_name, identifier_type, identifier_value, supplier_type, country, governorate, address, phone, phone_prefix, email')
             .eq('organization_id', organization_id)
             .eq('status', 'active');
-          
+
           if (!suppliersError && existingSuppliers && existingSuppliers.length > 0) {
             let bestMatch: { supplier: any; confidence: number; reason: string } | null = null;
-            
+
             for (const existingSupplier of existingSuppliers) {
               let confidence = 0;
               const reasons: string[] = [];
-              
+
               // 1. Exact identifier match (highest priority - 100% confidence)
               if (supplierIdentifier && existingSupplier.identifier_value) {
                 const normalizedExtracted = supplierIdentifier.replace(/[\s\.\-\/]/g, '').toUpperCase();
                 const normalizedExisting = existingSupplier.identifier_value.replace(/[\s\.\-\/]/g, '').toUpperCase();
-                
+
                 if (normalizedExtracted === normalizedExisting) {
                   confidence = 100;
                   reasons.push(`MF identique: ${existingSupplier.identifier_value}`);
@@ -610,11 +612,11 @@ RÈGLES EXTRACTION:
                   reasons.push(`MF similaire: ${existingSupplier.identifier_value}`);
                 }
               }
-              
+
               // 2. Company name matching
               if (confidence < 100 && supplierCompanyName && existingSupplier.company_name) {
                 const existingCompanyName = existingSupplier.company_name.toLowerCase().trim();
-                
+
                 if (supplierCompanyName === existingCompanyName) {
                   confidence = Math.max(confidence, 95);
                   reasons.push(`Raison sociale identique`);
@@ -625,7 +627,7 @@ RÈGLES EXTRACTION:
                   const extractedWords = supplierCompanyName.split(/[\s\-\.]+/).filter((w: string) => w.length > 2);
                   const existingWords = existingCompanyName.split(/[\s\-\.]+/).filter((w: string) => w.length > 2);
                   const commonWords = extractedWords.filter((w: string) => existingWords.some((ew: string) => ew.includes(w) || w.includes(ew)));
-                  
+
                   if (commonWords.length >= 2 || (commonWords.length === 1 && extractedWords.length <= 2)) {
                     const matchRatio = commonWords.length / Math.max(extractedWords.length, existingWords.length);
                     const wordConfidence = Math.min(75, Math.round(matchRatio * 75));
@@ -636,12 +638,12 @@ RÈGLES EXTRACTION:
                   }
                 }
               }
-              
+
               // 3. Individual name matching
               if (confidence < 100 && supplierFirstName && supplierLastName && existingSupplier.first_name && existingSupplier.last_name) {
                 const existingFirstName = existingSupplier.first_name.toLowerCase().trim();
                 const existingLastName = existingSupplier.last_name.toLowerCase().trim();
-                
+
                 if (supplierFirstName === existingFirstName && supplierLastName === existingLastName) {
                   confidence = Math.max(confidence, 95);
                   reasons.push(`Nom identique`);
@@ -650,12 +652,12 @@ RÈGLES EXTRACTION:
                   reasons.push(`Nom de famille identique`);
                 }
               }
-              
+
               // 4. Generic name matching
               if (confidence < 70 && supplierName) {
-                const existingFullName = existingSupplier.company_name?.toLowerCase() || 
+                const existingFullName = existingSupplier.company_name?.toLowerCase() ||
                   `${existingSupplier.first_name || ''} ${existingSupplier.last_name || ''}`.toLowerCase().trim();
-                
+
                 if (supplierName === existingFullName) {
                   confidence = Math.max(confidence, 90);
                   reasons.push(`Nom exact`);
@@ -664,20 +666,20 @@ RÈGLES EXTRACTION:
                   reasons.push(`Nom partiel`);
                 }
               }
-              
+
               if (confidence >= 60 && (!bestMatch || confidence > bestMatch.confidence)) {
                 bestMatch = { supplier: existingSupplier, confidence, reason: reasons.join(' | ') };
               }
             }
-            
+
             if (bestMatch) {
               console.log(`Supplier match: ${bestMatch.supplier.company_name || bestMatch.supplier.first_name} (${bestMatch.confidence}%)`);
-              
+
               supplier.is_existing = true;
               supplier.existing_supplier_id = bestMatch.supplier.id;
               supplier.match_confidence = bestMatch.confidence;
               supplier.match_reason = bestMatch.reason;
-              
+
               // Enrich with existing data if missing
               if (!supplier.phone && bestMatch.supplier.phone) {
                 supplier.phone = bestMatch.supplier.phone;
@@ -695,7 +697,7 @@ RÈGLES EXTRACTION:
             }
           }
         }
-        
+
         extractedData = {
           invoice_number: parsed.invoice_number || null,
           invoice_date: parsed.invoice_date || null,
@@ -705,7 +707,7 @@ RÈGLES EXTRACTION:
           is_duplicate: false,
           duplicate_reason: null,
         };
-        
+
         console.log('Extraction processed:', {
           invoice_number: extractedData.invoice_number,
           supplier_name: extractedData.supplier?.name,
@@ -723,7 +725,7 @@ RÈGLES EXTRACTION:
           currency: extractedData.totals.currency,
           vat_rates: extractedData.totals.vat_breakdown.map(v => v.rate),
         });
-        
+
       } else {
         throw new Error('No JSON found in response');
       }
@@ -753,9 +755,9 @@ RÈGLES EXTRACTION:
     // Check for duplicate based on supplier + invoice_number + invoice_date in supply_records only
     if (extractedData.invoice_number && extractedData.invoice_date && extractedData.supplier) {
       console.log('Checking for duplicate supply by supplier + invoice_number + date...');
-      
+
       const supplierName = extractedData.supplier.name;
-      
+
       // Check directly in supply_records (which stores supplier_name)
       const { data: duplicateSupplies } = await supabase
         .from('supply_records')
@@ -764,20 +766,20 @@ RÈGLES EXTRACTION:
         .eq('invoice_number', extractedData.invoice_number)
         .eq('invoice_date', extractedData.invoice_date)
         .limit(10);
-      
+
       if (duplicateSupplies && duplicateSupplies.length > 0) {
         // Check if any match the supplier name
         const matchingSupply = duplicateSupplies.find(s => {
           const existingName = (s.supplier_name || '').toLowerCase().trim();
           const extractedName = (supplierName || '').toLowerCase().trim();
-          return existingName === extractedName || 
-                 existingName.includes(extractedName) || 
-                 extractedName.includes(existingName);
+          return existingName === extractedName ||
+            existingName.includes(extractedName) ||
+            extractedName.includes(existingName);
         });
-        
+
         if (matchingSupply) {
           console.log('Duplicate supply found by supplier + invoice_number + date');
-          
+
           return new Response(
             JSON.stringify({
               success: true,
@@ -820,9 +822,9 @@ RÈGLES EXTRACTION:
   } catch (error) {
     console.error('Error analyzing PDF:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to analyze PDF' 
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to analyze PDF'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
