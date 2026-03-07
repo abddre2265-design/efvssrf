@@ -8,13 +8,18 @@ const Supply: React.FC = () => {
   const { t, isRTL } = useLanguage();
   const location = useLocation();
   const [refreshKey, setRefreshKey] = useState(0);
+  // Extract preloaded PDF data passed via navigate state (from local purchase workflow)
+  const [preloadedPdf, setPreloadedPdf] = useState(location.state?.preloadedPdf || null);
 
   const handleRefresh = () => {
+    // Clear preloaded state on refresh/completion to avoid loops
+    if (preloadedPdf) {
+      setPreloadedPdf(null);
+      // Also clear the location state to prevent re-hydration on browser refresh
+      window.history.replaceState({}, document.title);
+    }
     setRefreshKey(prev => prev + 1);
   };
-
-  // Extract preloaded PDF data passed via navigate state (from local purchase workflow)
-  const preloadedPdf = location.state?.preloadedPdf || null;
 
   return (
     <motion.div
