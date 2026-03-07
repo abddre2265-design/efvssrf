@@ -355,29 +355,36 @@ IMPORTANT: Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ou ap
       "unit_price_ht": 100.000,
       "unit_price_ttc": 119.000,
       "vat_rate": 19,
+      "name": "",
+      "reference": "",
+      "ean": "",
+      "quantity": 0,
+      "unit_price_ht": 0,
+      "unit_price_ttc": 0,
+      "vat_rate": 0,
       "discount_percent": 0,
-      "line_total_ht": 100.000,
-      "line_total_ttc": 119.000,
-      "line_vat": 19.000,
-      "product_type": "physical" ou "service",
-      "unit": "piece",
+      "line_total_ht": 0,
+      "line_total_ttc": 0,
+      "line_vat": 0,
+      "product_type": "",
+      "unit": "",
       "max_discount": 0,
       "unlimited_stock": false,
       "allow_out_of_stock_sale": false,
-      "purchase_year": 2025
+      "purchase_year": 0
     }
   ],
   "totals": {
-    "subtotal_ht": 100.000,
+    "subtotal_ht": 0,
     "total_discount": 0,
-    "ht_after_discount": 100.000,
-    "total_vat": 19.000,
-    "total_ttc": 119.000,
-    "stamp_duty_amount": 1.000,
-    "net_payable": 120.000,
-    "currency": "TND",
+    "ht_after_discount": 0,
+    "total_vat": 0,
+    "total_ttc": 0,
+    "stamp_duty_amount": 0,
+    "net_payable": 0,
+    "currency": "",
     "vat_breakdown": [
-      { "rate": 19, "base_ht": 100.000, "vat_amount": 19.000 }
+      { "rate": 0, "base_ht": 0, "vat_amount": 0 }
     ]
   }
 }

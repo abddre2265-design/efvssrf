@@ -78,28 +78,31 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: `Tu es un expert en OCR et extraction de données de documents comptables (factures, bons de livraison, etc.).
-Analyse le document PDF fourni et extrait les informations suivantes avec précision:
+                text: `Tu es un expert en OCR et extraction de données de documents comptables tunisiens et internationaux.
+Analyse le document PDF fourni et extrait les informations suivantes:
 
-1. **Fournisseur (supplier)**: Le nom de l'entreprise ou la personne qui émet le document (VENDEUR). 
-   - Cherche en haut du document, dans l'en-tête principal, le logo ou les coordonnées de l'émetteur.
-   - ⚠️ IMPORTANT: Ignore le destinataire (Client, Facturé à, Destinataire). Nous sommes l'acheteur, donc ne prends pas notre nom comme fournisseur.
+1. **Fournisseur (supplier)**: Le nom de l'entreprise qui émet le document (VENDEUR). 
+   - Cherche en haut du document (logo, en-tête principal, adresse).
+   - ⚠️ IMPORTANT: Ne confonds pas avec le Client (Facturé à, Destinataire).
+   - Si tu ne trouves pas de nom clair, cherche une adresse ou un matricule fiscal pour déduire le nom.
 
-2. **Numéro du document (documentNumber)**: Le numéro de facture, bon de livraison, ou référence du document. Cherche des termes comme "N°", "Facture N°", "BL N°", "Réf:", "Invoice N°", etc.
+2. **Numéro du document (documentNumber)**: Le numéro de facture, bon de livraison (BL), ou référence. 
+   - Cherche: "N°", "Facture", "BL", "Reference", "Invoice", "Piece", "n/ref".
 
-3. **Date du document (documentDate)**: La date d'émission du document au format YYYY-MM-DD. Cherche des termes comme "Date:", "Le:", "Fait le:", "Date facture:", etc.
+3. **Date du document (documentDate)**: La date d'émission (format YYYY-MM-DD).
 
-Réponds UNIQUEMENT en JSON valide avec ce format exact, sans aucun texte avant ou après:
+Réponds UNIQUEMENT en JSON valide avec ce format exact, sans aucun texte avant ou après. 
+NE METS PAS LES LABELS DANS LES VALEURS PAR DÉFAUT SI NON TROUVÉ.
 {
-  "supplier": "Nom exact du fournisseur (Émetteur)",
-  "documentNumber": "Numéro exact du document",
-  "documentDate": "YYYY-MM-DD"
+  "supplier": "",
+  "documentNumber": "",
+  "documentDate": ""
 }
 
 IMPORTANT: 
-- Si tu ne peux pas extraire une information, utilise une chaîne vide "".
-- Pour la date, convertis toujours au format YYYY-MM-DD.
-- Pour le fournisseur, prends le nom commercial principal de l'émetteur visible sur le document.`,
+- Pas de markdown.
+- Si inconnu, laisse une chaîne vide "".
+- Pour la date, convertis toujours au format YYYY-MM-DD (ex: 15/01/2026 devient 2026-01-15).`,
               },
               {
                 type: 'image_url',

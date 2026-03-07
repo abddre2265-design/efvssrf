@@ -87,45 +87,33 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: `Tu es un expert en OCR et extraction de données de documents douaniers tunisiens (quittances douanières).
-Analyse le document PDF fourni et extrait les informations suivantes avec précision:
+                text: `Tu es un expert en OCR de documents douaniers tunisiens (quittances).
+Analyse le document et extrait:
 
-1. **Type de quittance (quittanceType)**: Identifie le type de quittance douanière parmi ces options:
-   - "droits_taxes_importation" : Quittance de droits et taxes d'importation (par défaut si non déterminé)
-   - "regularisation" : Quittance de régularisation
-   - "penalite_amende" : Quittance de pénalité ou amende douanière
-   - "consignation_garantie" : Quittance de consignation ou garantie
-   - "autre" : Autre type de quittance douanière
+1. **quittanceType**: 
+   - "droits_taxes_importation" (Défaut)
+   - "regularisation"
+   - "penalite_amende"
+   - "consignation_garantie"
+   - "autre"
    
-   Indices: Cherche des mots-clés comme "droits de douane", "taxe", "régularisation", "pénalité", "amende", "consignation", "garantie", etc.
+2. **customsOffice**: Nom du bureau/recette (ex: Goulette, Tunis Port).
+3. **documentNumber**: N° Quittance (ex: 2026/1234).
+4. **documentDate**: Date (YYYY-MM-DD).
+5. **totalAmount**: Montant total payé (Nombre).
+6. **customsDeclarationNumber**: N° Déclaration/D.U.
+7. **importerName**: Nom du redevable/importateur.
 
-2. **Bureau des douanes (customsOffice)**: Le nom du bureau ou recette des douanes émetteur (ex: Bureau des douanes de Tunis Port, Goulette, Sfax).
-
-3. **Numéro de quittance (documentNumber)**: Le numéro de la quittance (ex: 2026/12345).
-
-4. **Date de la quittance (documentDate)**: La date d'émission au format YYYY-MM-DD.
-
-5. **Montant total (totalAmount)**: Le montant total en dinars tunisiens (TND). Extrait uniquement le nombre.
-
-6. **Numéro de déclaration douanière (customsDeclarationNumber)**: Le numéro de la déclaration en douane associée (souvent D.U. ou Déclaration N°).
-
-7. **Raison sociale importateur (importerName)**: Le nom de l'entreprise importatrice (Redevable).
-
-Réponds UNIQUEMENT en JSON valide avec ce format exact:
+Réponds en JSON pur sans labels par défaut. Si inconnu, "".
 {
   "quittanceType": "droits_taxes_importation",
-  "customsOffice": "Nom du bureau",
-  "documentNumber": "Numéro",
-  "documentDate": "YYYY-MM-DD",
+  "customsOffice": "",
+  "documentNumber": "",
+  "documentDate": "",
   "totalAmount": 0,
-  "customsDeclarationNumber": "N° Déclaration",
-  "importerName": "Nom importateur"
-}
-
-IMPORTANT: 
-- Pas de markdown.
-- Si inconnu, utilise "" (ou 0).
-- Date au format YYYY-MM-DD.`,
+  "customsDeclarationNumber": "",
+  "importerName": ""
+}`,
               },
               {
                 type: 'image_url',
