@@ -286,8 +286,9 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                 <Card>
                   <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Settings2 className="h-4 w-4" />{t('generation_parameters')}</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                       <div className="space-y-2"><Label>{t('max_lines')}</Label><Input type="number" min="1" max="100" value={maxLines} onChange={(e) => setMaxLines(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>{t('max_qty_per_line')}</Label><Input type="number" min="1" max="1000" value={maxQuantityPerLine} onChange={(e) => setMaxQuantityPerLine(e.target.value)} /></div>
                       <div className="space-y-2"><Label>{t('min_price_ttc')}</Label><Input type="number" min="0" step="0.001" value={minPriceTtc} onChange={(e) => setMinPriceTtc(e.target.value)} /></div>
                       <div className="space-y-2"><Label>{t('max_price_ttc')}</Label><Input type="number" min="0" step="0.001" value={maxPriceTtc} onChange={(e) => setMaxPriceTtc(e.target.value)} /></div>
                     </div>
