@@ -175,10 +175,13 @@ const PublicInvoiceRequest: React.FC = () => {
           // Get organization name
           const { data: org } = await supabase
             .from('organizations')
-            .select('name')
+            .select('name, logo_url')
             .eq('id', data.organization_id)
             .maybeSingle();
-          if (org) setOrganizationName(org.name);
+          if (org) {
+            setOrganizationName(org.name);
+            setOrganizationLogo(org.logo_url);
+          }
 
           // Get stores for this organization
           const { data: storesData } = await supabase
