@@ -498,7 +498,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                 onClick={onClose}
                 className="text-primary underline hover:no-underline"
               >
-                {t('fill_manually')}
+                {t('fill_manually_link')}
               </button>
             </p>
           </div>
