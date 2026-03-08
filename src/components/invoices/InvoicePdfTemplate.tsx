@@ -781,11 +781,14 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   );
 
   const getWatermarkInfo = (): { text: string; className: string } | null => {
-    if (invoice.status === 'created') {
+    const status = invoice.status as string;
+    if (status === 'created' || status === 'draft') {
       return { text: 'BROUILLON', className: 'invoice-watermark-draft' };
     }
-    // Validated invoices show payment status
-    if (invoice.status === 'validated') {
+    if (status === 'cancelled') {
+      return { text: 'ANNULÉE', className: 'invoice-watermark-cancelled' };
+    }
+    if (status === 'validated') {
       switch (invoice.payment_status) {
         case 'paid':
           return { text: 'PAYÉ', className: 'invoice-watermark-paid' };
