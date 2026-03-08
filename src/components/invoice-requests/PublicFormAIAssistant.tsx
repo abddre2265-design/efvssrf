@@ -99,10 +99,10 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     }
   }, [messages]);
 
-  // Initial greeting
+  // Initial greeting - re-run when language changes
   useEffect(() => {
     initializeAssistant();
-  }, []);
+  }, [language]);
 
   const initializeAssistant = async () => {
     setIsLoading(true);
