@@ -1249,27 +1249,6 @@ const PublicInvoiceRequest: React.FC = () => {
         </Tabs>
       </div>
 
-      {/* Payment Confirmation Dialog */}
-      <AlertDialog open={showPaymentConfirm} onOpenChange={setShowPaymentConfirm}>
-        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('payment_confirmation')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('partial_equals_total_confirm')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setShowPaymentConfirm(false);
-              setPaymentStatus('paid');
-              submitRequest();
-            }}>
-              {t('yes_treat_as_paid')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Pending Requests Dialog */}
       <PendingRequestDialog
