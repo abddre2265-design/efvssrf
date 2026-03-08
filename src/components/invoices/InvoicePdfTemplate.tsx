@@ -1015,7 +1015,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                       </div>
                       {cn.reason && (
                         <div style={{ marginTop: '3px', fontStyle: 'italic', color: '#666' }}>
-                          Motif : {cn.reason}
+                          {t('pdf_reason')} : {cn.reason}
                         </div>
                       )}
                     </div>
