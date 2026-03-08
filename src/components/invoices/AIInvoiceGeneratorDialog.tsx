@@ -350,7 +350,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                             <div className="flex items-center gap-3 shrink-0">
                               <span>{t('max_qty')}: <strong>{maxQty}</strong></span>
                               <span>{t('max_discount_label')}: <strong>{p.max_discount ?? 0}%</strong></span>
-                              <Badge variant="outline" className="text-[10px]">TVA {p.vat_rate}%</Badge>
+                              <Badge variant="outline" className="text-[10px]">{t('vat_label')} {p.vat_rate}%</Badge>
                             </div>
                           </div>
                         );
