@@ -110,7 +110,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   borderRadius: 15,
                   fontSize: 7
                 }}>
-                  VALIDÉE
+                  {t('pdf_status_validated')}
                 </span>
               )}
             </div>
