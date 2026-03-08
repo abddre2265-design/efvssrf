@@ -381,6 +381,8 @@ IMPORTANT: Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ou ap
     "total_vat": 0,
     "total_ttc": 0,
     "stamp_duty_amount": 0,
+    "withholding_rate": 0,
+    "withholding_amount": 0,
     "net_payable": 0,
     "currency": "",
     "vat_breakdown": [
@@ -393,7 +395,15 @@ RÈGLES EXTRACTION:
 1. MATRICULE FISCAL: Cherche PARTOUT dans l'en-tête du fournisseur. C'est CRITIQUE!
 2. Gouvernorats tunisiens valides: Tunis, Ariana, Ben Arous, Manouba, Nabeul, Zaghouan, Bizerte, Béja, Jendouba, Le Kef, Siliana, Sousse, Monastir, Mahdia, Sfax, Kairouan, Kasserine, Sidi Bouzid, Gabès, Medenine, Tataouine, Gafsa, Tozeur, Kébili
 3. TVA tunisienne: 0%, 7%, 13%, 19% - Défaut 19%
-4. Timbre fiscal: 1 DT pour factures locales, 0 pour étrangers`;
+4. Timbre fiscal: 1 DT pour factures locales, 0 pour étrangers
+
+═══════════════════════════════════════════════════════════════
+RÈGLE CRITIQUE - CALCUL DES TOTAUX
+═══════════════════════════════════════════════════════════════
+- total_ttc = ht_after_discount + total_vat UNIQUEMENT (PAS de timbre fiscal, PAS de retenue à la source)
+- net_payable = total_ttc + stamp_duty_amount (SANS déduire la retenue à la source)
+- La retenue à la source (withholding) doit être extraite séparément dans withholding_rate et withholding_amount mais NE DOIT PAS être déduite du net_payable
+- Exemple: HT net=1000, TVA=190, Retenue 1%=11.90, Timbre=1 → total_ttc=1190, net_payable=1191`;
 
     console.log('Prompt prepared, calling AI...');
 
