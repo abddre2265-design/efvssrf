@@ -1221,6 +1221,10 @@ const PublicInvoiceRequest: React.FC = () => {
             <MessageCircle className="h-6 w-6" />
           </Button>
         </div>
+        </div>
+
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Payment Confirmation Dialog */}
@@ -1252,7 +1256,6 @@ const PublicInvoiceRequest: React.FC = () => {
         requests={pendingRequests}
         stores={stores}
         onEditRequest={(request) => {
-          // Load request data into form for editing
           setEditingRequestId(request.id);
           setClientType((request.client_type || 'individual_local') as ClientType);
           setFirstName(request.first_name || '');
@@ -1283,9 +1286,6 @@ const PublicInvoiceRequest: React.FC = () => {
           toast.info(t('request_loaded_for_editing'));
         }}
       />
-          </TabsContent>
-        </Tabs>
-      </div>
     </div>
   );
 };
