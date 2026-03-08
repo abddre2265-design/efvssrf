@@ -249,6 +249,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
     return invoice.invoice_number.replace(storedPrefix, currentPrefix);
   };
 
+  const getPaymentStatusLabel = () => {
     switch (invoice.payment_status) {
       case 'paid': return t('pdf_payment_paid');
       case 'partial': return t('pdf_payment_partial');
