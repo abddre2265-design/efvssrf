@@ -76,6 +76,8 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   isDuplicate = false,
 }) => {
   const { isComponentEnabled } = usePdfSettings();
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'ar' ? arSA : language === 'en' ? enUS : fr;
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [lines, setLines] = useState<InvoiceLineWithProduct[]>([]);
