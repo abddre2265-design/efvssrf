@@ -779,7 +779,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
       {isEnabled('signature_area') && (
         <div className="invoice-footer-signature">
           <div className="invoice-footer-signature-line"></div>
-          <div>Signature autorisée</div>
+          <div>{t('pdf_signature')}</div>
         </div>
       )}
     </div>
