@@ -927,9 +927,9 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                     )}
                     {isForeign && (
                       <>
-                        <p>Devise : {invoice.currency}</p>
+                        <p>{t('pdf_currency_label')} : {invoice.currency}</p>
                         {invoice.exchange_rate !== 1 && (
-                          <p>Taux de change : {invoice.exchange_rate}</p>
+                          <p>{t('pdf_exchange_rate')} : {invoice.exchange_rate}</p>
                         )}
                       </>
                     )}
