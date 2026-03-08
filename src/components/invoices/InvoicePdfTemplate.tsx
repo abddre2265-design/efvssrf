@@ -920,10 +920,10 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                 )}
 
                 {isEnabled('payment_status') && (
-                  <div className="invoice-card" data-label="RÈGLEMENT & STATUT">
-                    <p>Paiement : <strong>{getPaymentStatusLabel()}</strong></p>
+                  <div className="invoice-card" data-label={t('pdf_payment_status')}>
+                    <p>{t('pdf_payment_label')} : <strong>{getPaymentStatusLabel()}</strong></p>
                     {invoice.paid_amount > 0 && (
-                      <p>Montant payé : {formatCurrency(invoice.paid_amount, invoice.currency)}</p>
+                      <p>{t('pdf_paid_amount')} : {formatCurrency(invoice.paid_amount, invoice.currency)}</p>
                     )}
                     {isForeign && (
                       <>
