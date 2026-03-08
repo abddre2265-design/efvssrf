@@ -244,17 +244,17 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
   const getPaymentStatusLabel = () => {
     switch (invoice.payment_status) {
-      case 'paid': return 'PAYÉ';
-      case 'partial': return 'PARTIEL';
-      default: return 'IMPAYÉ';
+      case 'paid': return t('pdf_payment_paid');
+      case 'partial': return t('pdf_payment_partial');
+      default: return t('pdf_payment_unpaid');
     }
   };
 
   const getStatusLabel = () => {
     switch (invoice.status) {
-      case 'validated': return 'VALIDÉE';
-      case 'draft': return 'BROUILLON';
-      default: return 'CRÉÉE';
+      case 'validated': return t('pdf_status_validated');
+      case 'draft': return t('pdf_status_draft');
+      default: return t('pdf_status_created');
     }
   };
 
