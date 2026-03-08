@@ -594,6 +594,7 @@ export const translations: Translations = {
   // Watermark labels
   watermark_cancelled: { fr: 'ANNULÉE', en: 'CANCELLED', ar: 'ملغاة' },
   watermark_draft: { fr: 'BROUILLON', en: 'DRAFT', ar: 'مسودة' },
+  watermark_created: { fr: 'CRÉÉE', en: 'CREATED', ar: 'منشأة' },
   watermark_paid: { fr: 'PAYÉ', en: 'PAID', ar: 'مدفوع' },
   watermark_partial: { fr: 'PARTIELLEMENT PAYÉ', en: 'PARTIALLY PAID', ar: 'مدفوع جزئياً' },
   watermark_unpaid: { fr: 'IMPAYÉ', en: 'UNPAID', ar: 'غير مدفوع' },
