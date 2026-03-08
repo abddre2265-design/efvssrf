@@ -908,7 +908,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
               {/* Client & Payment Info */}
               <div className="invoice-info">
                 {isEnabled('client_info') && (
-                  <div className="invoice-card" data-label="FACTURÉ À">
+                  <div className="invoice-card" data-label={t('pdf_billed_to')}>
                     {isClientFieldVisible('client_name') && (
                       <p style={{ fontWeight: 700, fontSize: '12px' }}>{getClientName()}</p>
                     )}
