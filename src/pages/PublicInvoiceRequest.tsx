@@ -324,16 +324,9 @@ const PublicInvoiceRequest: React.FC = () => {
     if (!transactionNumber.trim()) newErrors.transactionNumber = t('field_required');
     if (!totalTTC || parseFloat(totalTTC) <= 0) newErrors.totalTTC = t('field_required');
 
-    // Payment validation
-    if (paymentStatus !== 'unpaid') {
+    // Payment validation (status is automatic)
+    if (paidAmountNumber > 0) {
       if (!paymentMethod) newErrors.paymentMethod = t('field_required');
-      
-      if (paymentStatus === 'partial') {
-        const paid = parseFloat(paidAmount) || 0;
-        const total = parseFloat(totalTTC) || 0;
-        if (paid <= 0) newErrors.paidAmount = t('field_required');
-        if (paid > total) newErrors.paidAmount = t('amount_greater_than_total');
-      }
 
       if (paymentMethod === 'mixed') {
         if (!isMixedAmountValid) {
