@@ -206,6 +206,15 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
               <Button 
                 variant="outline" 
                 size="sm" 
+                onClick={() => setDuplicatePrintDialogOpen(true)}
+                className="gap-2"
+              >
+                <Copy className="h-4 w-4" />
+                {t('print_duplicate') || 'Duplicata'}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
                 onClick={() => setPrintDialogOpen(true)}
                 className="gap-2"
               >
