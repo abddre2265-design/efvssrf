@@ -410,6 +410,8 @@ const PublicInvoiceRequest: React.FC = () => {
         payment_status: calculatedPaymentStatus,
         paid_amount: paidAmountNumber,
         payment_methods: paymentMethods,
+        linked_client_id: linkedClientId,
+      };
 
       if (editingRequestId) {
         // UPDATE existing request
