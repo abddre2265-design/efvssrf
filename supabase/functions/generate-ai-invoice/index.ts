@@ -73,6 +73,7 @@ serve(async (req) => {
     const params: GenerationParams = await req.json();
     const {
       maxLines,
+      maxQuantityPerLine,
       minPriceTtc,
       maxPriceTtc,
       allowedVatRates,
@@ -80,6 +81,7 @@ serve(async (req) => {
       products,
       isForeignClient,
     } = params;
+    const effectiveMaxQtyPerLine = maxQuantityPerLine || 50;
 
     // Filter products by allowed VAT rates and price range
     const eligibleProducts = products.filter(p => {
