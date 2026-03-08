@@ -160,7 +160,7 @@ serve(async (req) => {
           if (p.allow_out_of_stock_sale) return true;
           
           const used = stockUsed.get(p.id) || 0;
-          const available = (p.current_stock || 0) - used;
+          const available = (p.available_stock ?? 0) - used;
           return available > 0;
         });
 
