@@ -174,9 +174,9 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   color: accentColor,
                   fontWeight: 600
                 }}>
-                  RÈGLEMENT & STATUT
+                  {t('pdf_payment_status')}
                 </div>
-                <div>Paiement : <strong>IMPAYÉ</strong></div>
+                <div>{t('pdf_preview_payment')} : <strong>{t('pdf_payment_unpaid')}</strong></div>
               </div>
             )}
 
