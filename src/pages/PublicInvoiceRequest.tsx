@@ -605,7 +605,6 @@ const PublicInvoiceRequest: React.FC = () => {
                   setTotalTTC('');
                   setStoreId('');
                   setPurchaseDate(new Date());
-                  setPaymentStatus('unpaid');
                   setPaidAmount('');
                   setPaymentMethod('');
                   setLinkedClientId(null);
