@@ -220,14 +220,14 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
               {isEnabled('vat_breakdown') && (
                 <div style={{ width: 120, border: `2px solid ${accentColor}`, padding: 6 }}>
                   <div style={{ fontSize: 7, fontWeight: 700, color: accentColor, textAlign: 'center', borderBottom: `1px solid ${accentColor}`, paddingBottom: 3, marginBottom: 5 }}>
-                    RÉCAP. TVA
+                    {t('pdf_vat_recap')}
                   </div>
                   <table style={{ width: '100%', fontSize: 6, borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        <th style={{ textAlign: 'left', fontWeight: 600 }}>Taux</th>
-                        <th style={{ textAlign: 'right', fontWeight: 600 }}>Base</th>
-                        <th style={{ textAlign: 'right', fontWeight: 600 }}>TVA</th>
+                        <th style={{ textAlign: 'left', fontWeight: 600 }}>{t('pdf_vat_rate')}</th>
+                        <th style={{ textAlign: 'right', fontWeight: 600 }}>{t('pdf_vat_base')}</th>
+                        <th style={{ textAlign: 'right', fontWeight: 600 }}>{t('pdf_vat')}</th>
                       </tr>
                     </thead>
                     <tbody>
