@@ -65,7 +65,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
               {isEnabled('company_info') && (
                 <>
                   {isCompanyFieldVisible('company_name') && (
-                    <div style={{ fontWeight: 700, fontSize: 10, color: accentColor, marginBottom: 3 }}>Nom Société</div>
+                    <div style={{ fontWeight: 700, fontSize: 10, color: accentColor, marginBottom: 3 }}>{t('pdf_preview_company_name')}</div>
                   )}
                   {isCompanyFieldVisible('company_address') && (
                     <>
