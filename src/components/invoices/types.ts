@@ -133,10 +133,11 @@ export const getCurrencySymbol = (currency: typeof CURRENCIES[number], language:
   return currency.symbol[language as keyof typeof currency.symbol] || currency.symbol.fr;
 };
 
-// Format currency (language-aware)
-export const formatCurrency = (amount: number, currency: string = 'TND', language: string = 'fr'): string => {
+// Format currency (auto-detects language from localStorage)
+export const formatCurrency = (amount: number, currency: string = 'TND', language?: string): string => {
+  const lang = language || (typeof window !== 'undefined' ? localStorage.getItem('gaara-language') || 'fr' : 'fr');
   const currencyInfo = CURRENCIES.find(c => c.code === currency);
-  const symbol = currencyInfo ? getCurrencySymbol(currencyInfo, language) : currency;
+  const symbol = currencyInfo ? getCurrencySymbol(currencyInfo, lang) : currency;
   return `${amount.toFixed(3)} ${symbol}`;
 };
 
