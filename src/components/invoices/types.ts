@@ -105,22 +105,22 @@ export interface StockBubble {
 
 // Common currencies
 export const CURRENCIES = [
-  { code: 'TND', name: 'Dinar Tunisien', symbol: 'DT' },
-  { code: 'EUR', name: 'Euro', symbol: '€' },
-  { code: 'USD', name: 'Dollar US', symbol: '$' },
-  { code: 'GBP', name: 'Livre Sterling', symbol: '£' },
-  { code: 'CAD', name: 'Dollar Canadien', symbol: 'CA$' },
-  { code: 'CHF', name: 'Franc Suisse', symbol: 'CHF' },
-  { code: 'AED', name: 'Dirham Emirats', symbol: 'AED' },
-  { code: 'SAR', name: 'Riyal Saoudien', symbol: 'SAR' },
-  { code: 'QAR', name: 'Riyal Qatari', symbol: 'QAR' },
-  { code: 'MAD', name: 'Dirham Marocain', symbol: 'MAD' },
-  { code: 'DZD', name: 'Dinar Algérien', symbol: 'DZD' },
-  { code: 'LYD', name: 'Dinar Libyen', symbol: 'LYD' },
-  { code: 'EGP', name: 'Livre Égyptienne', symbol: 'EGP' },
-  { code: 'TRY', name: 'Livre Turque', symbol: '₺' },
-  { code: 'CNY', name: 'Yuan Chinois', symbol: '¥' },
-  { code: 'JPY', name: 'Yen Japonais', symbol: '¥' },
+  { code: 'TND', name: { fr: 'Dinar Tunisien', en: 'Tunisian Dinar', ar: 'الدينار التونسي' }, symbol: 'DT' },
+  { code: 'EUR', name: { fr: 'Euro', en: 'Euro', ar: 'اليورو' }, symbol: '€' },
+  { code: 'USD', name: { fr: 'Dollar US', en: 'US Dollar', ar: 'الدولار الأمريكي' }, symbol: '$' },
+  { code: 'GBP', name: { fr: 'Livre Sterling', en: 'Pound Sterling', ar: 'الجنيه الإسترليني' }, symbol: '£' },
+  { code: 'CAD', name: { fr: 'Dollar Canadien', en: 'Canadian Dollar', ar: 'الدولار الكندي' }, symbol: 'CA$' },
+  { code: 'CHF', name: { fr: 'Franc Suisse', en: 'Swiss Franc', ar: 'الفرنك السويسري' }, symbol: 'CHF' },
+  { code: 'AED', name: { fr: 'Dirham Emirats', en: 'UAE Dirham', ar: 'الدرهم الإماراتي' }, symbol: 'AED' },
+  { code: 'SAR', name: { fr: 'Riyal Saoudien', en: 'Saudi Riyal', ar: 'الريال السعودي' }, symbol: 'SAR' },
+  { code: 'QAR', name: { fr: 'Riyal Qatari', en: 'Qatari Riyal', ar: 'الريال القطري' }, symbol: 'QAR' },
+  { code: 'MAD', name: { fr: 'Dirham Marocain', en: 'Moroccan Dirham', ar: 'الدرهم المغربي' }, symbol: 'MAD' },
+  { code: 'DZD', name: { fr: 'Dinar Algérien', en: 'Algerian Dinar', ar: 'الدينار الجزائري' }, symbol: 'DZD' },
+  { code: 'LYD', name: { fr: 'Dinar Libyen', en: 'Libyan Dinar', ar: 'الدينار الليبي' }, symbol: 'LYD' },
+  { code: 'EGP', name: { fr: 'Livre Égyptienne', en: 'Egyptian Pound', ar: 'الجنيه المصري' }, symbol: 'EGP' },
+  { code: 'TRY', name: { fr: 'Livre Turque', en: 'Turkish Lira', ar: 'الليرة التركية' }, symbol: '₺' },
+  { code: 'CNY', name: { fr: 'Yuan Chinois', en: 'Chinese Yuan', ar: 'اليوان الصيني' }, symbol: '¥' },
+  { code: 'JPY', name: { fr: 'Yen Japonais', en: 'Japanese Yen', ar: 'الين الياباني' }, symbol: '¥' },
 ];
 
 // Invoice number prefixes by language
