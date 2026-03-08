@@ -1,0 +1,1 @@
+ALTER TABLE public.invoice_requests ADD COLUMN IF NOT EXISTS pdf_download_count integer NOT NULL DEFAULT 0;

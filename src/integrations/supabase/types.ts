@@ -1068,6 +1068,7 @@ export type Database = {
           paid_amount: number | null
           payment_methods: Json | null
           payment_status: string
+          pdf_download_count: number
           phone: string | null
           phone_prefix: string | null
           postal_code: string | null
@@ -1104,6 +1105,7 @@ export type Database = {
           paid_amount?: number | null
           payment_methods?: Json | null
           payment_status?: string
+          pdf_download_count?: number
           phone?: string | null
           phone_prefix?: string | null
           postal_code?: string | null
@@ -1140,6 +1142,7 @@ export type Database = {
           paid_amount?: number | null
           payment_methods?: Json | null
           payment_status?: string
+          pdf_download_count?: number
           phone?: string | null
           phone_prefix?: string | null
           postal_code?: string | null

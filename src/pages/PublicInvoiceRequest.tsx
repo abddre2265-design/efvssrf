@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -44,7 +45,8 @@ import {
   Layers,
   Trash2,
   Plus,
-  MessageCircle
+  MessageCircle,
+  Search
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
@@ -62,6 +64,7 @@ import { PendingRequestDialog } from '@/components/invoice-requests/PendingReque
 import { useLanguage, governorates } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/auth/ThemeToggle';
 import { LanguageSelector } from '@/components/auth/LanguageSelector';
+import { PublicRequestTracker } from '@/components/invoice-requests/PublicRequestTracker';
 
 interface StoreData {
   id: string;
@@ -91,6 +94,7 @@ const PublicInvoiceRequest: React.FC = () => {
   const [stores, setStores] = useState<StoreData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [activePublicTab, setActivePublicTab] = useState<'request' | 'track'>('request');
   
   // Confirmation dialog for partial payment treated as paid
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
@@ -628,6 +632,25 @@ const PublicInvoiceRequest: React.FC = () => {
             </h1>
           </div>
         </div>
+
+        {/* Tabs: New Request / Track */}
+        <Tabs value={activePublicTab} onValueChange={(v) => setActivePublicTab(v as 'request' | 'track')} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="request" className="gap-2">
+              <FileText className="h-4 w-4" />
+              {t('new_request_tab')}
+            </TabsTrigger>
+            <TabsTrigger value="track" className="gap-2">
+              <Search className="h-4 w-4" />
+              {t('track_requests_tab')}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="track" className="mt-6">
+            <PublicRequestTracker organizationId={organizationId} />
+          </TabsContent>
+
+          <TabsContent value="request" className="mt-6 space-y-6">
 
         {/* Block 1: Client Information */}
         <Card>
@@ -1199,6 +1222,9 @@ const PublicInvoiceRequest: React.FC = () => {
             <MessageCircle className="h-6 w-6" />
           </Button>
         </div>
+
+        </TabsContent>
+        </Tabs>
       </div>
 
       {/* Payment Confirmation Dialog */}
@@ -1230,7 +1256,6 @@ const PublicInvoiceRequest: React.FC = () => {
         requests={pendingRequests}
         stores={stores}
         onEditRequest={(request) => {
-          // Load request data into form for editing
           setEditingRequestId(request.id);
           setClientType((request.client_type || 'individual_local') as ClientType);
           setFirstName(request.first_name || '');
