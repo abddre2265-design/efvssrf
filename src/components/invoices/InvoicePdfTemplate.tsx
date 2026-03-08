@@ -836,7 +836,27 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           {pageIndex === 0 ? (
             <>
               {/* First page: Full header */}
-              <div className="invoice-header">
+              <div className="invoice-header" style={{ position: 'relative' }}>
+                {isDuplicate && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    textAlign: 'center',
+                    fontSize: '22px',
+                    fontWeight: 700,
+                    color: 'rgba(239, 68, 68, 0.7)',
+                    letterSpacing: '6px',
+                    textTransform: 'uppercase',
+                    borderBottom: '2px solid rgba(239, 68, 68, 0.3)',
+                    paddingBottom: '4px',
+                    marginBottom: '4px',
+                    fontFamily: "'Orbitron', sans-serif",
+                  }}>
+                    DUPLICATA
+                  </div>
+                )}
                 {isEnabled('company_info') && (
                   <div className="invoice-company">
                     {isEnabled('logo') && organization.logo_url && (

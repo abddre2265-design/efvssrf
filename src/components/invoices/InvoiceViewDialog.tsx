@@ -661,6 +661,14 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
         onOpenChange={setPrintDialogOpen}
         invoiceId={invoiceId}
       />
+
+      {/* Duplicate Print Dialog */}
+      <InvoicePrintDialog
+        open={duplicatePrintDialogOpen}
+        onOpenChange={setDuplicatePrintDialogOpen}
+        invoiceId={invoiceId}
+        isDuplicate
+      />
     </Dialog>
   );
 };
