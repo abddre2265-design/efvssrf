@@ -1356,6 +1356,7 @@ export type Database = {
           address: string | null
           city: string | null
           created_at: string
+          default_withholding_rate: number
           email: string | null
           governorate: string
           id: string
@@ -1369,11 +1370,13 @@ export type Database = {
           postal_code: string
           updated_at: string
           user_id: string
+          withholding_min_amount: number
         }
         Insert: {
           address?: string | null
           city?: string | null
           created_at?: string
+          default_withholding_rate?: number
           email?: string | null
           governorate: string
           id?: string
@@ -1387,11 +1390,13 @@ export type Database = {
           postal_code: string
           updated_at?: string
           user_id: string
+          withholding_min_amount?: number
         }
         Update: {
           address?: string | null
           city?: string | null
           created_at?: string
+          default_withholding_rate?: number
           email?: string | null
           governorate?: string
           id?: string
@@ -1405,6 +1410,7 @@ export type Database = {
           postal_code?: string
           updated_at?: string
           user_id?: string
+          withholding_min_amount?: number
         }
         Relationships: []
       }
