@@ -78,7 +78,9 @@ export const InvoiceRequestTable: React.FC<InvoiceRequestTableProps> = ({
   };
 
   const getPaymentStatusBadge = (status: string, paidAmount: number, totalTtc: number) => {
-    switch (status) {
+    // Normalize: if paid_amount >= total_ttc, treat as "paid" regardless of stored status
+    const effectiveStatus = (status === 'partial' && paidAmount >= totalTtc) ? 'paid' : status;
+    switch (effectiveStatus) {
       case 'paid':
         return (
           <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
