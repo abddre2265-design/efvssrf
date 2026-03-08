@@ -10,7 +10,6 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -18,16 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { 
   Loader2, 
   AlertCircle, 
@@ -95,9 +84,13 @@ const PublicInvoiceRequest: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [activePublicTab, setActivePublicTab] = useState<'request' | 'track'>('request');
-  
-  // Confirmation dialog for partial payment treated as paid
-  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+
+  // Organization tax settings for public calculation
+  const [withholdingSettings, setWithholdingSettings] = useState({
+    rate: 0,
+    minAmount: 0,
+  });
+  const [stampDutyAmount, setStampDutyAmount] = useState(1);
 
   // Client form data
   const [clientType, setClientType] = useState<ClientType>('individual_local');
@@ -125,8 +118,7 @@ const PublicInvoiceRequest: React.FC = () => {
   const [orderNumber, setOrderNumber] = useState('');
   const [totalTTC, setTotalTTC] = useState('');
 
-  // Payment status
-  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'partial' | 'unpaid'>('unpaid');
+  // Payment data (status is automatic)
   const [paidAmount, setPaidAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([]);
@@ -185,6 +177,29 @@ const PublicInvoiceRequest: React.FC = () => {
             setOrganizationLogo(orgInfo.logo_url);
           }
 
+          // Get public withholding settings via security definer function
+          const { data: withholdingData } = await supabase
+            .rpc('get_organization_public_withholding', { org_id: data.organization_id })
+            .maybeSingle();
+
+          if (withholdingData) {
+            setWithholdingSettings({
+              rate: Number(withholdingData.default_withholding_rate) || 0,
+              minAmount: Number(withholdingData.withholding_min_amount) || 0,
+            });
+          }
+
+          // Get stamp duty (fallback to 1.000 if inaccessible)
+          const { data: stampData } = await supabase
+            .from('stamp_duty_settings')
+            .select('amount')
+            .eq('organization_id', data.organization_id)
+            .maybeSingle();
+
+          if (stampData?.amount !== undefined && stampData?.amount !== null) {
+            setStampDutyAmount(Number(stampData.amount) || 1);
+          }
+
           // Get stores for this organization
           const { data: storesData } = await supabase
             .from('stores')
@@ -235,6 +250,15 @@ const PublicInvoiceRequest: React.FC = () => {
 
   const isLocal = clientType !== 'foreign';
 
+  const totalTTCAmount = Math.max(0, parseFloat(totalTTC) || 0);
+  const paidAmountNumber = Math.max(0, parseFloat(paidAmount) || 0);
+  const shouldApplyWithholding = totalTTCAmount > withholdingSettings.minAmount;
+  const appliedWithholdingRate = shouldApplyWithholding ? withholdingSettings.rate : 0;
+  const withholdingAmount = totalTTCAmount * (appliedWithholdingRate / 100);
+  const netPayableAmount = totalTTCAmount - withholdingAmount + stampDutyAmount;
+  const calculatedPaymentStatus: 'paid' | 'partial' | 'unpaid' =
+    paidAmountNumber <= 0 ? 'unpaid' : paidAmountNumber < netPayableAmount ? 'partial' : 'paid';
+
   const addMixedLine = () => {
     setMixedLines([...mixedLines, { id: crypto.randomUUID(), method: '', amount: '' }]);
   };
@@ -252,7 +276,7 @@ const PublicInvoiceRequest: React.FC = () => {
   };
 
   const mixedLinesTotal = mixedLines.reduce((sum, line) => sum + (parseFloat(line.amount) || 0), 0);
-  const expectedMixedTotal = paymentStatus === 'paid' ? parseFloat(totalTTC) || 0 : parseFloat(paidAmount) || 0;
+  const expectedMixedTotal = paidAmountNumber;
   const isMixedAmountValid = Math.abs(mixedLinesTotal - expectedMixedTotal) < 0.001;
 
   const validate = (): boolean => {
@@ -300,16 +324,9 @@ const PublicInvoiceRequest: React.FC = () => {
     if (!transactionNumber.trim()) newErrors.transactionNumber = t('field_required');
     if (!totalTTC || parseFloat(totalTTC) <= 0) newErrors.totalTTC = t('field_required');
 
-    // Payment validation
-    if (paymentStatus !== 'unpaid') {
+    // Payment validation (status is automatic)
+    if (paidAmountNumber > 0) {
       if (!paymentMethod) newErrors.paymentMethod = t('field_required');
-      
-      if (paymentStatus === 'partial') {
-        const paid = parseFloat(paidAmount) || 0;
-        const total = parseFloat(totalTTC) || 0;
-        if (paid <= 0) newErrors.paidAmount = t('field_required');
-        if (paid > total) newErrors.paidAmount = t('amount_greater_than_total');
-      }
 
       if (paymentMethod === 'mixed') {
         if (!isMixedAmountValid) {
@@ -349,16 +366,6 @@ const PublicInvoiceRequest: React.FC = () => {
       }
     }
 
-    // Check if partial payment equals total
-    if (paymentStatus === 'partial') {
-      const paid = parseFloat(paidAmount) || 0;
-      const total = parseFloat(totalTTC) || 0;
-      if (Math.abs(paid - total) < 0.001) {
-        setShowPaymentConfirm(true);
-        return;
-      }
-    }
-
     await submitRequest();
   };
 
@@ -367,14 +374,14 @@ const PublicInvoiceRequest: React.FC = () => {
     try {
       // Build payment methods JSON
       let paymentMethods = null;
-      if (paymentStatus !== 'unpaid') {
+      if (paidAmountNumber > 0) {
         if (paymentMethod === 'mixed') {
           paymentMethods = mixedLines.map(line => ({
             method: line.method,
             amount: parseFloat(line.amount) || 0
           }));
         } else {
-          paymentMethods = [{ method: paymentMethod, amount: paymentStatus === 'paid' ? parseFloat(totalTTC) : parseFloat(paidAmount) }];
+          paymentMethods = [{ method: paymentMethod, amount: paidAmountNumber }];
         }
       }
 
@@ -399,9 +406,9 @@ const PublicInvoiceRequest: React.FC = () => {
         transaction_number: transactionNumber,
         receipt_number: receiptNumber || null,
         order_number: orderNumber || null,
-        total_ttc: parseFloat(totalTTC),
-        payment_status: paymentStatus,
-        paid_amount: paymentStatus === 'paid' ? parseFloat(totalTTC) : (paymentStatus === 'partial' ? parseFloat(paidAmount) : 0),
+        total_ttc: totalTTCAmount,
+        payment_status: calculatedPaymentStatus,
+        paid_amount: paidAmountNumber,
         payment_methods: paymentMethods,
         linked_client_id: linkedClientId,
       };
@@ -596,7 +603,6 @@ const PublicInvoiceRequest: React.FC = () => {
                   setTotalTTC('');
                   setStoreId('');
                   setPurchaseDate(new Date());
-                  setPaymentStatus('unpaid');
                   setPaidAmount('');
                   setPaymentMethod('');
                   setLinkedClientId(null);
@@ -1022,45 +1028,59 @@ const PublicInvoiceRequest: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <RadioGroup value={paymentStatus} onValueChange={(v: any) => setPaymentStatus(v)}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="unpaid" id="unpaid" />
-                <Label htmlFor="unpaid">{t('payment_unpaid')}</Label>
+            <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('total_ttc')}</span>
+                <span className="font-medium">{totalTTCAmount.toFixed(3)} {t('currency_label')}</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="partial" id="partial" />
-                <Label htmlFor="partial">{t('payment_partial')}</Label>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('withholding_amount')} ({appliedWithholdingRate.toFixed(2)}%)</span>
+                <span className="font-medium">- {withholdingAmount.toFixed(3)} {t('currency_label')}</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="paid" id="paid" />
-                <Label htmlFor="paid">{t('payment_paid')}</Label>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('stamp_duty')}</span>
+                <span className="font-medium">+ {stampDutyAmount.toFixed(3)} {t('currency_label')}</span>
               </div>
-            </RadioGroup>
+              <div className="flex justify-between border-t border-border pt-2">
+                <span className="font-semibold">{t('net_payable')}</span>
+                <span className="font-semibold text-primary">{netPayableAmount.toFixed(3)} {t('currency_label')}</span>
+              </div>
+            </div>
 
-            {paymentStatus !== 'unpaid' && (
+            <div className="space-y-2">
+              <Label>{t('paid_amount')}</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={paidAmount}
+                  onChange={(e) => setPaidAmount(e.target.value)}
+                  className={`${errors.paidAmount ? 'border-destructive' : ''} pr-16`}
+                  placeholder="0.000"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {t('currency_label')}
+                </span>
+              </div>
+              {errors.paidAmount && <p className="text-xs text-destructive">{errors.paidAmount}</p>}
+              <p className="text-xs text-muted-foreground">0 = {t('payment_unpaid')}</p>
+            </div>
+
+            <div className="rounded-md bg-primary/5 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">{t('payment_status')}: </span>
+              <span className="font-semibold text-primary">
+                {calculatedPaymentStatus === 'paid'
+                  ? t('payment_paid')
+                  : calculatedPaymentStatus === 'partial'
+                    ? t('payment_partial')
+                    : t('payment_unpaid')}
+              </span>
+            </div>
+
+            {paidAmountNumber > 0 && (
               <>
                 <Separator />
-                
-                {paymentStatus === 'partial' && (
-                  <div className="space-y-2">
-                    <Label>{t('paid_amount')} *</Label>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        value={paidAmount}
-                        onChange={(e) => setPaidAmount(e.target.value)}
-                        className={`${errors.paidAmount ? 'border-destructive' : ''} pr-16`}
-                        placeholder="0.000"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        {t('currency_label')}
-                      </span>
-                    </div>
-                    {errors.paidAmount && <p className="text-xs text-destructive">{errors.paidAmount}</p>}
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <Label>{t('payment_method')} *</Label>
@@ -1097,10 +1117,10 @@ const PublicInvoiceRequest: React.FC = () => {
                         {t('add')}
                       </Button>
                     </div>
-                    {mixedLines.map((line, index) => (
+                    {mixedLines.map((line) => (
                       <div key={line.id} className="flex gap-2 items-start">
-                        <Select 
-                          value={line.method} 
+                        <Select
+                          value={line.method}
                           onValueChange={(v) => updateMixedLine(line.id, 'method', v)}
                         >
                           <SelectTrigger className="flex-1">
@@ -1227,27 +1247,6 @@ const PublicInvoiceRequest: React.FC = () => {
         </Tabs>
       </div>
 
-      {/* Payment Confirmation Dialog */}
-      <AlertDialog open={showPaymentConfirm} onOpenChange={setShowPaymentConfirm}>
-        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('payment_confirmation')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('partial_equals_total_confirm')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setShowPaymentConfirm(false);
-              setPaymentStatus('paid');
-              submitRequest();
-            }}>
-              {t('yes_treat_as_paid')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Pending Requests Dialog */}
       <PendingRequestDialog
@@ -1278,7 +1277,6 @@ const PublicInvoiceRequest: React.FC = () => {
           setTotalTTC(request.total_ttc.toString());
           setStoreId(request.store_id || '');
           setPurchaseDate(new Date(request.purchase_date));
-          setPaymentStatus((request.payment_status || 'paid') as any);
           setPaidAmount(request.paid_amount?.toString() || '');
           setLinkedClientId(request.linked_client_id || null);
           setClientValidated(true);

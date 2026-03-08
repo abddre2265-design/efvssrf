@@ -2837,6 +2837,13 @@ export type Database = {
           name: string
         }[]
       }
+      get_organization_public_withholding: {
+        Args: { org_id: string }
+        Returns: {
+          default_withholding_rate: number
+          withholding_min_amount: number
+        }[]
+      }
       has_organization: { Args: never; Returns: boolean }
       is_credit_note_owner: { Args: { cn_id: string }; Returns: boolean }
       is_custom_tax_value_in_use: {
