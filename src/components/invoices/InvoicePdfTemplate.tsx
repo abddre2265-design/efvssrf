@@ -959,7 +959,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
               {renderTotals()}
               {creditNotes.length > 0 && (
                 <div className="invoice-credit-notes-block">
-                  <div className="invoice-credit-notes-title">AVOIRS ASSOCIÉS</div>
+                  <div className="invoice-credit-notes-title">{t('pdf_associated_credits')}</div>
                   {creditNotes.map((cn) => (
                     <div key={cn.id} className="invoice-credit-note-item">
                       <div className="invoice-credit-note-header">
