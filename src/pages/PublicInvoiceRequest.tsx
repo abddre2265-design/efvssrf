@@ -1100,7 +1100,7 @@ const PublicInvoiceRequest: React.FC = () => {
                     <div className="flex justify-between text-sm pt-2 border-t">
                       <span className="text-muted-foreground">{t('total')}:</span>
                       <span className={!isMixedAmountValid ? 'text-destructive' : 'text-green-600'}>
-                        {mixedLinesTotal.toFixed(3)} / {expectedMixedTotal.toFixed(3)} TND
+                        {mixedLinesTotal.toFixed(3)} / {expectedMixedTotal.toFixed(3)} {t('currency_label')}
                       </span>
                     </div>
                     {errors.mixedPayment && <p className="text-xs text-destructive">{errors.mixedPayment}</p>}
