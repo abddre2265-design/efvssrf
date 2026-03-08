@@ -624,6 +624,43 @@ export const OrganizationSettingsDialog: React.FC = () => {
 
               <Separator />
 
+              {/* Withholding Tax Settings */}
+              <div className="space-y-4">
+                <h3 className="text-base font-semibold">{t('withholdingSettings')}</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t('defaultWithholdingRate')} (%) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={data.defaultWithholdingRate}
+                      onChange={(e) => setData(prev => ({ ...prev, defaultWithholdingRate: parseFloat(e.target.value) || 0 }))}
+                      className="futuristic-input"
+                      placeholder="1.5"
+                    />
+                    <p className="text-xs text-muted-foreground">{t('defaultWithholdingRateHint')}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('withholdingMinAmount')} (TND) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      value={data.withholdingMinAmount}
+                      onChange={(e) => setData(prev => ({ ...prev, withholdingMinAmount: parseFloat(e.target.value) || 0 }))}
+                      className="futuristic-input"
+                      placeholder="1000"
+                    />
+                    <p className="text-xs text-muted-foreground">{t('withholdingMinAmountHint')}</p>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
               {/* Bank Info */}
               <div className="space-y-4">
                 <h3 className="text-base font-semibold">{t('bankInfo')}</h3>
