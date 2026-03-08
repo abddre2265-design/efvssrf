@@ -123,6 +123,7 @@ export const InvoicePrintDialog: React.FC<InvoicePrintDialogProps> = ({
               <InvoicePdfTemplate 
                 invoiceId={invoiceId} 
                 onReady={handleReady}
+                isDuplicate={isDuplicate}
               />
             )}
           </div>
