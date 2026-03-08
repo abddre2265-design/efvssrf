@@ -68,7 +68,7 @@ export const CurrencySelectionStep: React.FC<CurrencySelectionStepProps> = ({
   defaultCurrency = 'USD',
   onCurrencyConfirmed,
 }) => {
-  const { t, isRTL } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   const [currency, setCurrency] = useState<string>(defaultCurrency);
   const [exchangeRate, setExchangeRate] = useState<number>(DEFAULT_EXCHANGE_RATES[defaultCurrency] || 1.0);
   const [exchangeRateInput, setExchangeRateInput] = useState<string>(String(exchangeRate));
