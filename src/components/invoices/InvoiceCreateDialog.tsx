@@ -693,7 +693,7 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
                     <SelectContent>
                       {CURRENCIES.map((curr) => (
                         <SelectItem key={curr.code} value={curr.code}>
-                          {curr.code} - {curr.name}
+                          {curr.code} - {getCurrencyName(curr, language)}
                         </SelectItem>
                       ))}
                     </SelectContent>
