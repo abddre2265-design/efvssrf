@@ -192,9 +192,10 @@ serve(async (req) => {
         let bestDiff = Infinity;
 
         // Try different quantities and discounts
-        const maxQuantity = product.unlimited_stock || product.allow_out_of_stock_sale 
-          ? Math.min(100, Math.ceil(remainingHt / product.price_ht) + 5)
-          : Math.min((product.available_stock ?? 0) - (stockUsed.get(product.id) || 0), Math.ceil(remainingHt / product.price_ht) + 5);
+        const stockLimit = product.unlimited_stock || product.allow_out_of_stock_sale 
+          ? Math.ceil(remainingHt / product.price_ht) + 5
+          : (product.available_stock ?? 0) - (stockUsed.get(product.id) || 0);
+        const maxQuantity = Math.min(effectiveMaxQtyPerLine, stockLimit, Math.ceil(remainingHt / product.price_ht) + 5);
 
         for (let qty = 1; qty <= Math.max(1, maxQuantity); qty++) {
           for (let discount = 0; discount <= maxDiscount; discount += 0.5) {
