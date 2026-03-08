@@ -716,11 +716,11 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           {!isForeign && (
             <>
               <p>
-                <span>Total HT</span>
+                <span>{t('pdf_total_ht')}</span>
                 <span>{formatCurrency(invoice.subtotal_ht, invoice.currency)}</span>
               </p>
               <p>
-                <span>TVA</span>
+                <span>{t('pdf_vat')}</span>
                 <span>{formatCurrency(invoice.total_vat, invoice.currency)}</span>
               </p>
             </>
