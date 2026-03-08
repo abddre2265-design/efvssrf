@@ -775,6 +775,37 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
     </div>
   );
 
+  const getWatermarkInfo = (): { text: string; className: string } | null => {
+    if (invoice.status === 'draft') {
+      return { text: 'BROUILLON', className: 'invoice-watermark-draft' };
+    }
+    if (invoice.status === 'cancelled') {
+      return { text: 'ANNULÉE', className: 'invoice-watermark-cancelled' };
+    }
+    // Validated invoices show payment status
+    if (invoice.status === 'validated') {
+      switch (invoice.payment_status) {
+        case 'paid':
+          return { text: 'PAYÉ', className: 'invoice-watermark-paid' };
+        case 'partial':
+          return { text: 'PARTIELLEMENT PAYÉ', className: 'invoice-watermark-partial' };
+        default:
+          return { text: 'IMPAYÉ', className: 'invoice-watermark-unpaid' };
+      }
+    }
+    return null;
+  };
+
+  const renderWatermark = () => {
+    const info = getWatermarkInfo();
+    if (!info) return null;
+    return (
+      <div className={`invoice-watermark ${info.className}`}>
+        {info.text}
+      </div>
+    );
+  };
+
   const renderCorners = () => (
     isEnabled('decorative_corners') ? (
       <>
