@@ -31,6 +31,7 @@ interface GenerationParams {
   invoiceDate: string;
   invoiceNumber: { prefix: string; year: number; counter: number; number: string };
   maxLines: number;
+  maxQuantityPerLine: number;
   minPriceTtc: number;
   maxPriceTtc: number;
   allowedVatRates: number[];
