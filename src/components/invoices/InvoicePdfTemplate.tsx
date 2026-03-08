@@ -608,23 +608,23 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
     }
 
     .invoice-watermark-paid {
-      color: rgba(34, 197, 94, 0.12);
+      color: rgba(34, 197, 94, 0.18);
     }
 
     .invoice-watermark-partial {
-      color: rgba(245, 158, 11, 0.12);
+      color: rgba(245, 158, 11, 0.18);
     }
 
     .invoice-watermark-unpaid {
-      color: rgba(239, 68, 68, 0.12);
+      color: rgba(239, 68, 68, 0.18);
     }
 
     .invoice-watermark-draft {
-      color: rgba(107, 114, 128, 0.15);
+      color: rgba(107, 114, 128, 0.22);
     }
 
     .invoice-watermark-cancelled {
-      color: rgba(239, 68, 68, 0.15);
+      color: rgba(239, 68, 68, 0.22);
     }
 
     @media print {
