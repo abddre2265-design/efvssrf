@@ -21,7 +21,8 @@ import {
   RotateCcw,
   Wallet,
   Printer,
-  ClipboardList
+  ClipboardList,
+  Copy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
@@ -70,6 +71,7 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
   const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [duplicatePrintDialogOpen, setDuplicatePrintDialogOpen] = useState(false);
   const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
   const getDateLocale = () => {
     switch (language) {
@@ -202,6 +204,15 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
               {t('invoice_details')}
             </div>
             <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setDuplicatePrintDialogOpen(true)}
+                className="gap-2"
+              >
+                <Copy className="h-4 w-4" />
+                {t('print_duplicate') || 'Duplicata'}
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -650,6 +661,14 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
         open={printDialogOpen}
         onOpenChange={setPrintDialogOpen}
         invoiceId={invoiceId}
+      />
+
+      {/* Duplicate Print Dialog */}
+      <InvoicePrintDialog
+        open={duplicatePrintDialogOpen}
+        onOpenChange={setDuplicatePrintDialogOpen}
+        invoiceId={invoiceId}
+        isDuplicate
       />
     </Dialog>
   );

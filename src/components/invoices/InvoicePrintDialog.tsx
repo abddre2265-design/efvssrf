@@ -9,12 +9,14 @@ interface InvoicePrintDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoiceId: string | null;
+  isDuplicate?: boolean;
 }
 
 export const InvoicePrintDialog: React.FC<InvoicePrintDialogProps> = ({
   open,
   onOpenChange,
   invoiceId,
+  isDuplicate = false,
 }) => {
   const { t, isRTL } = useLanguage();
   const printRef = useRef<HTMLDivElement>(null);
@@ -121,6 +123,7 @@ export const InvoicePrintDialog: React.FC<InvoicePrintDialogProps> = ({
               <InvoicePdfTemplate 
                 invoiceId={invoiceId} 
                 onReady={handleReady}
+                isDuplicate={isDuplicate}
               />
             )}
           </div>
