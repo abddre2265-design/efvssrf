@@ -216,7 +216,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
       const totals = generatedLines.reduce((acc, line) => { const { lineHt, lineVat, lineTtc } = calculateLineTotal(line.quantity, line.unit_price_ht, line.vat_rate, line.discount_percent, isForeignClient); acc.subtotalHt += lineHt; acc.totalVat += lineVat; acc.totalTtc += lineTtc; acc.totalDiscount += (line.quantity * line.unit_price_ht) - lineHt; return acc; }, { subtotalHt: 0, totalVat: 0, totalTtc: 0, totalDiscount: 0 });
       const stampDuty = isForeignClient ? 0 : stampDutyEnabled ? stampDutyAmount : 0;
       const netPayable = totals.totalTtc + stampDuty;
-      const { data: invoice, error: invoiceError } = await supabase.from('invoices').insert({ organization_id: organizationId, client_id: selectedClientId, invoice_number: invoiceNumber.number, invoice_prefix: invoiceNumber.prefix, invoice_year: invoiceNumber.year, invoice_counter: invoiceNumber.counter, invoice_date: format(invoiceDate, 'yyyy-MM-dd'), due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null, client_type: selectedClient?.client_type || 'individual_local', currency: isForeignClient ? 'EUR' : 'TND', exchange_rate: null, subtotal_ht: totals.subtotalHt, total_vat: totals.totalVat, total_discount: totals.totalDiscount, total_ttc: totals.totalTtc, stamp_duty_enabled: isForeignClient ? false : stampDutyEnabled, stamp_duty_amount: stampDuty, net_payable: netPayable, status: 'created', payment_status: 'unpaid', notes: `Facture générée par IA` }).select().single();
+      const { data: invoice, error: invoiceError } = await supabase.from('invoices').insert({ organization_id: organizationId, client_id: selectedClientId, invoice_number: invoiceNumber.number, invoice_prefix: invoiceNumber.prefix, invoice_year: invoiceNumber.year, invoice_counter: invoiceNumber.counter, invoice_date: format(invoiceDate, 'yyyy-MM-dd'), due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null, client_type: selectedClient?.client_type || 'individual_local', currency: isForeignClient ? 'EUR' : 'TND', exchange_rate: null, subtotal_ht: totals.subtotalHt, total_vat: totals.totalVat, total_discount: totals.totalDiscount, total_ttc: totals.totalTtc, stamp_duty_enabled: isForeignClient ? false : stampDutyEnabled, stamp_duty_amount: stampDuty, net_payable: netPayable, status: 'created', payment_status: 'unpaid', notes: t('ai_generated_invoice') }).select().single();
       if (invoiceError) throw invoiceError;
       const invoiceLines = generatedLines.map((line, index) => { const { lineHt, lineVat, lineTtc } = calculateLineTotal(line.quantity, line.unit_price_ht, line.vat_rate, line.discount_percent, isForeignClient); return { invoice_id: invoice.id, product_id: line.product_id, description: line.description || null, quantity: line.quantity, unit_price_ht: line.unit_price_ht, vat_rate: line.vat_rate, discount_percent: line.discount_percent, line_total_ht: lineHt, line_vat: lineVat, line_total_ttc: lineTtc, line_order: index }; });
       const { error: linesError } = await supabase.from('invoice_lines').insert(invoiceLines);
@@ -307,7 +307,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                       <div className="grid grid-cols-3 gap-4 text-sm font-medium text-muted-foreground"><div>{t('vat_rate')}</div><div>{t('total_ht')}</div><div>{t('total_ttc')}</div></div>
                       {vatTargets.map((target, index) => (
                         <div key={target.vatRate} className="grid grid-cols-3 gap-4 items-center">
-                          <Badge variant="outline">TVA {target.vatRate}%</Badge>
+                          <Badge variant="outline">{t('vat_label')} {target.vatRate}%</Badge>
                           <Input type="number" min="0" step="0.001" placeholder="0.000" value={target.targetHt} onChange={(e) => handleVatTargetChange(index, 'targetHt', e.target.value)} className={cn(target.editMode === 'ht' && target.targetHt && 'border-primary')} />
                           <Input type="number" min="0" step="0.001" placeholder="0.000" value={target.targetTtc} onChange={(e) => handleVatTargetChange(index, 'targetTtc', e.target.value)} className={cn(target.editMode === 'ttc' && target.targetTtc && 'border-primary')} />
                         </div>
@@ -321,7 +321,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     <CardContent className="pt-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2"><Switch id="stamp-duty" checked={stampDutyEnabled} onCheckedChange={setStampDutyEnabled} /><label htmlFor="stamp-duty" className="text-sm">{t('add_stamp_duty')}</label></div>
-                        {stampDutyEnabled && <div className="flex items-center gap-2"><Input type="number" min="0" step="0.001" value={stampDutyAmount} onChange={(e) => setStampDutyAmount(parseFloat(e.target.value) || 0)} className="w-24" /><span className="text-sm text-muted-foreground">DT</span></div>}
+                        {stampDutyEnabled && <div className="flex items-center gap-2"><Input type="number" min="0" step="0.001" value={stampDutyAmount} onChange={(e) => setStampDutyAmount(parseFloat(e.target.value) || 0)} className="w-24" /><span className="text-sm text-muted-foreground">{t('vat_label') === 'VAT' ? 'TND' : 'DT'}</span></div>}
                       </div>
                     </CardContent>
                   </Card>
@@ -350,7 +350,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                             <div className="flex items-center gap-3 shrink-0">
                               <span>{t('max_qty')}: <strong>{maxQty}</strong></span>
                               <span>{t('max_discount_label')}: <strong>{p.max_discount ?? 0}%</strong></span>
-                              <Badge variant="outline" className="text-[10px]">TVA {p.vat_rate}%</Badge>
+                              <Badge variant="outline" className="text-[10px]">{t('vat_label')} {p.vat_rate}%</Badge>
                             </div>
                           </div>
                         );
@@ -370,9 +370,9 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     <CardContent>
                       <div className="grid grid-cols-4 gap-4 text-sm">
                         <div><span className="text-muted-foreground">{t('lines')}:</span> <span className="font-medium">{generationSummary.lineCount}</span></div>
-                        <div><span className="text-muted-foreground">{t('subtotal_ht')}:</span> <span className="font-medium">{generationSummary.subtotalHt.toFixed(3)} DT</span></div>
-                        <div><span className="text-muted-foreground">{t('total_vat')}:</span> <span className="font-medium">{generationSummary.totalVat.toFixed(3)} DT</span></div>
-                        <div><span className="text-muted-foreground">{t('total_ttc')}:</span> <span className="font-medium">{generationSummary.totalTtc.toFixed(3)} DT</span></div>
+                        <div><span className="text-muted-foreground">{t('subtotal_ht')}:</span> <span className="font-medium">{formatCurrency(generationSummary.subtotalHt, 'TND', language)}</span></div>
+                        <div><span className="text-muted-foreground">{t('total_vat')}:</span> <span className="font-medium">{formatCurrency(generationSummary.totalVat, 'TND', language)}</span></div>
+                        <div><span className="text-muted-foreground">{t('total_ttc')}:</span> <span className="font-medium">{formatCurrency(generationSummary.totalTtc, 'TND', language)}</span></div>
                       </div>
                     </CardContent>
                   </Card>
@@ -384,19 +384,19 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     {generatedLines.map((line, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
                         <div className="flex-1"><span className="font-medium">{line.product_name}</span>{line.product_reference && <span className="text-muted-foreground ml-2">({line.product_reference})</span>}</div>
-                        <div className="flex items-center gap-4 text-right"><span>{line.quantity} x {line.unit_price_ht.toFixed(3)} DT</span>{line.discount_percent > 0 && <Badge variant="secondary">-{line.discount_percent}%</Badge>}<Badge variant="outline">TVA {line.vat_rate}%</Badge></div>
+                        <div className="flex items-center gap-4 text-right"><span>{line.quantity} x {formatCurrency(line.unit_price_ht, 'TND', language)}</span>{line.discount_percent > 0 && <Badge variant="secondary">-{line.discount_percent}%</Badge>}<Badge variant="outline">{t('vat_label')} {line.vat_rate}%</Badge></div>
                       </div>
                     ))}
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-4 space-y-2">
-                    <div className="flex justify-between"><span className="text-muted-foreground">{t('subtotal_ht')}</span><span>{formatCurrency(totals.subtotalHt, 'TND')}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">{t('total_vat')}</span><span>{formatCurrency(totals.totalVat, 'TND')}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">{t('total_ttc')}</span><span>{formatCurrency(totals.totalTtc, 'TND')}</span></div>
-                    {!isForeignClient && stampDutyEnabled && <div className="flex justify-between"><span className="text-muted-foreground">{t('stamp_duty')}</span><span>{formatCurrency(stampDutyAmount, 'TND')}</span></div>}
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('subtotal_ht')}</span><span>{formatCurrency(totals.subtotalHt, 'TND', language)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('total_vat')}</span><span>{formatCurrency(totals.totalVat, 'TND', language)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('total_ttc')}</span><span>{formatCurrency(totals.totalTtc, 'TND', language)}</span></div>
+                    {!isForeignClient && stampDutyEnabled && <div className="flex justify-between"><span className="text-muted-foreground">{t('stamp_duty')}</span><span>{formatCurrency(stampDutyAmount, 'TND', language)}</span></div>}
                     <Separator />
-                    <div className="flex justify-between text-lg font-bold"><span>{t('net_payable')}</span><span className="text-primary">{formatCurrency(totals.totalTtc + (isForeignClient ? 0 : stampDutyEnabled ? stampDutyAmount : 0), 'TND')}</span></div>
+                    <div className="flex justify-between text-lg font-bold"><span>{t('net_payable')}</span><span className="text-primary">{formatCurrency(totals.totalTtc + (isForeignClient ? 0 : stampDutyEnabled ? stampDutyAmount : 0), 'TND', language)}</span></div>
                   </CardContent>
                 </Card>
               </motion.div>
