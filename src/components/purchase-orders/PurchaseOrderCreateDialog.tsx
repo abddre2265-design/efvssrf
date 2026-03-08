@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PurchaseOrderLineForm } from './types';
+import { PurchaseOrderNumberInput, generatePONumber } from './PurchaseOrderNumberInput';
 
 interface Props {
   open: boolean;
@@ -19,12 +21,17 @@ interface Props {
 
 export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange, onCreated }) => {
   const { t } = useLanguage();
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [supplierId, setSupplierId] = useState('');
   const [orderDate, setOrderDate] = useState(new Date().toISOString().split('T')[0]);
   const [expectedDate, setExpectedDate] = useState('');
   const [currency, setCurrency] = useState('TND');
   const [notes, setNotes] = useState('');
+  const [orderNumber, setOrderNumber] = useState<{ prefix: string; year: number; counter: number; number: string }>({
+    prefix: 'BC', year: new Date().getFullYear(), counter: 1, number: '',
+  });
+  const [numberValid, setNumberValid] = useState(false);
   const [lines, setLines] = useState<PurchaseOrderLineForm[]>([
     { productId: '', name: '', reference: '', quantity: 1, unitPriceHt: 0, vatRate: 19, discountPercent: 0 },
   ]);
@@ -35,6 +42,7 @@ export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange,
     (async () => {
       const { data: org } = await supabase.from('organizations').select('id').single();
       if (!org) return;
+      setOrganizationId(org.id);
       const { data } = await supabase.from('suppliers').select('id, company_name, first_name, last_name').eq('organization_id', org.id);
       setSuppliers(data || []);
     })();
@@ -69,6 +77,10 @@ export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange,
       toast({ title: t('error') || 'Erreur', description: t('select_supplier') || 'Sélectionnez un fournisseur', variant: 'destructive' });
       return;
     }
+    if (!numberValid) {
+      toast({ title: t('error') || 'Erreur', description: t('invalid_number') || 'Numéro invalide', variant: 'destructive' });
+      return;
+    }
     if (lines.some(l => !l.name.trim())) {
       toast({ title: t('error') || 'Erreur', description: t('fill_line_names') || 'Remplissez le nom de chaque ligne', variant: 'destructive' });
       return;
@@ -76,22 +88,15 @@ export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange,
 
     setSaving(true);
     try {
-      const { data: org } = await supabase.from('organizations').select('id').single();
-      if (!org) throw new Error('No organization');
-
-      // Generate order number
-      const year = new Date().getFullYear();
-      const { count } = await (supabase as any)
-        .from('purchase_orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('organization_id', org.id);
-      const counter = (count || 0) + 1;
-      const orderNumber = `BC-${year}-${String(counter).padStart(4, '0')}`;
+      if (!organizationId) throw new Error('No organization');
 
       const { data: order, error } = await (supabase as any).from('purchase_orders').insert({
-        organization_id: org.id,
+        organization_id: organizationId,
         supplier_id: supplierId,
-        order_number: orderNumber,
+        order_number: orderNumber.number,
+        order_prefix: orderNumber.prefix,
+        order_year: orderNumber.year,
+        order_counter: orderNumber.counter,
         order_date: orderDate,
         expected_delivery_date: expectedDate || null,
         currency,
@@ -105,7 +110,6 @@ export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange,
 
       if (error) throw error;
 
-      // Insert lines
       const orderLines = lines.map((l, i) => {
         const c = calcLine(l);
         return {
@@ -149,6 +153,17 @@ export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange,
         <DialogHeader>
           <DialogTitle>{t('create_purchase_order') || 'Créer un bon de commande'}</DialogTitle>
         </DialogHeader>
+
+        {/* Numbering section */}
+        <PurchaseOrderNumberInput
+          orderDate={orderDate}
+          organizationId={organizationId}
+          value={orderNumber}
+          onChange={setOrderNumber}
+          onValidityChange={setNumberValid}
+        />
+
+        <Separator />
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -246,7 +261,9 @@ export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange,
 
         <div className="flex justify-end gap-2 mt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('cancel') || 'Annuler'}</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? (t('saving') || 'Enregistrement...') : (t('save') || 'Enregistrer')}</Button>
+          <Button onClick={handleSave} disabled={saving || !numberValid}>
+            {saving ? (t('saving') || 'Enregistrement...') : (t('save') || 'Enregistrer')}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
