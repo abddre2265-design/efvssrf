@@ -117,12 +117,27 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   const fetchData = useCallback(async () => {
     if (!organizationId) return;
     setIsLoading(true);
-    const [clientsRes, productsRes] = await Promise.all([
+    const [clientsRes, productsRes, reservationsRes] = await Promise.all([
       supabase.from('clients').select('id, client_type, first_name, last_name, company_name').eq('organization_id', organizationId).eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('products').select('id, name, reference, price_ht, price_ttc, vat_rate, max_discount, current_stock, unlimited_stock, allow_out_of_stock_sale').eq('organization_id', organizationId).eq('status', 'active').order('name'),
+      supabase.from('product_reservations').select('product_id, quantity').eq('organization_id', organizationId).eq('status', 'active'),
     ]);
     if (clientsRes.data) setClients(clientsRes.data as Client[]);
-    if (productsRes.data) setProducts(productsRes.data as Product[]);
+    if (productsRes.data) {
+      // Calculate reserved stock per product
+      const reservedMap = new Map<string, number>();
+      if (reservationsRes.data) {
+        for (const r of reservationsRes.data) {
+          reservedMap.set(r.product_id, (reservedMap.get(r.product_id) || 0) + r.quantity);
+        }
+      }
+      const productsWithAvailability = productsRes.data.map((p: any) => {
+        const reserved = reservedMap.get(p.id) || 0;
+        const available = p.unlimited_stock ? null : Math.max(0, (p.current_stock || 0) - reserved);
+        return { ...p, reserved_stock: reserved, available_stock: available } as Product;
+      });
+      setProducts(productsWithAvailability);
+    }
     setIsLoading(false);
   }, [organizationId]);
 
