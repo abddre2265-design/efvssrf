@@ -788,19 +788,19 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const getWatermarkInfo = (): { text: string; className: string } | null => {
     const status = invoice.status as string;
     if (status === 'created' || status === 'draft') {
-      return { text: 'ANNULÉE', className: 'invoice-watermark-cancelled' };
+      return { text: t('watermark_cancelled'), className: 'invoice-watermark-cancelled' };
     }
     if (status === 'cancelled') {
-      return { text: 'ANNULÉE', className: 'invoice-watermark-cancelled' };
+      return { text: t('watermark_cancelled'), className: 'invoice-watermark-cancelled' };
     }
     if (status === 'validated') {
       switch (invoice.payment_status) {
         case 'paid':
-          return { text: 'PAYÉ', className: 'invoice-watermark-paid' };
+          return { text: t('watermark_paid'), className: 'invoice-watermark-paid' };
         case 'partial':
-          return { text: 'PARTIELLEMENT PAYÉ', className: 'invoice-watermark-partial' };
+          return { text: t('watermark_partial'), className: 'invoice-watermark-partial' };
         default:
-          return { text: 'IMPAYÉ', className: 'invoice-watermark-unpaid' };
+          return { text: t('watermark_unpaid'), className: 'invoice-watermark-unpaid' };
       }
     }
     return null;
