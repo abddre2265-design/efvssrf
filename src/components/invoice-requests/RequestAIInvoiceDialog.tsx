@@ -39,6 +39,8 @@ interface Product {
   current_stock: number | null;
   unlimited_stock: boolean;
   allow_out_of_stock_sale: boolean | null;
+  reserved_stock: number;
+  available_stock: number | null;
 }
 
 interface VatTarget {

@@ -87,8 +87,10 @@ serve(async (req) => {
     const eligibleProducts = products.filter(p => {
       if (!allowedVatRates.includes(p.vat_rate)) return false;
       if (p.price_ttc < minPriceTtc || p.price_ttc > maxPriceTtc) return false;
+
+      const baseAvailableStock = p.available_stock ?? ((p.current_stock ?? 0) - (p.reserved_stock ?? 0));
       // Exclude products with no available stock (unless unlimited or allow out of stock)
-      if (!p.unlimited_stock && !p.allow_out_of_stock_sale && (p.available_stock ?? 0) <= 0) return false;
+      if (!p.unlimited_stock && !p.allow_out_of_stock_sale && baseAvailableStock <= 0) return false;
       return true;
     });
 
