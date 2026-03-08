@@ -43,6 +43,8 @@ interface Product {
   current_stock: number | null;
   unlimited_stock: boolean;
   allow_out_of_stock_sale: boolean | null;
+  reserved_stock: number;
+  available_stock: number | null;
 }
 
 interface VatTarget {
@@ -115,12 +117,27 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   const fetchData = useCallback(async () => {
     if (!organizationId) return;
     setIsLoading(true);
-    const [clientsRes, productsRes] = await Promise.all([
+    const [clientsRes, productsRes, reservationsRes] = await Promise.all([
       supabase.from('clients').select('id, client_type, first_name, last_name, company_name').eq('organization_id', organizationId).eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('products').select('id, name, reference, price_ht, price_ttc, vat_rate, max_discount, current_stock, unlimited_stock, allow_out_of_stock_sale').eq('organization_id', organizationId).eq('status', 'active').order('name'),
+      supabase.from('product_reservations').select('product_id, quantity').eq('organization_id', organizationId).eq('status', 'active'),
     ]);
     if (clientsRes.data) setClients(clientsRes.data as Client[]);
-    if (productsRes.data) setProducts(productsRes.data as Product[]);
+    if (productsRes.data) {
+      // Calculate reserved stock per product
+      const reservedMap = new Map<string, number>();
+      if (reservationsRes.data) {
+        for (const r of reservationsRes.data) {
+          reservedMap.set(r.product_id, (reservedMap.get(r.product_id) || 0) + r.quantity);
+        }
+      }
+      const productsWithAvailability = productsRes.data.map((p: any) => {
+        const reserved = reservedMap.get(p.id) || 0;
+        const available = p.unlimited_stock ? null : Math.max(0, (p.current_stock || 0) - reserved);
+        return { ...p, reserved_stock: reserved, available_stock: available } as Product;
+      });
+      setProducts(productsWithAvailability);
+    }
     setIsLoading(false);
   }, [organizationId]);
 
@@ -308,7 +325,37 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                   </Card>
                 )}
 
-                <Card><CardContent className="pt-4"><div className="flex items-center gap-4 text-sm text-muted-foreground"><Package className="h-4 w-4" /><span>{products.length} {t('products_available')}</span><Separator orientation="vertical" className="h-4" /><span>{products.filter(p => allowedVatRates.includes(p.vat_rate)).length} {t('matching_vat_rates')}</span></div></CardContent></Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      {t('products_available')} ({products.filter(p => allowedVatRates.includes(p.vat_rate)).length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                      <span>{products.length} {t('products_available')}</span>
+                      <Separator orientation="vertical" className="h-4" />
+                      <span>{products.filter(p => allowedVatRates.includes(p.vat_rate)).length} {t('matching_vat_rates')}</span>
+                    </div>
+                    <div className="max-h-[200px] overflow-y-auto space-y-1">
+                      {products.filter(p => allowedVatRates.includes(p.vat_rate) && p.price_ttc >= (parseFloat(minPriceTtc) || 0) && p.price_ttc <= (parseFloat(maxPriceTtc) || 999999)).map(p => {
+                        const maxQty = p.unlimited_stock ? '∞' : p.allow_out_of_stock_sale ? `${p.available_stock ?? 0} (+)` : `${p.available_stock ?? 0}`;
+                        const isOutOfStock = !p.unlimited_stock && !p.allow_out_of_stock_sale && (p.available_stock ?? 0) <= 0;
+                        return (
+                          <div key={p.id} className={cn("flex items-center justify-between p-2 rounded text-xs", isOutOfStock ? "bg-destructive/10 text-destructive" : "bg-muted/50")}>
+                            <span className="font-medium truncate flex-1">{p.name}</span>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span>{t('max_qty')}: <strong>{maxQty}</strong></span>
+                              <span>{t('max_discount_label')}: <strong>{p.max_discount ?? 0}%</strong></span>
+                              <Badge variant="outline" className="text-[10px]">TVA {p.vat_rate}%</Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
                 {generationError && <Card className="border-destructive"><CardContent className="pt-4"><div className="flex items-center gap-2 text-destructive"><AlertCircle className="h-4 w-4" /><span>{generationError}</span></div></CardContent></Card>}
               </motion.div>
             )}

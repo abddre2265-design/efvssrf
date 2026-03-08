@@ -16,6 +16,8 @@ interface Product {
   current_stock: number | null;
   unlimited_stock: boolean;
   allow_out_of_stock_sale: boolean | null;
+  reserved_stock: number;
+  available_stock: number | null;
 }
 
 interface VatTarget {
@@ -82,6 +84,8 @@ serve(async (req) => {
     const eligibleProducts = products.filter(p => {
       if (!allowedVatRates.includes(p.vat_rate)) return false;
       if (p.price_ttc < minPriceTtc || p.price_ttc > maxPriceTtc) return false;
+      // Exclude products with no available stock (unless unlimited or allow out of stock)
+      if (!p.unlimited_stock && !p.allow_out_of_stock_sale && (p.available_stock ?? 0) <= 0) return false;
       return true;
     });
 
@@ -156,7 +160,7 @@ serve(async (req) => {
           if (p.allow_out_of_stock_sale) return true;
           
           const used = stockUsed.get(p.id) || 0;
-          const available = (p.current_stock || 0) - used;
+          const available = (p.available_stock ?? 0) - used;
           return available > 0;
         });
 
@@ -187,7 +191,7 @@ serve(async (req) => {
         // Try different quantities and discounts
         const maxQuantity = product.unlimited_stock || product.allow_out_of_stock_sale 
           ? Math.min(100, Math.ceil(remainingHt / product.price_ht) + 5)
-          : Math.min((product.current_stock || 0) - (stockUsed.get(product.id) || 0), Math.ceil(remainingHt / product.price_ht) + 5);
+          : Math.min((product.available_stock ?? 0) - (stockUsed.get(product.id) || 0), Math.ceil(remainingHt / product.price_ht) + 5);
 
         for (let qty = 1; qty <= Math.max(1, maxQuantity); qty++) {
           for (let discount = 0; discount <= maxDiscount; discount += 0.5) {
@@ -205,7 +209,7 @@ serve(async (req) => {
         // Validate stock one more time
         if (!product.unlimited_stock && !product.allow_out_of_stock_sale) {
           const used = stockUsed.get(product.id) || 0;
-          const available = (product.current_stock || 0) - used;
+          const available = (product.available_stock ?? 0) - used;
           if (bestQuantity > available) {
             bestQuantity = Math.max(1, available);
           }
