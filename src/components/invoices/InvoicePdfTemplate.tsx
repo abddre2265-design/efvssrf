@@ -1029,7 +1029,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           {/* Page number */}
           {totalPages > 1 && (
             <div className="invoice-page-number">
-              Page {pageIndex + 1} / {totalPages}
+              {t('pdf_page')} {pageIndex + 1} / {totalPages}
             </div>
           )}
         </div>
