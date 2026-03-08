@@ -930,7 +930,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                             const curr = CURRENCIES.find(c => c.code === code);
                             return (
                               <SelectItem key={code} value={code}>
-                                {code} - {curr ? getCurrencyName(curr, language) : code} ({curr?.symbol || code})
+                                {code} - {curr ? getCurrencyName(curr, language) : code} ({curr ? getCurrencySymbol(curr, language) : code})
                               </SelectItem>
                             );
                           })}
