@@ -146,12 +146,16 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
 
   useEffect(() => { if (open && organizationId) fetchData(); }, [open, organizationId, fetchData]);
 
-  // Sync allowed VAT rates with dynamic rates
+  // Sync allowed VAT rates with dynamic rates + product rates
   useEffect(() => {
-    if (dynamicVatRates.length > 0 && allowedVatRates.length === 0) {
-      setAllowedVatRates(dynamicVatRates);
+    if (allowedVatRates.length === 0) {
+      const productVatRates = [...new Set(products.map(p => p.vat_rate))];
+      const allRates = [...new Set([...dynamicVatRates, ...productVatRates])].sort((a, b) => a - b);
+      if (allRates.length > 0) {
+        setAllowedVatRates(allRates);
+      }
     }
-  }, [dynamicVatRates]);
+  }, [dynamicVatRates, products]);
 
   // Set preselected client when dialog opens
   useEffect(() => {
@@ -240,7 +244,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
     } catch (error: any) { toast.error(error.message || t('error_creating_invoice')); setStep('preview'); } finally { setIsSaving(false); }
   };
 
-  const resetForm = () => { setStep('config'); setInvoiceDate(null); setDueDate(null); setSelectedClientId(''); setMaxLines('10'); setMaxQuantityPerLine('50'); setMinPriceTtc('0'); setMaxPriceTtc('10000'); setAllowedVatRates(dynamicVatRates); setVatTargets([]); setStampDutyEnabled(true); setGeneratedLines([]); setGenerationSummary(null); setGenerationError(null); };
+  const resetForm = () => { const productVatRates = [...new Set(products.map(p => p.vat_rate))]; const allRates = [...new Set([...dynamicVatRates, ...productVatRates])].sort((a, b) => a - b); setStep('config'); setInvoiceDate(null); setDueDate(null); setSelectedClientId(''); setMaxLines('10'); setMaxQuantityPerLine('50'); setMinPriceTtc('0'); setMaxPriceTtc('10000'); setAllowedVatRates(allRates); setVatTargets([]); setStampDutyEnabled(true); setGeneratedLines([]); setGenerationSummary(null); setGenerationError(null); };
   const getClientName = (client: Client): string => client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim();
 
   const stockBubbles: StockBubble[] = React.useMemo(() => {
@@ -303,7 +307,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     </div>
                     <div className="space-y-2">
                       <Label>{t('vat_rates_to_use')}</Label>
-                      <div className="flex gap-4 flex-wrap">{dynamicVatRates.map(rate => (<div key={rate} className="flex items-center space-x-2"><Checkbox id={`vat-${rate}`} checked={allowedVatRates.includes(rate)} onCheckedChange={() => handleVatRateToggle(rate)} /><label htmlFor={`vat-${rate}`} className="text-sm font-medium">{rate}%</label></div>))}</div>
+                      <div className="flex gap-4 flex-wrap">{[...new Set([...dynamicVatRates, ...products.map(p => p.vat_rate)])].sort((a, b) => a - b).map(rate => (<div key={rate} className="flex items-center space-x-2"><Checkbox id={`vat-${rate}`} checked={allowedVatRates.includes(rate)} onCheckedChange={() => handleVatRateToggle(rate)} /><label htmlFor={`vat-${rate}`} className="text-sm font-medium">{rate}%</label></div>))}</div>
                     </div>
                   </CardContent>
                 </Card>
