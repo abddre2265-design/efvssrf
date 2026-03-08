@@ -252,7 +252,7 @@ const PublicInvoiceRequest: React.FC = () => {
 
   const totalTTCAmount = Math.max(0, parseFloat(totalTTC) || 0);
   const paidAmountNumber = Math.max(0, parseFloat(paidAmount) || 0);
-  const shouldApplyWithholding = totalTTCAmount > withholdingSettings.minAmount;
+  const shouldApplyWithholding = totalTTCAmount >= withholdingSettings.minAmount;
   const appliedWithholdingRate = shouldApplyWithholding ? withholdingSettings.rate : 0;
   const withholdingAmount = totalTTCAmount * (appliedWithholdingRate / 100);
   const netPayableAmount = totalTTCAmount - withholdingAmount + stampDutyAmount;
