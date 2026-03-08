@@ -38,6 +38,8 @@ interface OrganizationData {
   logoFile: File | null;
   logoPreview: string;
   isIdentifierLocked: boolean;
+  defaultWithholdingRate: number;
+  withholdingMinAmount: number;
 }
 
 export const OrganizationSettingsDialog: React.FC = () => {
