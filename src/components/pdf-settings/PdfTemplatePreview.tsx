@@ -379,7 +379,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             {isEnabled('signature_area') && (
               <div style={{ textAlign: 'center' }}>
                 <div style={{ width: 80, borderBottom: '1px solid #333', height: 25, marginBottom: 3 }}></div>
-                <div>Signature & cachet</div>
+                <div>{t('pdf_preview_signature')}</div>
               </div>
             )}
           </div>
