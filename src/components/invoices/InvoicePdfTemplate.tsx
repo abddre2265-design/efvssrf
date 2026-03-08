@@ -978,14 +978,14 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '6px', fontSize: '9px' }}>
                           <thead>
                             <tr style={{ background: '#f4faff' }}>
-                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Produit</th>
-                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Réf</th>
-                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Montant HT</th>
-                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Remise HT</th>
-                              <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Taux</th>
-                              {!isForeign && <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>TVA</th>}
-                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Remise TTC</th>
-                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Nouveau HT</th>
+                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_product')}</th>
+                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_ref')}</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_amount_ht')}</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_discount_ht')}</th>
+                              <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_vat_rate')}</th>
+                              {!isForeign && <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_vat')}</th>}
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_discount_ttc')}</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_new_ht')}</th>
                             </tr>
                           </thead>
                           <tbody>
