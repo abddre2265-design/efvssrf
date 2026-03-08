@@ -366,16 +366,6 @@ const PublicInvoiceRequest: React.FC = () => {
       }
     }
 
-    // Check if partial payment equals total
-    if (paymentStatus === 'partial') {
-      const paid = parseFloat(paidAmount) || 0;
-      const total = parseFloat(totalTTC) || 0;
-      if (Math.abs(paid - total) < 0.001) {
-        setShowPaymentConfirm(true);
-        return;
-      }
-    }
-
     await submitRequest();
   };
 
