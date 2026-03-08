@@ -74,7 +74,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                     </>
                   )}
                   {isCompanyFieldVisible('company_phone') && (
-                    <div>Tel : +216 XX XXX XXX</div>
+                    <div>{t('pdf_tel')} : +216 XX XXX XXX</div>
                   )}
                   {isCompanyFieldVisible('company_email') && (
                     <div>Email : contact@exemple.tn</div>
