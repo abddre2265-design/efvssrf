@@ -307,7 +307,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                       <div className="grid grid-cols-3 gap-4 text-sm font-medium text-muted-foreground"><div>{t('vat_rate')}</div><div>{t('total_ht')}</div><div>{t('total_ttc')}</div></div>
                       {vatTargets.map((target, index) => (
                         <div key={target.vatRate} className="grid grid-cols-3 gap-4 items-center">
-                          <Badge variant="outline">TVA {target.vatRate}%</Badge>
+                          <Badge variant="outline">{t('vat_label')} {target.vatRate}%</Badge>
                           <Input type="number" min="0" step="0.001" placeholder="0.000" value={target.targetHt} onChange={(e) => handleVatTargetChange(index, 'targetHt', e.target.value)} className={cn(target.editMode === 'ht' && target.targetHt && 'border-primary')} />
                           <Input type="number" min="0" step="0.001" placeholder="0.000" value={target.targetTtc} onChange={(e) => handleVatTargetChange(index, 'targetTtc', e.target.value)} className={cn(target.editMode === 'ttc' && target.targetTtc && 'border-primary')} />
                         </div>
