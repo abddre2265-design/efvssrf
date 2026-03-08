@@ -105,6 +105,19 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const isClientFieldVisible = (fieldId: string) => isEnabled('client_info') && isEnabled(fieldId);
 
   useEffect(() => {
+    // If preloaded data is provided, use it directly (for public pages without auth)
+    if (preloadedData) {
+      setInvoice(preloadedData.invoice as Invoice);
+      setClient(preloadedData.client);
+      setOrganization(preloadedData.organization);
+      setBanks(preloadedData.banks || []);
+      setLines(preloadedData.lines || []);
+      setCreditNotes(preloadedData.creditNotes || []);
+      setIsLoading(false);
+      onReady?.();
+      return;
+    }
+
     const fetchData = async () => {
       try {
         // Fetch invoice
@@ -180,7 +193,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
     };
 
     fetchData();
-  }, [invoiceId, onReady]);
+  }, [invoiceId, onReady, preloadedData]);
 
   // Calculate VAT breakdown by rate
   const vatBreakdown = useMemo(() => {
