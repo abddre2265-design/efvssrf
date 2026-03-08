@@ -84,6 +84,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   invoiceId,
   onReady,
   isDuplicate = false,
+  preloadedData,
 }) => {
   const { isComponentEnabled } = usePdfSettings();
   const { t, language } = useLanguage();
