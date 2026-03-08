@@ -893,7 +893,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                   )}
                   {isEnabled('invoice_date') && (
                     <div style={{ fontSize: '11px', margin: '3px 0' }}>
-                      Date : {format(new Date(invoice.invoice_date), 'dd/MM/yyyy', { locale: fr })}
+                      {t('pdf_date')} : {format(new Date(invoice.invoice_date), 'dd/MM/yyyy', { locale: dateLocale })}
                     </div>
                   )}
                   {isEnabled('due_date') && invoice.due_date && (
