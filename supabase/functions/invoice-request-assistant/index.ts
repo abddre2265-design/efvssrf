@@ -148,11 +148,11 @@ serve(async (req) => {
           `${client.first_name || ''} ${client.last_name || ''}`.trim() || 
           'Client';
         
-        let message = `✅ Client trouvé !\n\n👤 ${displayName}`;
+        let message = `${msg('client_found')}\n\n👤 ${displayName}`;
         if (client.email) message += `\n📧 ${client.email}`;
         if (client.phone) message += `\n📱 ${client.phone_prefix || ''} ${client.phone}`;
         if (client.address) message += `\n📍 ${client.address}`;
-        message += `\n\nEst-ce bien vous ?`;
+        message += msg('is_it_you');
 
         return new Response(JSON.stringify({
           action: "client_found",
