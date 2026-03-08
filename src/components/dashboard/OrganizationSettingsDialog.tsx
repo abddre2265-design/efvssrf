@@ -38,6 +38,8 @@ interface OrganizationData {
   logoFile: File | null;
   logoPreview: string;
   isIdentifierLocked: boolean;
+  defaultWithholdingRate: number;
+  withholdingMinAmount: number;
 }
 
 export const OrganizationSettingsDialog: React.FC = () => {
@@ -63,6 +65,8 @@ export const OrganizationSettingsDialog: React.FC = () => {
     logoFile: null,
     logoPreview: '',
     isIdentifierLocked: false,
+    defaultWithholdingRate: 0,
+    withholdingMinAmount: 0,
   });
 
   // Load organization data when dialog opens
@@ -115,6 +119,8 @@ export const OrganizationSettingsDialog: React.FC = () => {
           logoFile: null,
           logoPreview: org.logo_url || '',
           isIdentifierLocked: org.identifier_locked,
+          defaultWithholdingRate: (org as any).default_withholding_rate ?? 0,
+          withholdingMinAmount: (org as any).withholding_min_amount ?? 0,
         });
       }
     } catch (error) {
@@ -307,7 +313,9 @@ export const OrganizationSettingsDialog: React.FC = () => {
         governorate: data.governorate,
         postal_code: data.postalCode,
         logo_url: logoUrl || null,
-      };
+        default_withholding_rate: data.defaultWithholdingRate,
+        withholding_min_amount: data.withholdingMinAmount,
+      } as any;
 
       let organizationId = data.id;
 
@@ -611,6 +619,43 @@ export const OrganizationSettingsDialog: React.FC = () => {
                     disabled
                     className="futuristic-input bg-muted/50"
                   />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Withholding Tax Settings */}
+              <div className="space-y-4">
+                <h3 className="text-base font-semibold">{t('withholdingSettings')}</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t('defaultWithholdingRate')} (%) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={data.defaultWithholdingRate}
+                      onChange={(e) => setData(prev => ({ ...prev, defaultWithholdingRate: parseFloat(e.target.value) || 0 }))}
+                      className="futuristic-input"
+                      placeholder="1.5"
+                    />
+                    <p className="text-xs text-muted-foreground">{t('defaultWithholdingRateHint')}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('withholdingMinAmount')} (TND) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      value={data.withholdingMinAmount}
+                      onChange={(e) => setData(prev => ({ ...prev, withholdingMinAmount: parseFloat(e.target.value) || 0 }))}
+                      className="futuristic-input"
+                      placeholder="1000"
+                    />
+                    <p className="text-xs text-muted-foreground">{t('withholdingMinAmountHint')}</p>
+                  </div>
                 </div>
               </div>
 
