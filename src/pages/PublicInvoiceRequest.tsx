@@ -1030,45 +1030,59 @@ const PublicInvoiceRequest: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <RadioGroup value={paymentStatus} onValueChange={(v: any) => setPaymentStatus(v)}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="unpaid" id="unpaid" />
-                <Label htmlFor="unpaid">{t('payment_unpaid')}</Label>
+            <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('total_ttc')}</span>
+                <span className="font-medium">{totalTTCAmount.toFixed(3)} {t('currency_label')}</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="partial" id="partial" />
-                <Label htmlFor="partial">{t('payment_partial')}</Label>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('withholding_amount')} ({appliedWithholdingRate.toFixed(2)}%)</span>
+                <span className="font-medium">- {withholdingAmount.toFixed(3)} {t('currency_label')}</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="paid" id="paid" />
-                <Label htmlFor="paid">{t('payment_paid')}</Label>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t('stamp_duty')}</span>
+                <span className="font-medium">+ {stampDutyAmount.toFixed(3)} {t('currency_label')}</span>
               </div>
-            </RadioGroup>
+              <div className="flex justify-between border-t border-border pt-2">
+                <span className="font-semibold">{t('net_payable')}</span>
+                <span className="font-semibold text-primary">{netPayableAmount.toFixed(3)} {t('currency_label')}</span>
+              </div>
+            </div>
 
-            {paymentStatus !== 'unpaid' && (
+            <div className="space-y-2">
+              <Label>{t('paid_amount')}</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={paidAmount}
+                  onChange={(e) => setPaidAmount(e.target.value)}
+                  className={`${errors.paidAmount ? 'border-destructive' : ''} pr-16`}
+                  placeholder="0.000"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {t('currency_label')}
+                </span>
+              </div>
+              {errors.paidAmount && <p className="text-xs text-destructive">{errors.paidAmount}</p>}
+              <p className="text-xs text-muted-foreground">0 = {t('payment_unpaid')}</p>
+            </div>
+
+            <div className="rounded-md bg-primary/5 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">{t('payment_status')}: </span>
+              <span className="font-semibold text-primary">
+                {calculatedPaymentStatus === 'paid'
+                  ? t('payment_paid')
+                  : calculatedPaymentStatus === 'partial'
+                    ? t('payment_partial')
+                    : t('payment_unpaid')}
+              </span>
+            </div>
+
+            {paidAmountNumber > 0 && (
               <>
                 <Separator />
-                
-                {paymentStatus === 'partial' && (
-                  <div className="space-y-2">
-                    <Label>{t('paid_amount')} *</Label>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        value={paidAmount}
-                        onChange={(e) => setPaidAmount(e.target.value)}
-                        className={`${errors.paidAmount ? 'border-destructive' : ''} pr-16`}
-                        placeholder="0.000"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        {t('currency_label')}
-                      </span>
-                    </div>
-                    {errors.paidAmount && <p className="text-xs text-destructive">{errors.paidAmount}</p>}
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <Label>{t('payment_method')} *</Label>
@@ -1105,10 +1119,10 @@ const PublicInvoiceRequest: React.FC = () => {
                         {t('add')}
                       </Button>
                     </div>
-                    {mixedLines.map((line, index) => (
+                    {mixedLines.map((line) => (
                       <div key={line.id} className="flex gap-2 items-start">
-                        <Select 
-                          value={line.method} 
+                        <Select
+                          value={line.method}
                           onValueChange={(v) => updateMixedLine(line.id, 'method', v)}
                         >
                           <SelectTrigger className="flex-1">
