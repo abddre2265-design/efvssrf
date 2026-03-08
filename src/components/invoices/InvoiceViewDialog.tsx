@@ -70,6 +70,7 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
   const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [duplicatePrintDialogOpen, setDuplicatePrintDialogOpen] = useState(false);
   const [creditNotes, setCreditNotes] = useState<CreditNote[]>([]);
   const getDateLocale = () => {
     switch (language) {
