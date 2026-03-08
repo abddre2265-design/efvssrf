@@ -124,6 +124,13 @@ export const translations: Translations = {
   country: { fr: 'Pays', en: 'Country', ar: 'البلد' },
   tunisia: { fr: 'Tunisie', en: 'Tunisia', ar: 'تونس' },
   
+  // Withholding Settings
+  withholdingSettings: { fr: 'Paramètres de retenue à la source', en: 'Withholding Tax Settings', ar: 'إعدادات الاقتطاع من المنبع' },
+  defaultWithholdingRate: { fr: 'Taux de retenue par défaut', en: 'Default Withholding Rate', ar: 'معدل الاقتطاع الافتراضي' },
+  defaultWithholdingRateHint: { fr: 'Taux appliqué automatiquement sur les ventes', en: 'Rate automatically applied on sales', ar: 'المعدل المطبق تلقائياً على المبيعات' },
+  withholdingMinAmount: { fr: 'Montant minimum pour appliquer la retenue', en: 'Minimum amount to apply withholding', ar: 'الحد الأدنى للمبلغ لتطبيق الاقتطاع' },
+  withholdingMinAmountHint: { fr: 'La retenue ne s\'applique que si le TTC dépasse ce montant', en: 'Withholding only applies if TTC exceeds this amount', ar: 'يُطبق الاقتطاع فقط إذا تجاوز المبلغ الإجمالي هذا الحد' },
+
   // Bank Info
   bankInfo: { fr: 'Informations bancaires', en: 'Bank Information', ar: 'المعلومات البنكية' },
   bankName: { fr: 'Nom de la banque', en: 'Bank Name', ar: 'اسم البنك' },
