@@ -313,7 +313,9 @@ export const OrganizationSettingsDialog: React.FC = () => {
         governorate: data.governorate,
         postal_code: data.postalCode,
         logo_url: logoUrl || null,
-      };
+        default_withholding_rate: data.defaultWithholdingRate,
+        withholding_min_amount: data.withholdingMinAmount,
+      } as any;
 
       let organizationId = data.id;
 
