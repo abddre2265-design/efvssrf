@@ -595,36 +595,41 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
     .invoice-watermark {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-35deg);
-      font-size: 72px;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 68px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 8px;
       pointer-events: none;
-      z-index: 0;
       white-space: nowrap;
+      transform: rotate(-35deg);
     }
 
     .invoice-watermark-paid {
-      color: rgba(34, 197, 94, 0.18);
+      color: rgba(34, 197, 94, 0.20);
     }
 
     .invoice-watermark-partial {
-      color: rgba(245, 158, 11, 0.18);
+      color: rgba(245, 158, 11, 0.20);
     }
 
     .invoice-watermark-unpaid {
-      color: rgba(239, 68, 68, 0.18);
+      color: rgba(239, 68, 68, 0.20);
     }
 
     .invoice-watermark-draft {
-      color: rgba(107, 114, 128, 0.22);
+      color: rgba(107, 114, 128, 0.25);
     }
 
     .invoice-watermark-cancelled {
-      color: rgba(239, 68, 68, 0.22);
+      color: rgba(239, 68, 68, 0.25);
     }
 
     @media print {
