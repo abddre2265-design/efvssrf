@@ -335,7 +335,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
               onValueChange={(value) => handleChange('governorate', value)}
             >
               <SelectTrigger className={errors.governorate ? 'border-destructive' : ''}>
-                <SelectValue placeholder={t('select_governorate')} />
+                <SelectValue placeholder={t('selectGovernorate')} />
               </SelectTrigger>
               <SelectContent>
                 {TUNISIA_GOVERNORATES.map((gov) => (

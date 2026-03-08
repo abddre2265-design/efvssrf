@@ -736,7 +736,7 @@ const PublicInvoiceRequest: React.FC = () => {
                 <Label>{t('governorate')} *</Label>
                 <Select value={governorate} onValueChange={setGovernorate}>
                   <SelectTrigger className={errors.governorate ? 'border-destructive' : ''}>
-                    <SelectValue placeholder={t('select_governorate')} />
+                    <SelectValue placeholder={t('selectGovernorate')} />
                   </SelectTrigger>
                   <SelectContent>
                     {governorates.map((gov) => (

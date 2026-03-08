@@ -709,7 +709,7 @@ export const SupplierIdentificationStep: React.FC<SupplierIdentificationStepProp
                       onValueChange={(value) => handleChange('governorate', value)}
                     >
                       <SelectTrigger className={errors.governorate ? 'border-destructive' : ''}>
-                        <SelectValue placeholder={t('select_governorate') || 'Sélectionner'} />
+                        <SelectValue placeholder={t('selectGovernorate')} />
                       </SelectTrigger>
                       <SelectContent>
                         {TUNISIA_GOVERNORATES.map((gov) => (
