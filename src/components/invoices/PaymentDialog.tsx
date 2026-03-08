@@ -52,7 +52,7 @@ import {
   RefreshCw,
   Coins
 } from 'lucide-react';
-import { Invoice, formatCurrency, CURRENCIES, getCurrencyName } from './types';
+import { Invoice, formatCurrency, CURRENCIES, getCurrencyName, getCurrencySymbol } from './types';
 import { useTaxRates, DEFAULT_WITHHOLDING_RATES } from '@/hooks/useTaxRates';
 
 interface Payment {
@@ -731,9 +731,9 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const previewAmountInTND = invoice.subtotal_ht * previewExchangeRate;
 
   // Get currency info
-  const getCurrencySymbol = (code: string) => {
+  const getLocalCurrencySymbol = (code: string) => {
     const curr = CURRENCIES.find(c => c.code === code);
-    return curr?.symbol || code;
+    return curr ? getCurrencySymbol(curr, language) : code;
   };
 
   return (
@@ -930,7 +930,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                             const curr = CURRENCIES.find(c => c.code === code);
                             return (
                               <SelectItem key={code} value={code}>
-                                {code} - {curr ? getCurrencyName(curr, language) : code} ({curr?.symbol || code})
+                                {code} - {curr ? getCurrencyName(curr, language) : code} ({curr ? getCurrencySymbol(curr, language) : code})
                               </SelectItem>
                             );
                           })}
