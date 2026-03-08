@@ -1516,6 +1516,7 @@ export const translations: Translations = {
   matching_vat_rates: { fr: 'correspondent aux taux TVA', en: 'matching VAT rates', ar: 'تطابق معدلات الضريبة' },
   max_qty: { fr: 'Qté max', en: 'Max qty', ar: 'الكمية القصوى' },
   max_discount_label: { fr: 'Remise max', en: 'Max discount', ar: 'الخصم الأقصى' },
+  max_qty_per_line: { fr: 'Qté max par ligne', en: 'Max qty per line', ar: 'الكمية القصوى لكل سطر' },
   
   // PDF Components - Delivery Note
   pdf_component_delivery_note_title: { fr: 'Titre "BON DE LIVRAISON"', en: '"DELIVERY NOTE" Title', ar: 'عنوان "سند التسليم"' },
