@@ -728,7 +728,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           
           {invoice.total_discount > 0 && (
             <p>
-              <span>Remise</span>
+              <span>{t('pdf_discount')}</span>
               <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.total_discount, invoice.currency)}</span>
             </p>
           )}
