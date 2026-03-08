@@ -177,6 +177,29 @@ const PublicInvoiceRequest: React.FC = () => {
             setOrganizationLogo(orgInfo.logo_url);
           }
 
+          // Get public withholding settings via security definer function
+          const { data: withholdingData } = await supabase
+            .rpc('get_organization_public_withholding', { org_id: data.organization_id })
+            .maybeSingle();
+
+          if (withholdingData) {
+            setWithholdingSettings({
+              rate: Number(withholdingData.default_withholding_rate) || 0,
+              minAmount: Number(withholdingData.withholding_min_amount) || 0,
+            });
+          }
+
+          // Get stamp duty (fallback to 1.000 if inaccessible)
+          const { data: stampData } = await supabase
+            .from('stamp_duty_settings')
+            .select('amount')
+            .eq('organization_id', data.organization_id)
+            .maybeSingle();
+
+          if (stampData?.amount !== undefined && stampData?.amount !== null) {
+            setStampDutyAmount(Number(stampData.amount) || 1);
+          }
+
           // Get stores for this organization
           const { data: storesData } = await supabase
             .from('stores')
