@@ -602,14 +602,23 @@ const PublicInvoiceRequest: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <Building2 className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold text-primary">{organizationName}</span>
+        <div className="text-center space-y-4">
+          <div className="flex flex-col items-center gap-3">
+            {organizationLogo ? (
+              <img 
+                src={organizationLogo} 
+                alt={organizationName} 
+                className="h-16 w-16 object-contain rounded-lg border border-border shadow-sm"
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center border border-border">
+                <Building2 className="h-8 w-8 text-primary" />
+              </div>
+            )}
+            <span className="text-xl font-bold text-foreground">{organizationName}</span>
           </div>
           <div className="space-y-1">
-            <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-primary">
               {editingRequestId ? t('edit_request') : t('invoice_request')}
             </h1>
           </div>
