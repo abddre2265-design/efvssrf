@@ -2821,6 +2821,13 @@ export type Database = {
         Returns: string
       }
       get_client_balance: { Args: { p_client_id: string }; Returns: number }
+      get_organization_public_info: {
+        Args: { org_id: string }
+        Returns: {
+          logo_url: string
+          name: string
+        }[]
+      }
       has_organization: { Args: never; Returns: boolean }
       is_credit_note_owner: { Args: { cn_id: string }; Returns: boolean }
       is_custom_tax_value_in_use: {

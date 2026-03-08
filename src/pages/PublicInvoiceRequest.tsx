@@ -172,15 +172,13 @@ const PublicInvoiceRequest: React.FC = () => {
           setIsValid(true);
           setOrganizationId(data.organization_id);
           
-          // Get organization name
-          const { data: org } = await supabase
-            .from('organizations')
-            .select('name, logo_url')
-            .eq('id', data.organization_id)
+          // Get organization name and logo via security definer function (bypasses RLS)
+          const { data: orgInfo } = await supabase
+            .rpc('get_organization_public_info', { org_id: data.organization_id })
             .maybeSingle();
-          if (org) {
-            setOrganizationName(org.name);
-            setOrganizationLogo(org.logo_url);
+          if (orgInfo) {
+            setOrganizationName(orgInfo.name);
+            setOrganizationLogo(orgInfo.logo_url);
           }
 
           // Get stores for this organization
