@@ -391,12 +391,12 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                 </Card>
                 <Card>
                   <CardContent className="pt-4 space-y-2">
-                    <div className="flex justify-between"><span className="text-muted-foreground">{t('subtotal_ht')}</span><span>{formatCurrency(totals.subtotalHt, 'TND')}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">{t('total_vat')}</span><span>{formatCurrency(totals.totalVat, 'TND')}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">{t('total_ttc')}</span><span>{formatCurrency(totals.totalTtc, 'TND')}</span></div>
-                    {!isForeignClient && stampDutyEnabled && <div className="flex justify-between"><span className="text-muted-foreground">{t('stamp_duty')}</span><span>{formatCurrency(stampDutyAmount, 'TND')}</span></div>}
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('subtotal_ht')}</span><span>{formatCurrency(totals.subtotalHt, 'TND', language)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('total_vat')}</span><span>{formatCurrency(totals.totalVat, 'TND', language)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">{t('total_ttc')}</span><span>{formatCurrency(totals.totalTtc, 'TND', language)}</span></div>
+                    {!isForeignClient && stampDutyEnabled && <div className="flex justify-between"><span className="text-muted-foreground">{t('stamp_duty')}</span><span>{formatCurrency(stampDutyAmount, 'TND', language)}</span></div>}
                     <Separator />
-                    <div className="flex justify-between text-lg font-bold"><span>{t('net_payable')}</span><span className="text-primary">{formatCurrency(totals.totalTtc + (isForeignClient ? 0 : stampDutyEnabled ? stampDutyAmount : 0), 'TND')}</span></div>
+                    <div className="flex justify-between text-lg font-bold"><span>{t('net_payable')}</span><span className="text-primary">{formatCurrency(totals.totalTtc + (isForeignClient ? 0 : stampDutyEnabled ? stampDutyAmount : 0), 'TND', language)}</span></div>
                   </CardContent>
                 </Card>
               </motion.div>
