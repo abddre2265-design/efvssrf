@@ -51,6 +51,7 @@ export const PublicRequestTracker: React.FC<PublicRequestTrackerProps> = ({ orga
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+  const [preloadedData, setPreloadedData] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const [isPrintReady, setIsPrintReady] = useState(false);
 
