@@ -179,7 +179,7 @@ serve(async (req) => {
     // Default response
     return new Response(JSON.stringify({
       action: "unknown",
-      message: "Je n'ai pas compris. Veuillez saisir votre identifiant fiscal (CIN, matricule fiscal ou passeport).",
+      message: msg('unknown'),
       clientData: null,
       pendingRequests: null
     }), {
@@ -191,7 +191,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       action: "error",
-      message: "Une erreur s'est produite. Veuillez remplir le formulaire manuellement.",
+      message: "An error occurred. Please fill in the form manually.",
       clientData: null,
       pendingRequests: null
     }), {
