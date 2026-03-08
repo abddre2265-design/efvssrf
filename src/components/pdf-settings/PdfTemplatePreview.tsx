@@ -252,7 +252,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
               {isEnabled('totals_box') && (
                 <div style={{ width: 150, border: `2px solid ${accentColor}`, padding: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
-                    <span>Total HT</span>
+                    <span>{t('pdf_total_ht')}</span>
                     <span>200.000 DT</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
