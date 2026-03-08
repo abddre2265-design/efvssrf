@@ -311,7 +311,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
               fontSize: 6,
               color: '#666'
             }}>
-              <strong>Mentions légales :</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+              <strong>{t('pdf_preview_legal')} :</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
               Sed do eiusmod tempor incididunt ut labore.
             </div>
           )}
