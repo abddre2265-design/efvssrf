@@ -898,7 +898,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                   )}
                   {isEnabled('due_date') && invoice.due_date && (
                     <div style={{ fontSize: '11px', margin: '3px 0' }}>
-                      Échéance : {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: fr })}
+                      {t('pdf_due_date')} : {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: dateLocale })}
                     </div>
                   )}
                   {isEnabled('status_badge') && <span className="invoice-badge">{getStatusLabel()}</span>}
