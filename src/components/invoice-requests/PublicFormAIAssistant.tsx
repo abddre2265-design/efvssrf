@@ -181,7 +181,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
         onPendingRequestsFound(data.pendingRequests);
         const pendingMsg = data.pendingRequests.length === 1
           ? `${t('attention_pending_single')} (N° ${data.pendingRequests[0].request_number}).${t('window_opened_for_details')}`
-          : `⚠️ **${t('attention')}:** ${data.pendingRequests.length} ${t('attention_pending_multiple')}${t('window_opened_for_details')}`;
+          : `${t('attention_pending_multiple').replace('{count}', String(data.pendingRequests.length))}${t('window_opened_for_details')}`;
         
         setMessages(prev => [...prev, {
           role: 'assistant',
