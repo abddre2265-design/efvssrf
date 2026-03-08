@@ -168,8 +168,8 @@ const Invoices: React.FC = () => {
               quantity: line.quantity,
               previous_stock: previousStock,
               new_stock: newStock,
-              reason_category: 'Annulation facture',
-              reason_detail: `Annulation facture ${invoice.invoice_number}`,
+              reason_category: 'commercial',
+              reason_detail: `${t('cancel_invoice')} ${invoice.invoice_number}`,
             }]);
         }
       }

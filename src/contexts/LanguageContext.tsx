@@ -488,6 +488,10 @@ export const translations: Translations = {
   invoices: { fr: 'Factures', en: 'Invoices', ar: 'الفواتير' },
   manage_invoices: { fr: 'Gérer vos factures de vente', en: 'Manage your sales invoices', ar: 'إدارة فواتير المبيعات' },
   create_invoice: { fr: 'Créer une facture', en: 'Create Invoice', ar: 'إنشاء فاتورة' },
+  search_invoice: { fr: 'Rechercher une facture...', en: 'Search invoice...', ar: 'البحث عن فاتورة...' },
+  enter_at_least_one_target: { fr: 'Entrez au moins un objectif', en: 'Enter at least one target', ar: 'أدخل هدفًا واحدًا على الأقل' },
+  invoice_generated_successfully: { fr: 'Facture générée avec succès', en: 'Invoice generated successfully', ar: 'تم إنشاء الفاتورة بنجاح' },
+  error_generating_invoice: { fr: 'Erreur lors de la génération', en: 'Error generating invoice', ar: 'خطأ في إنشاء الفاتورة' },
   invoice_number: { fr: 'Numéro de facture', en: 'Invoice Number', ar: 'رقم الفاتورة' },
   invoice_date: { fr: 'Date de facture', en: 'Invoice Date', ar: 'تاريخ الفاتورة' },
   due_date: { fr: 'Date d\'échéance', en: 'Due Date', ar: 'تاريخ الاستحقاق' },
@@ -1415,6 +1419,9 @@ export const translations: Translations = {
   error_delivering_invoice: { fr: 'Erreur lors de la livraison', en: 'Error delivering invoice', ar: 'خطأ في التسليم' },
   delivery_status_pending: { fr: 'En attente', en: 'Pending', ar: 'في الانتظار' },
   delivery_status_delivered: { fr: 'Livré', en: 'Delivered', ar: 'تم التسليم' },
+  delivery_pending: { fr: 'En attente', en: 'Pending', ar: 'في الانتظار' },
+  delivery_delivered: { fr: 'Livré', en: 'Delivered', ar: 'تم التسليم' },
+  ai_invoice_generator: { fr: 'Générateur IA', en: 'AI Generator', ar: 'مولد الذكاء الاصطناعي' },
   
   // PDF Components - Delivery Note
   pdf_component_delivery_note_title: { fr: 'Titre "BON DE LIVRAISON"', en: '"DELIVERY NOTE" Title', ar: 'عنوان "سند التسليم"' },
