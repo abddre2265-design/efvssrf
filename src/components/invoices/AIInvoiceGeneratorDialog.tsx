@@ -22,7 +22,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { InvoiceNumberInput } from './InvoiceNumberInput';
 import { StockBubbles } from './StockBubbles';
-import { InvoiceLineFormData, StockBubble, INVOICE_PREFIXES, VAT_RATES, calculateLineTotal, formatCurrency } from './types';
+import { InvoiceLineFormData, StockBubble, INVOICE_PREFIXES, calculateLineTotal, formatCurrency } from './types';
+import { useTaxRates } from '@/hooks/useTaxRates';
 
 interface Client {
   id: string;
@@ -70,6 +71,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   const { t, language, isRTL } = useLanguage();
   
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const { vatRates: dynamicVatRates } = useTaxRates(organizationId);
   const [step, setStep] = useState<'config' | 'preview' | 'saving'>('config');
   const [invoiceDate, setInvoiceDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
@@ -87,7 +89,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   const [maxQuantityPerLine, setMaxQuantityPerLine] = useState<string>('50');
   const [minPriceTtc, setMinPriceTtc] = useState<string>('0');
   const [maxPriceTtc, setMaxPriceTtc] = useState<string>('10000');
-  const [allowedVatRates, setAllowedVatRates] = useState<number[]>([0, 7, 13, 19]);
+  const [allowedVatRates, setAllowedVatRates] = useState<number[]>([]);
   const [vatTargets, setVatTargets] = useState<VatTarget[]>([]);
   const [stampDutyEnabled, setStampDutyEnabled] = useState(true);
   const [stampDutyAmount, setStampDutyAmount] = useState(1);
@@ -143,6 +145,13 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   }, [organizationId]);
 
   useEffect(() => { if (open && organizationId) fetchData(); }, [open, organizationId, fetchData]);
+
+  // Sync allowed VAT rates with dynamic rates
+  useEffect(() => {
+    if (dynamicVatRates.length > 0 && allowedVatRates.length === 0) {
+      setAllowedVatRates(dynamicVatRates);
+    }
+  }, [dynamicVatRates]);
 
   // Set preselected client when dialog opens
   useEffect(() => {
@@ -231,7 +240,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
     } catch (error: any) { toast.error(error.message || t('error_creating_invoice')); setStep('preview'); } finally { setIsSaving(false); }
   };
 
-  const resetForm = () => { setStep('config'); setInvoiceDate(null); setDueDate(null); setSelectedClientId(''); setMaxLines('10'); setMaxQuantityPerLine('50'); setMinPriceTtc('0'); setMaxPriceTtc('10000'); setAllowedVatRates([0, 7, 13, 19]); setVatTargets([]); setStampDutyEnabled(true); setGeneratedLines([]); setGenerationSummary(null); setGenerationError(null); };
+  const resetForm = () => { setStep('config'); setInvoiceDate(null); setDueDate(null); setSelectedClientId(''); setMaxLines('10'); setMaxQuantityPerLine('50'); setMinPriceTtc('0'); setMaxPriceTtc('10000'); setAllowedVatRates(dynamicVatRates); setVatTargets([]); setStampDutyEnabled(true); setGeneratedLines([]); setGenerationSummary(null); setGenerationError(null); };
   const getClientName = (client: Client): string => client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim();
 
   const stockBubbles: StockBubble[] = React.useMemo(() => {
@@ -294,7 +303,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     </div>
                     <div className="space-y-2">
                       <Label>{t('vat_rates_to_use')}</Label>
-                      <div className="flex gap-4">{VAT_RATES.map(rate => (<div key={rate} className="flex items-center space-x-2"><Checkbox id={`vat-${rate}`} checked={allowedVatRates.includes(rate)} onCheckedChange={() => handleVatRateToggle(rate)} /><label htmlFor={`vat-${rate}`} className="text-sm font-medium">{rate}%</label></div>))}</div>
+                      <div className="flex gap-4 flex-wrap">{dynamicVatRates.map(rate => (<div key={rate} className="flex items-center space-x-2"><Checkbox id={`vat-${rate}`} checked={allowedVatRates.includes(rate)} onCheckedChange={() => handleVatRateToggle(rate)} /><label htmlFor={`vat-${rate}`} className="text-sm font-medium">{rate}%</label></div>))}</div>
                     </div>
                   </CardContent>
                 </Card>
