@@ -17,9 +17,10 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, arSA } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PendingRequest {
   id: string;
@@ -31,7 +32,6 @@ interface PendingRequest {
   total_ttc: number;
   store_id: string | null;
   purchase_date: string;
-  // Extended fields for full request
   client_type?: string;
   first_name?: string | null;
   last_name?: string | null;
@@ -74,11 +74,15 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
   stores,
   onEditRequest,
 }) => {
+  const { t, language, isRTL } = useLanguage();
   const [selectedRequest, setSelectedRequest] = useState<PendingRequest | null>(null);
   const [fullRequestData, setFullRequestData] = useState<PendingRequest | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
-  // Reset selection when dialog closes
+  const getDateLocale = () => {
+    switch (language) { case 'ar': return arSA; case 'en': return enUS; default: return fr; }
+  };
+
   useEffect(() => {
     if (!open) {
       setSelectedRequest(null);
@@ -86,7 +90,6 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
     }
   }, [open]);
 
-  // Load full request details when selected
   useEffect(() => {
     if (selectedRequest?.id) {
       loadFullRequest(selectedRequest.id);
@@ -114,15 +117,15 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
   };
 
   const getStoreName = (storeId: string | null) => {
-    if (!storeId) return 'Non spécifié';
-    return stores.find(s => s.id === storeId)?.name || 'Magasin inconnu';
+    if (!storeId) return t('not_specified');
+    return stores.find(s => s.id === storeId)?.name || t('unknown_store');
   };
 
   const getPaymentStatusLabel = (status?: string) => {
     switch (status) {
-      case 'paid': return { label: 'Payé', variant: 'default' as const };
-      case 'partial': return { label: 'Partiel', variant: 'secondary' as const };
-      case 'unpaid': return { label: 'Non payé', variant: 'outline' as const };
+      case 'paid': return { label: t('paid_label'), variant: 'default' as const };
+      case 'partial': return { label: t('partial_label'), variant: 'secondary' as const };
+      case 'unpaid': return { label: t('unpaid_label'), variant: 'outline' as const };
       default: return { label: 'N/A', variant: 'outline' as const };
     }
   };
@@ -142,16 +145,16 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
+      <DialogContent className="max-w-2xl max-h-[90vh]" dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Demandes en attente détectées
+            {t('pending_requests_detected_title')}
           </DialogTitle>
           <DialogDescription>
             {requests.length === 1 
-              ? 'Une demande est déjà en cours pour cet identifiant.'
-              : `${requests.length} demandes sont déjà en cours pour cet identifiant.`
+              ? t('one_request_pending_for_id')
+              : `${requests.length} ${t('multiple_requests_pending_for_id')}`
             }
           </DialogDescription>
         </DialogHeader>
@@ -160,7 +163,7 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
           {/* Left: Request list */}
           <div className="w-1/3 border-r pr-4">
             <h4 className="text-sm font-medium text-muted-foreground mb-3">
-              Sélectionner une demande
+              {t('select_a_request')}
             </h4>
             <ScrollArea className="h-[350px]">
               <div className="space-y-2 pr-2">
@@ -183,7 +186,7 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
                     <div className="text-xs text-muted-foreground space-y-0.5">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="h-3 w-3" />
-                        {format(new Date(req.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                        {format(new Date(req.created_at), 'dd/MM/yyyy HH:mm', { locale: getDateLocale() })}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Receipt className="h-3 w-3" />
@@ -205,30 +208,30 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
             {!selectedRequest ? (
               <div className="h-[350px] flex items-center justify-center text-muted-foreground">
                 <p className="text-center text-sm">
-                  Cliquez sur une demande pour voir les détails
+                  {t('click_request_for_details')}
                 </p>
               </div>
             ) : isLoadingDetails ? (
               <div className="h-[350px] flex items-center justify-center">
                 <div className="animate-pulse text-center">
                   <Clock className="h-8 w-8 mx-auto text-muted-foreground mb-2 animate-spin" />
-                  <p className="text-sm text-muted-foreground">Chargement...</p>
+                  <p className="text-sm text-muted-foreground">{t('loading_details')}</p>
                 </div>
               </div>
             ) : fullRequestData ? (
               <ScrollArea className="h-[350px]">
                 <div className="space-y-4 pr-4">
-                  {/* Header with request number and status */}
+                  {/* Header */}
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-semibold text-lg">{fullRequestData.request_number}</h3>
                       <p className="text-xs text-muted-foreground">
-                        Créée le {format(new Date(fullRequestData.created_at), "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
+                        {t('created_on')} {format(new Date(fullRequestData.created_at), "dd MMMM yyyy", { locale: getDateLocale() })} {t('at_time')} {format(new Date(fullRequestData.created_at), "HH:mm", { locale: getDateLocale() })}
                       </p>
                     </div>
                     <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200">
                       <Clock className="h-3 w-3 mr-1" />
-                      En attente
+                      {t('pending_status')}
                     </Badge>
                   </div>
 
@@ -242,7 +245,7 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
                       ) : (
                         <User className="h-4 w-4 text-primary" />
                       )}
-                      Client
+                      {t('client_label')}
                     </h4>
                     <div className="bg-muted/50 rounded-lg p-3 space-y-1">
                       <p className="font-medium">{getClientDisplayName(fullRequestData)}</p>
@@ -264,26 +267,26 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium flex items-center gap-2">
                       <Receipt className="h-4 w-4 text-primary" />
-                      Transaction
+                      {t('transaction_label')}
                     </h4>
                     <div className="bg-muted/50 rounded-lg p-3">
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <span className="text-muted-foreground">N° Transaction:</span>
+                          <span className="text-muted-foreground">{t('transaction_number_label')}</span>
                           <p className="font-medium">{fullRequestData.transaction_number}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Date d'achat:</span>
+                          <span className="text-muted-foreground">{t('purchase_date_label')}</span>
                           <p className="font-medium">
-                            {format(new Date(fullRequestData.purchase_date), 'dd/MM/yyyy', { locale: fr })}
+                            {format(new Date(fullRequestData.purchase_date), 'dd/MM/yyyy', { locale: getDateLocale() })}
                           </p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Point de vente:</span>
+                          <span className="text-muted-foreground">{t('point_of_sale_label')}</span>
                           <p className="font-medium">{getStoreName(fullRequestData.store_id)}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Montant TTC:</span>
+                          <span className="text-muted-foreground">{t('amount_ttc_label')}</span>
                           <p className="font-semibold text-primary">{fullRequestData.total_ttc?.toFixed(3)} TND</p>
                         </div>
                       </div>
@@ -294,7 +297,7 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium flex items-center gap-2">
                       <CreditCard className="h-4 w-4 text-primary" />
-                      Paiement
+                      {t('payment_label')}
                     </h4>
                     <div className="bg-muted/50 rounded-lg p-3">
                       <div className="flex items-center gap-2">
@@ -303,7 +306,7 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
                         </Badge>
                         {fullRequestData.payment_status === 'partial' && fullRequestData.paid_amount && (
                           <span className="text-sm text-muted-foreground">
-                            ({fullRequestData.paid_amount?.toFixed(3)} TND payés)
+                            ({fullRequestData.paid_amount?.toFixed(3)} TND {t('paid_amount_suffix')})
                           </span>
                         )}
                       </div>
@@ -314,10 +317,10 @@ export const PendingRequestDialog: React.FC<PendingRequestDialogProps> = ({
                   <div className="pt-4">
                     <Button onClick={handleEditClick} className="w-full">
                       <Edit3 className="h-4 w-4 mr-2" />
-                      Modifier cette demande
+                      {t('modify_this_request')}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center mt-2">
-                      La demande sera mise à jour avec vos modifications
+                      {t('request_will_be_updated')}
                     </p>
                   </div>
                 </div>

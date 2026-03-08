@@ -17,8 +17,9 @@ import {
   Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, arSA } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -75,6 +76,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
   onClose,
   clientValidated,
 }) => {
+  const { t, language, isRTL } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -85,6 +87,10 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
   const [searchAttempts, setSearchAttempts] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const getDateLocale = () => {
+    switch (language) { case 'ar': return arSA; case 'en': return enUS; default: return fr; }
+  };
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -106,6 +112,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
           action: 'greeting',
           organizationId,
           organizationName,
+          language,
         }
       });
 
@@ -120,7 +127,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
       console.error('Error initializing assistant:', error);
       setMessages([{
         role: 'assistant',
-        content: `Bienvenue ! 👋\n\nSi vous avez effectué un achat chez « ${organizationName} », vous pouvez saisir votre identifiant fiscal pour récupérer automatiquement vos informations.`
+        content: `${t('welcome_ai_fallback')} « ${organizationName} »${t('ai_fallback_suffix')}`
       }]);
       setState('waiting_input');
     } finally {
@@ -138,14 +145,16 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
 
   const getFormatHelpMessage = (attempts: number): string => {
     if (attempts >= 3) {
-      return `📝 Veuillez remplir le formulaire manuellement.\n\nLa prochaine fois, ce sera plus rapide car vos informations seront enregistrées ! 🚀`;
+      return t('fill_form_manually');
     }
+
+    const formatBlock = `\n\n${t('accepted_formats_title')}\n\n${t('cin_format')}\n\n${t('tax_id_format')}\n\n${t('passport_format')}`;
 
     if (attempts === 2) {
-      return `🤔 Êtes-vous un client étranger ?\n\nSi oui, essayez avec votre numéro de passeport.\n\nSinon, voici les formats acceptés :\n\n📋 **Formats acceptés :**\n\n🆔 **CIN** (8 chiffres)\n   Exemple : 12345678\n\n🏢 **Matricule fiscal**\n   • Format 1 : 1234567/A\n   • Format 2 : 123456/A\n   • Format 3 : 1234567/A/B/C/000\n   • Format 4 : 123456A/B/C/000\n\n🛂 **Passeport** (format libre)\n   Exemple : Y787678\n\n💡 Ou vous pouvez remplir le formulaire manuellement.`;
+      return `${t('are_you_foreign_client')}\n\n${formatBlock}\n\n${t('or_fill_manually_hint')}`;
     }
 
-    return `📋 **Formats acceptés :**\n\n🆔 **CIN** (8 chiffres)\n   Exemple : 12345678\n\n🏢 **Matricule fiscal**\n   • Format 1 : 1234567/A\n   • Format 2 : 123456/A  \n   • Format 3 : 1234567/A/B/C/000\n   • Format 4 : 123456A/B/C/000\n\n🛂 **Passeport** (format libre)\n   Exemple : Y787678\n\nVeuillez réessayer avec l'un de ces formats.`;
+    return `${formatBlock}\n\n${t('please_retry')}`;
   };
 
   const searchClient = async (identifier: string) => {
@@ -159,7 +168,8 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
           action: 'search',
           organizationId,
           organizationName,
-          searchIdentifier: identifier
+          searchIdentifier: identifier,
+          language,
         }
       });
 
@@ -170,8 +180,8 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
         setPendingRequests(data.pendingRequests);
         onPendingRequestsFound(data.pendingRequests);
         const pendingMsg = data.pendingRequests.length === 1
-          ? `⚠️ **Attention :** Une demande est déjà en attente pour cet identifiant (N° ${data.pendingRequests[0].request_number}).\n\nUne fenêtre s'est ouverte pour voir les détails.`
-          : `⚠️ **Attention :** ${data.pendingRequests.length} demandes sont déjà en attente pour cet identifiant.\n\nUne fenêtre s'est ouverte pour voir les détails.`;
+          ? `${t('attention_pending_single')} (N° ${data.pendingRequests[0].request_number}).${t('window_opened_for_details')}`
+          : `⚠️ **${t('attention')}:** ${data.pendingRequests.length} ${t('attention_pending_multiple')}${t('window_opened_for_details')}`;
         
         setMessages(prev => [...prev, {
           role: 'assistant',
@@ -205,7 +215,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
       console.error('Error searching client:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "Une erreur s'est produite. Veuillez réessayer ou remplir le formulaire manuellement."
+        content: t('search_error')
       }]);
       setState('not_found');
     } finally {
@@ -228,7 +238,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     } else {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "Veuillez saisir un identifiant valide (CIN à 8 chiffres, matricule fiscal, ou passeport)."
+        content: t('enter_valid_identifier')
       }]);
     }
   };
@@ -237,10 +247,10 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     if (foundClient) {
       setState('confirmed');
       setMessages(prev => [...prev, 
-        { role: 'user', content: "Oui, c'est moi ✓" },
+        { role: 'user', content: t('yes_its_me') },
         {
           role: 'assistant',
-          content: "Parfait ! ✨\n\nVos informations ont été pré-remplies dans le formulaire.\n\nVous pouvez maintenant compléter les détails de votre transaction."
+          content: t('perfect_prefilled')
         }
       ]);
       
@@ -260,10 +270,10 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
     setState('not_found');
     
     const formatHelp = getFormatHelpMessage(attempts);
-    const message = `Je comprends, ce n'est pas vous.\n\n${formatHelp}`;
+    const message = `${t('i_understand_not_you')}\n\n${formatHelp}`;
 
     setMessages(prev => [...prev, 
-      { role: 'user', content: "Ce n'est pas moi" },
+      { role: 'user', content: t('not_me') },
       { role: 'assistant', content: message }
     ]);
   };
@@ -306,6 +316,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       className="fixed bottom-4 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)]"
+      dir={isRTL ? 'rtl' : 'ltr'}
     >
       <Card className="shadow-2xl border-2 border-primary/20 overflow-hidden">
         {/* Header */}
@@ -316,8 +327,8 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-semibold">Assistant IA</h3>
-                <p className="text-xs opacity-80">Récupération automatique</p>
+                <h3 className="font-semibold">{t('ai_assistant')}</h3>
+                <p className="text-xs opacity-80">{t('automatic_recovery')}</p>
               </div>
             </div>
             <div className="flex gap-1">
@@ -365,7 +376,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
               ))}
             </AnimatePresence>
 
-            {/* Pending requests info - dialog handles the details */}
+            {/* Pending requests info */}
             {pendingRequests.length > 0 && state !== 'confirmed' && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -378,20 +389,20 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                       <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       <span className="font-medium text-sm text-amber-800 dark:text-amber-200">
                         {pendingRequests.length === 1 
-                          ? 'Une demande en attente détectée' 
-                          : `${pendingRequests.length} demandes en attente détectées`
+                          ? t('pending_request_detected_single')
+                          : `${pendingRequests.length} ${t('pending_requests_detected')}`
                         }
                       </span>
                     </div>
                     <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                      Consultez la fenêtre pour voir les détails.
+                      {t('check_window_for_details')}
                     </p>
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* Client confirmation card - shown when client found */}
+            {/* Client confirmation card */}
             {state === 'client_found' && foundClient && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -424,7 +435,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                         className="flex-1"
                       >
                         <CheckCircle2 className="h-4 w-4 mr-1" />
-                        Oui, c'est moi
+                        {t('yes_its_me')}
                       </Button>
                       <Button
                         size="sm"
@@ -433,7 +444,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                         className="flex-1"
                       >
                         <XCircle className="h-4 w-4 mr-1" />
-                        Non
+                        {t('not_me')}
                       </Button>
                     </div>
                   </div>
@@ -450,7 +461,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                 <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">Recherche en cours...</span>
+                    <span className="text-sm text-muted-foreground">{t('searching_in_progress')}</span>
                   </div>
                 </div>
               </motion.div>
@@ -458,7 +469,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
           </div>
         </ScrollArea>
 
-        {/* Input - hidden when client found and waiting for confirmation */}
+        {/* Input */}
         {state !== 'client_found' && state !== 'confirmed' && (
           <div className="p-4 border-t bg-muted/30">
             <form
@@ -472,7 +483,7 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Saisissez votre identifiant..."
+                placeholder={t('enter_your_identifier')}
                 disabled={isLoading}
                 className="flex-1"
               />
@@ -481,23 +492,23 @@ export const PublicFormAIAssistant: React.FC<PublicFormAIAssistantProps> = ({
               </Button>
             </form>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Ou{' '}
+              {t('or_word')}{' '}
               <button
                 type="button"
                 onClick={onClose}
                 className="text-primary underline hover:no-underline"
               >
-                remplir manuellement
+                {t('fill_manually_link')}
               </button>
             </p>
           </div>
         )}
 
-        {/* Confirmed state - show close button */}
+        {/* Confirmed state */}
         {state === 'confirmed' && (
           <div className="p-4 border-t bg-muted/30 text-center">
             <p className="text-sm text-muted-foreground">
-              Formulaire pré-rempli ✨
+              {t('form_prefilled')}
             </p>
           </div>
         )}
