@@ -408,7 +408,6 @@ const SimplifiedTotalsStep: React.FC<{
     let subtotalHt = 0;
     let totalVat = 0;
     let totalDiscount = 0;
-    let totalTtc = 0;
 
     // Use productDetails if available (more reliable), otherwise use verifiedProducts
     const products = workflowData.productDetails.length > 0 
@@ -419,7 +418,6 @@ const SimplifiedTotalsStep: React.FC<{
       if (!pd) return;
       subtotalHt += pd.line_total_ht || 0;
       totalVat += pd.line_vat || 0;
-      totalTtc += pd.line_total_ttc || 0;
       const discountAmt = pd.discount_percent > 0 
         ? ((pd.unit_price_ht || 0) * (pd.quantity || 1) * (pd.discount_percent || 0) / 100) 
         : 0;
@@ -435,15 +433,12 @@ const SimplifiedTotalsStep: React.FC<{
       subtotalHt = extracted.subtotal_ht || 0;
       totalVat = extracted.total_vat || 0;
       totalDiscount = extracted.total_discount || 0;
-      totalTtc = extracted.total_ttc || 0;
     }
 
-    // net_payable extrait inclut déjà le timbre fiscal - ne pas l'ajouter en double
-    // Si net_payable extrait est disponible, l'utiliser directement
-    // Sinon, calculer : TTC + timbre fiscal
-    const netPayable = extracted?.net_payable 
-      ? extracted.net_payable 
-      : totalTtc + stampDuty;
+    // Total TTC = HT net (après remise) + TVA uniquement (pas de timbre, pas de retenue)
+    const totalTtc = subtotalHt + totalVat;
+    // Net à payer = TTC + timbre fiscal (sans retenue à la source)
+    const netPayable = totalTtc + stampDuty;
 
     return {
       subtotalHt,

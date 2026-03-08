@@ -533,23 +533,28 @@ RÈGLE CRITIQUE - CALCUL DES TOTAUX
 
         // Process totals
         const isForeign = parsed.supplier?.supplier_type === 'foreign';
+        const subtotalHt = parsed.totals?.subtotal_ht || 0;
+        const totalDiscount = parsed.totals?.total_discount || 0;
+        const htAfterDiscount = parsed.totals?.ht_after_discount || (subtotalHt - totalDiscount);
+        const totalVat = parsed.totals?.total_vat || 0;
+        const stampDuty = isForeign ? 0 : (parsed.totals?.stamp_duty_amount || 0);
+
+        // total_ttc = HT net (après remise) + TVA uniquement
+        const totalTtc = htAfterDiscount + totalVat;
+        // net_payable = total_ttc + timbre fiscal (PAS de retenue à la source déduite)
+        const netPayable = totalTtc + stampDuty;
+
         const totals: ExtractedTotals = {
-          subtotal_ht: parsed.totals?.subtotal_ht || 0,
-          total_discount: parsed.totals?.total_discount || 0,
-          ht_after_discount: parsed.totals?.ht_after_discount ||
-            (parsed.totals?.subtotal_ht || 0) - (parsed.totals?.total_discount || 0),
-          total_vat: parsed.totals?.total_vat || 0,
-          total_ttc: parsed.totals?.total_ttc || 0,
-          stamp_duty_amount: isForeign ? 0 : (parsed.totals?.stamp_duty_amount || 0),
-          net_payable: parsed.totals?.net_payable || 0,
+          subtotal_ht: subtotalHt,
+          total_discount: totalDiscount,
+          ht_after_discount: htAfterDiscount,
+          total_vat: totalVat,
+          total_ttc: totalTtc,
+          stamp_duty_amount: stampDuty,
+          net_payable: netPayable,
           currency: parsed.totals?.currency || 'USD',
           vat_breakdown: parsed.totals?.vat_breakdown || [],
         };
-
-        // Recalculate net_payable if needed
-        if (!totals.net_payable) {
-          totals.net_payable = totals.total_ttc + (isForeign ? 0 : totals.stamp_duty_amount);
-        }
 
         // Build VAT breakdown from products if not provided
         if (totals.vat_breakdown.length === 0 && products.length > 0) {
