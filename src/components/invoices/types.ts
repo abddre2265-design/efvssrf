@@ -123,6 +123,11 @@ export const CURRENCIES = [
   { code: 'JPY', name: { fr: 'Yen Japonais', en: 'Japanese Yen', ar: 'الين الياباني' }, symbol: '¥' },
 ];
 
+// Helper to get currency name by language
+export const getCurrencyName = (currency: typeof CURRENCIES[number], language: string = 'fr'): string => {
+  return currency.name[language as keyof typeof currency.name] || currency.name.fr;
+};
+
 // Invoice number prefixes by language
 export const INVOICE_PREFIXES = {
   fr: 'FAC',
