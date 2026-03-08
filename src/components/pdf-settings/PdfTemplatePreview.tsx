@@ -278,7 +278,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   )}
                   {isEnabled('stamp_duty') && documentType === 'invoice' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
-                      <span>Timbre</span>
+                      <span>{t('pdf_stamp')}</span>
                       <span>1.000 DT</span>
                     </div>
                   )}
