@@ -25,6 +25,7 @@ import DeliveryNotes from '@/pages/DeliveryNotes';
 import Taxes from '@/pages/Taxes';
 import PurchaseInvoices from '@/pages/PurchaseInvoices';
 import CreditNotes from '@/pages/CreditNotes';
+import PurchaseOrders from '@/pages/PurchaseOrders';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
