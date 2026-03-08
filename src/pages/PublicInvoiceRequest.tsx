@@ -84,9 +84,13 @@ const PublicInvoiceRequest: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [activePublicTab, setActivePublicTab] = useState<'request' | 'track'>('request');
-  
-  // Confirmation dialog for partial payment treated as paid
-  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+
+  // Organization tax settings for public calculation
+  const [withholdingSettings, setWithholdingSettings] = useState({
+    rate: 0,
+    minAmount: 0,
+  });
+  const [stampDutyAmount, setStampDutyAmount] = useState(1);
 
   // Client form data
   const [clientType, setClientType] = useState<ClientType>('individual_local');
@@ -114,8 +118,7 @@ const PublicInvoiceRequest: React.FC = () => {
   const [orderNumber, setOrderNumber] = useState('');
   const [totalTTC, setTotalTTC] = useState('');
 
-  // Payment status
-  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'partial' | 'unpaid'>('unpaid');
+  // Payment data (status is automatic)
   const [paidAmount, setPaidAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([]);
