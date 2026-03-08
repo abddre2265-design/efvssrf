@@ -59,7 +59,7 @@ serve(async (req) => {
       greeting: {
         fr: `Bienvenue ! 👋\n\nSi vous avez effectué un achat chez nous, vous pouvez saisir votre identifiant fiscal pour récupérer automatiquement vos informations.\n\n📋 Formats acceptés :\n\n• CIN :\n8 chiffres\n\n• Matricule fiscal :\n1234567/A/M/000\n\n• Passeport :\nformat libre`,
         en: `Welcome! 👋\n\nIf you made a purchase with us, you can enter your tax identifier to automatically retrieve your information.\n\n📋 Accepted formats:\n\n• CIN:\n8 digits\n\n• Tax ID:\n1234567/A/M/000\n\n• Passport:\nfree format`,
-        ar: `مرحباً! 👋\n\nإذا قمت بعملية شراء لدينا، يمكنك إدخال معرّفك الجبائي لاسترجاع معلوماتك تلقائياً.\n\n📋 الصيغ المقبولة:\n\n• بطاقة التعريف الوطنية:\n8 أرقام\n\n• المعرّف الجبائي:\n1234567/أ/م/000\n\n• جواز السفر:\nصيغة حرة`,
+        ar: `مرحباً! 👋\n\nإذا قمت بعملية شراء لدينا، يمكنك إدخال معرّفك الجبائي لاسترجاع معلوماتك تلقائياً.\n\n📋 الصيغ المقبولة:\n\n• بطاقة التعريف الوطنية:\n8 أرقام\n\n• المعرّف الجبائي:\n1234567/A/M/000\n\n• جواز السفر:\nصيغة حرة`,
       },
       client_found: {
         fr: `✅ Client trouvé !`,
