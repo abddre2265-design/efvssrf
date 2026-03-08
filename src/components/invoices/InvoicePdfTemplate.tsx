@@ -646,13 +646,13 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const renderTableHeader = () => (
     <thead>
       <tr>
-        <th>Description</th>
-        <th>Réf</th>
-        <th>Qté</th>
-        <th>P.U {isForeign ? '' : 'HT'}</th>
-        {!isForeign && <th>TVA</th>}
-        <th>Remise</th>
-        <th>Total {isForeign ? '' : 'HT'}</th>
+        <th>{t('pdf_description')}</th>
+        <th>{t('pdf_ref')}</th>
+        <th>{t('pdf_qty')}</th>
+        <th>{isForeign ? t('pdf_unit_price') : t('pdf_unit_price_ht')}</th>
+        {!isForeign && <th>{t('pdf_vat')}</th>}
+        <th>{t('pdf_discount')}</th>
+        <th>{isForeign ? t('pdf_total') : t('pdf_total_ht')}</th>
       </tr>
     </thead>
   );
