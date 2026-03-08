@@ -71,6 +71,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   const { t, language, isRTL } = useLanguage();
   
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const { vatRates: dynamicVatRates } = useTaxRates(organizationId);
   const [step, setStep] = useState<'config' | 'preview' | 'saving'>('config');
   const [invoiceDate, setInvoiceDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
