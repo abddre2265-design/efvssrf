@@ -63,6 +63,7 @@ import { PendingRequestDialog } from '@/components/invoice-requests/PendingReque
 import { useLanguage, governorates } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/auth/ThemeToggle';
 import { LanguageSelector } from '@/components/auth/LanguageSelector';
+import { PublicRequestTracker } from '@/components/invoice-requests/PublicRequestTracker';
 
 interface StoreData {
   id: string;
