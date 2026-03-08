@@ -168,4 +168,3 @@ export const calculateLineTotal = (
 export const generateInvoiceNumber = (prefix: string, year: number, counter: number): string => {
   return `${prefix}-${year}-${String(counter).padStart(5, '0')}`;
 };
-};
