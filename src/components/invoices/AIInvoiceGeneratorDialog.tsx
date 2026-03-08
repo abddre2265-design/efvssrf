@@ -384,7 +384,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     {generatedLines.map((line, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
                         <div className="flex-1"><span className="font-medium">{line.product_name}</span>{line.product_reference && <span className="text-muted-foreground ml-2">({line.product_reference})</span>}</div>
-                        <div className="flex items-center gap-4 text-right"><span>{line.quantity} x {line.unit_price_ht.toFixed(3)} DT</span>{line.discount_percent > 0 && <Badge variant="secondary">-{line.discount_percent}%</Badge>}<Badge variant="outline">TVA {line.vat_rate}%</Badge></div>
+                        <div className="flex items-center gap-4 text-right"><span>{line.quantity} x {formatCurrency(line.unit_price_ht, 'TND', language)}</span>{line.discount_percent > 0 && <Badge variant="secondary">-{line.discount_percent}%</Badge>}<Badge variant="outline">{t('vat_label')} {line.vat_rate}%</Badge></div>
                       </div>
                     ))}
                   </CardContent>
