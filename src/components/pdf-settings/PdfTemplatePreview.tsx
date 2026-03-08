@@ -266,7 +266,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
-                    <span>Total TTC</span>
+                    <span>{t('pdf_total_ttc')}</span>
                     <span>238.000 DT</span>
                   </div>
                   {/* Custom taxes before stamp */}
