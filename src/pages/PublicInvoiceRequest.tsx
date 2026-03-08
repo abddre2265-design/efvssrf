@@ -1221,9 +1221,8 @@ const PublicInvoiceRequest: React.FC = () => {
             <MessageCircle className="h-6 w-6" />
           </Button>
         </div>
-        </div>
 
-          </TabsContent>
+        </TabsContent>
         </Tabs>
       </div>
 
