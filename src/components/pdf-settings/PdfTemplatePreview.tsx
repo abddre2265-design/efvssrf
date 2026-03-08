@@ -272,7 +272,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   {/* Custom taxes before stamp */}
                   {isEnabled('custom_taxes') && documentType === 'invoice' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3, color: '#1565c0' }}>
-                      <span>Taxe personnalisée</span>
+                      <span>{t('pdf_preview_custom_tax')}</span>
                       <span>+5.000 DT</span>
                     </div>
                   )}
