@@ -256,7 +256,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                     <span>200.000 DT</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
-                    <span>TVA</span>
+                    <span>{t('pdf_vat')}</span>
                     <span>38.000 DT</span>
                   </div>
                   {isEnabled('withholding_tax') && documentType === 'invoice' && (
