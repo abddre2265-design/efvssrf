@@ -19,7 +19,7 @@ export const PurchaseOrderViewDialog: React.FC<Props> = ({ order, open, onOpenCh
   useEffect(() => {
     if (!open) return;
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from('purchase_order_lines')
         .select('*')
         .eq('purchase_order_id', order.id)
@@ -72,7 +72,7 @@ export const PurchaseOrderViewDialog: React.FC<Props> = ({ order, open, onOpenCh
             </TableRow>
           </TableHeader>
           <TableBody>
-            {lines.map(line => (
+            {lines.map((line: any) => (
               <TableRow key={line.id}>
                 <TableCell>{line.name}</TableCell>
                 <TableCell>{line.reference || '-'}</TableCell>

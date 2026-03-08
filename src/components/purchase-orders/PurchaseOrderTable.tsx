@@ -32,14 +32,14 @@ export const PurchaseOrderTable: React.FC = () => {
       const { data: org } = await supabase.from('organizations').select('id').single();
       if (!org) return;
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('purchase_orders')
         .select('*, supplier:suppliers(company_name, first_name, last_name)')
         .eq('organization_id', org.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders((data as unknown as PurchaseOrder[]) || []);
+      setOrders((data as PurchaseOrder[]) || []);
     } catch (err: any) {
       console.error('Error fetching purchase orders:', err);
     } finally {
@@ -52,7 +52,7 @@ export const PurchaseOrderTable: React.FC = () => {
   const handleDelete = async () => {
     if (!deleteOrder) return;
     try {
-      const { error } = await supabase.from('purchase_orders').delete().eq('id', deleteOrder.id);
+      const { error } = await (supabase as any).from('purchase_orders').delete().eq('id', deleteOrder.id);
       if (error) throw error;
       toast({ title: t('success') || 'Succès', description: t('purchase_order_deleted') || 'Bon de commande supprimé' });
       fetchOrders();
@@ -65,7 +65,7 @@ export const PurchaseOrderTable: React.FC = () => {
 
   const handleStatusChange = async (order: PurchaseOrder, newStatus: PurchaseOrder['status']) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('purchase_orders')
         .update({ status: newStatus })
         .eq('id', order.id);
@@ -140,7 +140,7 @@ export const PurchaseOrderTable: React.FC = () => {
                 <TableCell className="font-medium">{order.order_number}</TableCell>
                 <TableCell>{getSupplierName(order)}</TableCell>
                 <TableCell>{new Date(order.order_date).toLocaleDateString('fr-FR')}</TableCell>
-                <TableCell>{order.total_ttc.toFixed(3)} {order.currency}</TableCell>
+                <TableCell>{Number(order.total_ttc).toFixed(3)} {order.currency}</TableCell>
                 <TableCell>{statusBadge(order.status)}</TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">

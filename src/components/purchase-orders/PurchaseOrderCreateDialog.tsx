@@ -81,14 +81,14 @@ export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange,
 
       // Generate order number
       const year = new Date().getFullYear();
-      const { count } = await supabase
+      const { count } = await (supabase as any)
         .from('purchase_orders')
         .select('id', { count: 'exact', head: true })
         .eq('organization_id', org.id);
       const counter = (count || 0) + 1;
       const orderNumber = `BC-${year}-${String(counter).padStart(4, '0')}`;
 
-      const { data: order, error } = await supabase.from('purchase_orders').insert({
+      const { data: order, error } = await (supabase as any).from('purchase_orders').insert({
         organization_id: org.id,
         supplier_id: supplierId,
         order_number: orderNumber,
@@ -124,7 +124,7 @@ export const PurchaseOrderCreateDialog: React.FC<Props> = ({ open, onOpenChange,
         };
       });
 
-      const { error: lineErr } = await supabase.from('purchase_order_lines').insert(orderLines);
+      const { error: lineErr } = await (supabase as any).from('purchase_order_lines').insert(orderLines);
       if (lineErr) throw lineErr;
 
       toast({ title: t('success') || 'Succès', description: t('purchase_order_created') || 'Bon de commande créé' });
