@@ -250,6 +250,15 @@ const PublicInvoiceRequest: React.FC = () => {
 
   const isLocal = clientType !== 'foreign';
 
+  const totalTTCAmount = Math.max(0, parseFloat(totalTTC) || 0);
+  const paidAmountNumber = Math.max(0, parseFloat(paidAmount) || 0);
+  const shouldApplyWithholding = totalTTCAmount > withholdingSettings.minAmount;
+  const appliedWithholdingRate = shouldApplyWithholding ? withholdingSettings.rate : 0;
+  const withholdingAmount = totalTTCAmount * (appliedWithholdingRate / 100);
+  const netPayableAmount = totalTTCAmount - withholdingAmount + stampDutyAmount;
+  const calculatedPaymentStatus: 'paid' | 'partial' | 'unpaid' =
+    paidAmountNumber <= 0 ? 'unpaid' : paidAmountNumber < netPayableAmount ? 'partial' : 'paid';
+
   const addMixedLine = () => {
     setMixedLines([...mixedLines, { id: crypto.randomUUID(), method: '', amount: '' }]);
   };
@@ -267,7 +276,7 @@ const PublicInvoiceRequest: React.FC = () => {
   };
 
   const mixedLinesTotal = mixedLines.reduce((sum, line) => sum + (parseFloat(line.amount) || 0), 0);
-  const expectedMixedTotal = paymentStatus === 'paid' ? parseFloat(totalTTC) || 0 : parseFloat(paidAmount) || 0;
+  const expectedMixedTotal = paidAmountNumber;
   const isMixedAmountValid = Math.abs(mixedLinesTotal - expectedMixedTotal) < 0.001;
 
   const validate = (): boolean => {
