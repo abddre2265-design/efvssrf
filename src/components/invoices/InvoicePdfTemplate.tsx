@@ -62,6 +62,7 @@ interface InvoiceLineWithProduct {
 interface InvoicePdfTemplateProps {
   invoiceId: string;
   onReady?: () => void;
+  isDuplicate?: boolean;
 }
 
 // Constants for pagination
@@ -70,7 +71,8 @@ const LINES_PER_CONTINUATION_PAGE = 20;
 
 export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({ 
   invoiceId,
-  onReady 
+  onReady,
+  isDuplicate = false,
 }) => {
   const { isComponentEnabled } = usePdfSettings();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
