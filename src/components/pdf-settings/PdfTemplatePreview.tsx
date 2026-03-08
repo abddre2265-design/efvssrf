@@ -352,7 +352,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
               color: '#666',
               transform: 'rotate(-15deg)'
             }}>
-              CACHET
+              {t('pdf_preview_stamp')}
             </div>
           )}
 
