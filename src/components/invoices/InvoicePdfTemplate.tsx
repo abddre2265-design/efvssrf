@@ -876,8 +876,8 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                         <div>{organization.postal_code}, {organization.governorate}</div>
                       </>
                     )}
-                    {isCompanyFieldVisible('company_phone') && <div>Tel : {organization.phone}</div>}
-                    {isCompanyFieldVisible('company_email') && organization.email && <div>Email : {organization.email}</div>}
+                    {isCompanyFieldVisible('company_phone') && <div>{t('pdf_tel')} : {organization.phone}</div>}
+                    {isCompanyFieldVisible('company_email') && organization.email && <div>{t('pdf_email')} : {organization.email}</div>}
                     {isCompanyFieldVisible('company_identifier') && organization.identifier && (
                       <div>{organization.identifier_type} : {organization.identifier}</div>
                     )}
