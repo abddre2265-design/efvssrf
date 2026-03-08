@@ -87,6 +87,7 @@ const PublicInvoiceRequest: React.FC = () => {
   const [isValid, setIsValid] = useState(false);
   const [organizationId, setOrganizationId] = useState('');
   const [organizationName, setOrganizationName] = useState('');
+  const [organizationLogo, setOrganizationLogo] = useState<string | null>(null);
   const [stores, setStores] = useState<StoreData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
