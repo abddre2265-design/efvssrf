@@ -87,33 +87,28 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: `Tu es un expert en OCR de documents douaniers tunisiens (quittances).
-Analyse le document et extrait:
+                text: `Ceci est une quittance douanière tunisienne.
+Extrais les données suivantes en JSON:
+1. **quittanceType**: Type ("droits_taxes_importation", "regularisation", "penalite_amende", "consignation_garantie", "autre").
+2. **customsOffice**: Nom du bureau (ex: "Goulette", "Sfax"). Mets null si non trouvé.
+3. **documentNumber**: N° de quittance. Mets null si non trouvé.
+4. **documentDate**: Date au format YYYY-MM-DD. Mets null si non trouvé.
+5. **totalAmount**: Montant total payé (nombre). Mets 0 si non trouvé.
+6. **customsDeclarationNumber**: N° Déclaration ou D.U. Mets null si non trouvé.
+7. **importerName**: Nom de l'importateur. Mets null si non trouvé.
 
-1. **quittanceType**: 
-   - "droits_taxes_importation" (Défaut)
-   - "regularisation"
-   - "penalite_amende"
-   - "consignation_garantie"
-   - "autre"
-   
-2. **customsOffice**: Nom du bureau/recette (ex: Goulette, Tunis Port).
-3. **documentNumber**: N° Quittance (ex: 2026/1234).
-4. **documentDate**: Date (YYYY-MM-DD).
-5. **totalAmount**: Montant total payé (Nombre).
-6. **customsDeclarationNumber**: N° Déclaration/D.U.
-7. **importerName**: Nom du redevable/importateur.
-
-Réponds en JSON pur sans labels par défaut. Si inconnu, "".
+Exemple de réponse:
 {
   "quittanceType": "droits_taxes_importation",
-  "customsOffice": "",
-  "documentNumber": "",
-  "documentDate": "",
-  "totalAmount": 0,
-  "customsDeclarationNumber": "",
-  "importerName": ""
-}`,
+  "customsOffice": "Goulette",
+  "documentNumber": "2026/123",
+  "documentDate": "2026-02-15",
+  "totalAmount": 1500.500,
+  "customsDeclarationNumber": null,
+  "importerName": null
+}
+
+Règle stricte: Rends UNIQUEMENT un objet JSON valide, sans balises markdown.`,
               },
               {
                 type: 'image_url',
@@ -125,7 +120,7 @@ Réponds en JSON pur sans labels par défaut. Si inconnu, "".
             ],
           },
         ],
-        max_tokens: 1000,
+        max_tokens: 1500,
         temperature: 0.1,
       }),
     });

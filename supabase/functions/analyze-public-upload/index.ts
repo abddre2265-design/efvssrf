@@ -78,31 +78,20 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: `Tu es un expert en OCR et extraction de données de documents comptables tunisiens et internationaux.
-Analyse le document PDF fourni et extrait les informations suivantes:
+                text: `Tu es un expert en comptabilité. Analyse cette facture ou document d'achat.
+Extrais les informations suivantes en JSON pur:
+1. **supplier** : Le nom de l'entreprise qui VEND / ÉMET la facture. Cherche le logo, l'en-tête, le matricule fiscal (MF) ou ICE. Si c'est illisible, mets null.
+2. **documentNumber** : Le numéro de la facture ou du document. Cherche "N°", "Facture", "Invoice". Si introuvable, mets null.
+3. **documentDate** : La date du document au format YYYY-MM-DD. Si introuvable, mets null.
 
-1. **Fournisseur (supplier)**: Le nom de l'entreprise qui émet le document (VENDEUR). 
-   - Cherche en haut du document (logo, en-tête principal, adresse).
-   - ⚠️ IMPORTANT: Ne confonds pas avec le Client (Facturé à, Destinataire).
-   - Si tu ne trouves pas de nom clair, cherche une adresse ou un matricule fiscal pour déduire le nom.
-
-2. **Numéro du document (documentNumber)**: Le numéro de facture, bon de livraison (BL), ou référence. 
-   - Cherche: "N°", "Facture", "BL", "Reference", "Invoice", "Piece", "n/ref".
-
-3. **Date du document (documentDate)**: La date d'émission (format YYYY-MM-DD).
-
-Réponds UNIQUEMENT en JSON valide avec ce format exact, sans aucun texte avant ou après. 
-NE METS PAS LES LABELS DANS LES VALEURS PAR DÉFAUT SI NON TROUVÉ.
+Exemple de réponse attendue:
 {
-  "supplier": "",
-  "documentNumber": "",
-  "documentDate": ""
+  "supplier": "Société Exemple SARL",
+  "documentNumber": "F-2026-0012",
+  "documentDate": "2026-01-15"
 }
 
-IMPORTANT: 
-- Pas de markdown.
-- Si inconnu, laisse une chaîne vide "".
-- Pour la date, convertis toujours au format YYYY-MM-DD (ex: 15/01/2026 devient 2026-01-15).`,
+Règle stricte: Rends UNIQUEMENT un objet JSON valide, sans balises markdown (\`\`\`json). Ne mets pas de texte avant ou après.`,
               },
               {
                 type: 'image_url',
@@ -114,7 +103,7 @@ IMPORTANT:
             ],
           },
         ],
-        max_tokens: 1000,
+        max_tokens: 1500,
         temperature: 0.1,
       }),
     });
