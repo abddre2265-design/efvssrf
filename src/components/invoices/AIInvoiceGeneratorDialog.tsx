@@ -146,12 +146,16 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
 
   useEffect(() => { if (open && organizationId) fetchData(); }, [open, organizationId, fetchData]);
 
-  // Sync allowed VAT rates with dynamic rates
+  // Sync allowed VAT rates with dynamic rates + product rates
   useEffect(() => {
-    if (dynamicVatRates.length > 0 && allowedVatRates.length === 0) {
-      setAllowedVatRates(dynamicVatRates);
+    if (allowedVatRates.length === 0) {
+      const productVatRates = [...new Set(products.map(p => p.vat_rate))];
+      const allRates = [...new Set([...dynamicVatRates, ...productVatRates])].sort((a, b) => a - b);
+      if (allRates.length > 0) {
+        setAllowedVatRates(allRates);
+      }
     }
-  }, [dynamicVatRates]);
+  }, [dynamicVatRates, products]);
 
   // Set preselected client when dialog opens
   useEffect(() => {
