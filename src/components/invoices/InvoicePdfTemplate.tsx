@@ -242,7 +242,13 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
   const isForeign = invoice.client_type === 'foreign';
 
-  const getPaymentStatusLabel = () => {
+  // Translate invoice number prefix to current language
+  const getTranslatedInvoiceNumber = () => {
+    const currentPrefix = INVOICE_PREFIXES[language as keyof typeof INVOICE_PREFIXES] || INVOICE_PREFIXES.fr;
+    const storedPrefix = invoice.invoice_prefix || 'FAC';
+    return invoice.invoice_number.replace(storedPrefix, currentPrefix);
+  };
+
     switch (invoice.payment_status) {
       case 'paid': return t('pdf_payment_paid');
       case 'partial': return t('pdf_payment_partial');
