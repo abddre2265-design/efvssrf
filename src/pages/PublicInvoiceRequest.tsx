@@ -632,6 +632,25 @@ const PublicInvoiceRequest: React.FC = () => {
           </div>
         </div>
 
+        {/* Tabs: New Request / Track */}
+        <Tabs value={activePublicTab} onValueChange={(v) => setActivePublicTab(v as 'request' | 'track')} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="request" className="gap-2">
+              <FileText className="h-4 w-4" />
+              {t('new_request_tab')}
+            </TabsTrigger>
+            <TabsTrigger value="track" className="gap-2">
+              <Search className="h-4 w-4" />
+              {t('track_requests_tab')}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="track" className="mt-6">
+            <PublicRequestTracker organizationId={organizationId} />
+          </TabsContent>
+
+          <TabsContent value="request" className="mt-6 space-y-6">
+
         {/* Block 1: Client Information */}
         <Card>
           <CardHeader className="pb-4">
