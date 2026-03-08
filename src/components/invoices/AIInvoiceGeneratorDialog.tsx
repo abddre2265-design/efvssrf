@@ -370,9 +370,9 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     <CardContent>
                       <div className="grid grid-cols-4 gap-4 text-sm">
                         <div><span className="text-muted-foreground">{t('lines')}:</span> <span className="font-medium">{generationSummary.lineCount}</span></div>
-                        <div><span className="text-muted-foreground">{t('subtotal_ht')}:</span> <span className="font-medium">{generationSummary.subtotalHt.toFixed(3)} DT</span></div>
-                        <div><span className="text-muted-foreground">{t('total_vat')}:</span> <span className="font-medium">{generationSummary.totalVat.toFixed(3)} DT</span></div>
-                        <div><span className="text-muted-foreground">{t('total_ttc')}:</span> <span className="font-medium">{generationSummary.totalTtc.toFixed(3)} DT</span></div>
+                        <div><span className="text-muted-foreground">{t('subtotal_ht')}:</span> <span className="font-medium">{formatCurrency(generationSummary.subtotalHt, 'TND', language)}</span></div>
+                        <div><span className="text-muted-foreground">{t('total_vat')}:</span> <span className="font-medium">{formatCurrency(generationSummary.totalVat, 'TND', language)}</span></div>
+                        <div><span className="text-muted-foreground">{t('total_ttc')}:</span> <span className="font-medium">{formatCurrency(generationSummary.totalTtc, 'TND', language)}</span></div>
                       </div>
                     </CardContent>
                   </Card>
