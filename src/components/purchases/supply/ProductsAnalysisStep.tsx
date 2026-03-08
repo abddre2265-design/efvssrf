@@ -80,7 +80,7 @@ export const ProductsAnalysisStep: React.FC<ProductsAnalysisStepProps> = ({
   organizationId,
   onProductsConfirmed,
 }) => {
-  const { t, isRTL } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   
   // State
   const [supplier, setSupplier] = useState<Supplier | null>(null);
