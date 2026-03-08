@@ -1279,7 +1279,6 @@ const PublicInvoiceRequest: React.FC = () => {
           setTotalTTC(request.total_ttc.toString());
           setStoreId(request.store_id || '');
           setPurchaseDate(new Date(request.purchase_date));
-          setPaymentStatus((request.payment_status || 'paid') as any);
           setPaidAmount(request.paid_amount?.toString() || '');
           setLinkedClientId(request.linked_client_id || null);
           setClientValidated(true);
