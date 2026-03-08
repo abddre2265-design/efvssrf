@@ -371,8 +371,8 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
           }}>
             {isEnabled('bank_info') && (
               <div style={{ lineHeight: 1.5 }}>
-                <div>IBAN : TN59 XXXX XXXX XXXX XXXX XXXX</div>
-                <div>Banque Example</div>
+                <div>{t('pdf_iban')} : TN59 XXXX XXXX XXXX XXXX XXXX</div>
+                <div>{t('pdf_preview_bank')}</div>
               </div>
             )}
 
