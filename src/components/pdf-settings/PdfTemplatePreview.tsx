@@ -199,8 +199,8 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
               <tbody>
                 <tr style={{ background: '#f4faff' }}>
                   <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7 }}>
-                    Produit Example
-                    {isEnabled('product_description') && <div style={{ fontSize: 6, fontStyle: 'italic' }}>Description</div>}
+                    {t('pdf_preview_product')}
+                    {isEnabled('product_description') && <div style={{ fontSize: 6, fontStyle: 'italic' }}>{t('pdf_description')}</div>}
                   </td>
                   {isEnabled('product_reference') && <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7 }}>REF001</td>}
                   <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'center' }}>2</td>
