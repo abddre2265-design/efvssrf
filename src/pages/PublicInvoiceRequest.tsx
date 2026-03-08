@@ -1283,6 +1283,9 @@ const PublicInvoiceRequest: React.FC = () => {
           toast.info(t('request_loaded_for_editing'));
         }}
       />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
