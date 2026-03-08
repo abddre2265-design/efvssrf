@@ -953,7 +953,7 @@ const PublicInvoiceRequest: React.FC = () => {
                   placeholder="0.000"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  TND
+                  {t('currency_label')}
                 </span>
               </div>
               {errors.totalTTC && <p className="text-xs text-destructive">{errors.totalTTC}</p>}
