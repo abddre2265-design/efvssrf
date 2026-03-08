@@ -756,7 +756,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           )}
           
           <p className="invoice-grand">
-            <span>NET À PAYER</span>
+            <span>{t('pdf_net_payable')}</span>
             <span>{formatCurrency(invoice.net_payable, invoice.currency)}</span>
           </p>
         </div>
