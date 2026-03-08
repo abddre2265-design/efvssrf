@@ -79,7 +79,7 @@ serve(async (req) => {
       unknown: {
         fr: `Je n'ai pas compris. Veuillez saisir votre identifiant fiscal (CIN, matricule fiscal ou passeport).`,
         en: `I didn't understand. Please enter your tax identifier (CIN, tax ID or passport).`,
-        ar: `لم أفهم. يرجى إدخال معرّفك الجبائي (بطاقة التعريف، المعرّف الجبائي أو جواز السفر).`,
+        ar: `لم أفهم. يرجى إدخال معرّفك الجبائي (بطاقة التعريف الوطنية، المعرّف الجبائي أو جواز السفر).`,
       },
       error: {
         fr: `Une erreur s'est produite. Veuillez remplir le formulaire manuellement.`,
