@@ -731,9 +731,9 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const previewAmountInTND = invoice.subtotal_ht * previewExchangeRate;
 
   // Get currency info
-  const getCurrencySymbol = (code: string) => {
+  const getLocalCurrencySymbol = (code: string) => {
     const curr = CURRENCIES.find(c => c.code === code);
-    return curr?.symbol || code;
+    return curr ? getCurrencySymbol(curr, language) : code;
   };
 
   return (
