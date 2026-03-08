@@ -1914,6 +1914,141 @@ export type Database = {
           },
         ]
       }
+      purchase_order_lines: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          id: string
+          line_order: number
+          line_total_ht: number
+          line_total_ttc: number
+          line_vat: number
+          name: string
+          product_id: string | null
+          purchase_order_id: string
+          quantity: number
+          reference: string | null
+          unit_price_ht: number
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          line_order?: number
+          line_total_ht?: number
+          line_total_ttc?: number
+          line_vat?: number
+          name: string
+          product_id?: string | null
+          purchase_order_id: string
+          quantity?: number
+          reference?: string | null
+          unit_price_ht?: number
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          line_order?: number
+          line_total_ht?: number
+          line_total_ttc?: number
+          line_vat?: number
+          name?: string
+          product_id?: string | null
+          purchase_order_id?: string
+          quantity?: number
+          reference?: string | null
+          unit_price_ht?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          currency: string
+          exchange_rate: number
+          expected_delivery_date: string | null
+          id: string
+          notes: string | null
+          order_date: string
+          order_number: string
+          organization_id: string
+          status: string
+          subtotal_ht: number
+          supplier_id: string | null
+          total_ttc: number
+          total_vat: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          exchange_rate?: number
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          order_number: string
+          organization_id: string
+          status?: string
+          subtotal_ht?: number
+          supplier_id?: string | null
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          exchange_rate?: number
+          expected_delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          order_number?: string
+          organization_id?: string
+          status?: string
+          subtotal_ht?: number
+          supplier_id?: string | null
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_payment_requests: {
         Row: {
           approved_at: string | null
@@ -2696,6 +2831,7 @@ export type Database = {
         Args: { purchase_doc_id: string }
         Returns: boolean
       }
+      is_purchase_order_owner: { Args: { po_id: string }; Returns: boolean }
       is_purchase_payment_owner: {
         Args: { payment_id: string }
         Returns: boolean
