@@ -792,6 +792,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
       {pages.map((pageLines, pageIndex) => (
         <div key={pageIndex} className="invoice-pdf-page">
+          {renderWatermark()}
           {renderCorners()}
 
           {pageIndex === 0 ? (
