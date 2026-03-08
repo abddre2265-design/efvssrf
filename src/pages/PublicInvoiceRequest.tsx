@@ -87,6 +87,7 @@ const PublicInvoiceRequest: React.FC = () => {
   const [isValid, setIsValid] = useState(false);
   const [organizationId, setOrganizationId] = useState('');
   const [organizationName, setOrganizationName] = useState('');
+  const [organizationLogo, setOrganizationLogo] = useState<string | null>(null);
   const [stores, setStores] = useState<StoreData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -174,10 +175,13 @@ const PublicInvoiceRequest: React.FC = () => {
           // Get organization name
           const { data: org } = await supabase
             .from('organizations')
-            .select('name')
+            .select('name, logo_url')
             .eq('id', data.organization_id)
             .maybeSingle();
-          if (org) setOrganizationName(org.name);
+          if (org) {
+            setOrganizationName(org.name);
+            setOrganizationLogo(org.logo_url);
+          }
 
           // Get stores for this organization
           const { data: storesData } = await supabase
@@ -516,8 +520,15 @@ const PublicInvoiceRequest: React.FC = () => {
           <ThemeToggle />
         </div>
         <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
+          <CardHeader className="text-center space-y-3">
+            {organizationLogo ? (
+              <img src={organizationLogo} alt={organizationName} className="h-12 w-12 object-contain rounded-lg mx-auto" />
+            ) : organizationName ? (
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+            ) : null}
+            <CheckCircle2 className="h-12 w-12 mx-auto text-green-500" />
             <CardTitle>{t('request_sent_success')}</CardTitle>
             {organizationName && (
               <p className="text-sm font-medium text-primary">{organizationName}</p>
@@ -598,14 +609,23 @@ const PublicInvoiceRequest: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="text-center space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <Building2 className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold text-primary">{organizationName}</span>
+        <div className="text-center space-y-4">
+          <div className="flex flex-col items-center gap-3">
+            {organizationLogo ? (
+              <img 
+                src={organizationLogo} 
+                alt={organizationName} 
+                className="h-16 w-16 object-contain rounded-lg border border-border shadow-sm"
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center border border-border">
+                <Building2 className="h-8 w-8 text-primary" />
+              </div>
+            )}
+            <span className="text-xl font-bold text-foreground">{organizationName}</span>
           </div>
           <div className="space-y-1">
-            <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-primary">
               {editingRequestId ? t('edit_request') : t('invoice_request')}
             </h1>
           </div>
