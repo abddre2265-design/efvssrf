@@ -520,8 +520,15 @@ const PublicInvoiceRequest: React.FC = () => {
           <ThemeToggle />
         </div>
         <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
+          <CardHeader className="text-center space-y-3">
+            {organizationLogo ? (
+              <img src={organizationLogo} alt={organizationName} className="h-12 w-12 object-contain rounded-lg mx-auto" />
+            ) : organizationName ? (
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+            ) : null}
+            <CheckCircle2 className="h-12 w-12 mx-auto text-green-500" />
             <CardTitle>{t('request_sent_success')}</CardTitle>
             {organizationName && (
               <p className="text-sm font-medium text-primary">{organizationName}</p>
