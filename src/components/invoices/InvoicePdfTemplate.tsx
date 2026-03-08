@@ -795,10 +795,10 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const getWatermarkInfo = (): { text: string; className: string } | null => {
     const status = invoice.status as string;
     if (status === 'draft') {
-      return { text: t('watermark_draft'), className: 'invoice-watermark-draft' };
+      return { text: t('watermark_cancelled'), className: 'invoice-watermark-cancelled' };
     }
     if (status === 'created') {
-      return { text: t('watermark_created'), className: 'invoice-watermark-draft' };
+      return { text: t('watermark_draft'), className: 'invoice-watermark-draft' };
     }
     if (status === 'cancelled') {
       return { text: t('watermark_cancelled'), className: 'invoice-watermark-cancelled' };
