@@ -1006,12 +1006,12 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                       )}
 
                       <div className="invoice-credit-note-details" style={{ marginTop: '6px', borderTop: '1px solid #b0bec5', paddingTop: '4px' }}>
-                        <span>Réduction HT : {formatCurrency(cn.subtotal_ht, invoice.currency)}</span>
-                        <span>TVA : {formatCurrency(cn.total_vat, invoice.currency)}</span>
-                        <span>Réduction TTC : {formatCurrency(cn.total_ttc, invoice.currency)}</span>
-                        {cn.stamp_duty_amount > 0 && <span>Timbre : {formatCurrency(cn.stamp_duty_amount, 'TND')}</span>}
-                        {cn.withholding_amount > 0 && <span>Retenue : {formatCurrency(cn.withholding_amount, invoice.currency)}</span>}
-                        <span><strong>Nouveau Net : {formatCurrency(cn.new_net_payable, invoice.currency)}</strong></span>
+                        <span>{t('pdf_reduction_ht')} : {formatCurrency(cn.subtotal_ht, invoice.currency)}</span>
+                        <span>{t('pdf_vat')} : {formatCurrency(cn.total_vat, invoice.currency)}</span>
+                        <span>{t('pdf_reduction_ttc')} : {formatCurrency(cn.total_ttc, invoice.currency)}</span>
+                        {cn.stamp_duty_amount > 0 && <span>{t('pdf_stamp')} : {formatCurrency(cn.stamp_duty_amount, 'TND')}</span>}
+                        {cn.withholding_amount > 0 && <span>{t('pdf_withholding_short')} : {formatCurrency(cn.withholding_amount, invoice.currency)}</span>}
+                        <span><strong>{t('pdf_new_net')} : {formatCurrency(cn.new_net_payable, invoice.currency)}</strong></span>
                       </div>
                       {cn.reason && (
                         <div style={{ marginTop: '3px', fontStyle: 'italic', color: '#666' }}>
