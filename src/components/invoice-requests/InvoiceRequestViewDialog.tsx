@@ -109,7 +109,9 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
   };
 
   const getPaymentStatusBadge = (status: string) => {
-    switch (status) {
+    // Normalize: if paid_amount >= total_ttc, treat as "paid"
+    const effectiveStatus = (status === 'partial' && request.paid_amount >= request.total_ttc) ? 'paid' : status;
+    switch (effectiveStatus) {
       case 'paid':
         return <Badge className="bg-green-500">{t('paid')}</Badge>;
       case 'partial':
