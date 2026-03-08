@@ -1934,6 +1934,17 @@ export const translations: Translations = {
   modify_this_request: { fr: 'Modifier cette demande', en: 'Modify this request', ar: 'تعديل هذا الطلب' },
   request_will_be_updated: { fr: 'La demande sera mise à jour avec vos modifications', en: 'The request will be updated with your changes', ar: 'سيتم تحديث الطلب بتعديلاتك' },
   unknown_store: { fr: 'Magasin inconnu', en: 'Unknown store', ar: 'متجر غير معروف' },
+
+  // Public invoice request form - additional keys
+  your_details: { fr: 'Vos informations', en: 'Your Details', ar: 'معلوماتك' },
+  billing_information: { fr: 'Informations de facturation', en: 'Billing information', ar: 'معلومات الفوترة' },
+  whatsapp: { fr: 'WhatsApp', en: 'WhatsApp', ar: 'واتساب' },
+  purchase_information: { fr: 'Informations sur l\'achat', en: 'Purchase information', ar: 'معلومات الشراء' },
+  store: { fr: 'Magasin', en: 'Store', ar: 'المتجر' },
+  select_store: { fr: 'Sélectionner un magasin', en: 'Select a store', ar: 'اختر متجرًا' },
+  transaction_number_placeholder: { fr: 'Ex: TXN-2024-001', en: 'E.g.: TXN-2024-001', ar: 'مثال: TXN-2024-001' },
+  payment_status_description: { fr: 'Indiquez le statut du paiement de votre achat', en: 'Indicate the payment status of your purchase', ar: 'حدد حالة دفع مشترياتك' },
+  currency_label: { fr: 'DT', en: 'TND', ar: 'د.ت' },
 };
 
 

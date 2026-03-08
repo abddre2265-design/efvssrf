@@ -953,7 +953,7 @@ const PublicInvoiceRequest: React.FC = () => {
                   placeholder="0.000"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  TND
+                  {t('currency_label')}
                 </span>
               </div>
               {errors.totalTTC && <p className="text-xs text-destructive">{errors.totalTTC}</p>}
@@ -1008,7 +1008,7 @@ const PublicInvoiceRequest: React.FC = () => {
                         placeholder="0.000"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        TND
+                        {t('currency_label')}
                       </span>
                     </div>
                     {errors.paidAmount && <p className="text-xs text-destructive">{errors.paidAmount}</p>}
@@ -1081,7 +1081,7 @@ const PublicInvoiceRequest: React.FC = () => {
                             className="pr-10"
                           />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                            TND
+                            {t('currency_label')}
                           </span>
                         </div>
                         {mixedLines.length > 1 && (
@@ -1100,7 +1100,7 @@ const PublicInvoiceRequest: React.FC = () => {
                     <div className="flex justify-between text-sm pt-2 border-t">
                       <span className="text-muted-foreground">{t('total')}:</span>
                       <span className={!isMixedAmountValid ? 'text-destructive' : 'text-green-600'}>
-                        {mixedLinesTotal.toFixed(3)} / {expectedMixedTotal.toFixed(3)} TND
+                        {mixedLinesTotal.toFixed(3)} / {expectedMixedTotal.toFixed(3)} {t('currency_label')}
                       </span>
                     </div>
                     {errors.mixedPayment && <p className="text-xs text-destructive">{errors.mixedPayment}</p>}
