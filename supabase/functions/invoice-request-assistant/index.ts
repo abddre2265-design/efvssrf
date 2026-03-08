@@ -57,9 +57,9 @@ serve(async (req) => {
     // i18n messages
     const i18n: Record<string, Record<string, string>> = {
       greeting: {
-        fr: `Bienvenue ! 👋\n\nSi vous avez effectué un achat chez « ${organizationName} », vous pouvez saisir votre identifiant fiscal pour récupérer automatiquement vos informations.\n\n📋 Formats acceptés :\n• CIN : 8 chiffres\n• Matricule fiscal : 1234567/A/M/000\n• Passeport : format libre`,
-        en: `Welcome! 👋\n\nIf you made a purchase at "${organizationName}", you can enter your tax identifier to automatically retrieve your information.\n\n📋 Accepted formats:\n• CIN: 8 digits\n• Tax ID: 1234567/A/M/000\n• Passport: free format`,
-        ar: `مرحباً! 👋\n\nإذا قمت بعملية شراء لدى "${organizationName}"، يمكنك إدخال معرّفك الجبائي لاسترجاع معلوماتك تلقائياً.\n\n📋 الصيغ المقبولة:\n• بطاقة التعريف الوطنية: 8 أرقام\n• المعرّف الجبائي: 1234567/أ/م/000\n• جواز السفر: صيغة حرة`,
+        fr: `Bienvenue ! 👋\n\nSi vous avez effectué un achat chez nous, vous pouvez saisir votre identifiant fiscal pour récupérer automatiquement vos informations.\n\n📋 Formats acceptés :\n• CIN : 8 chiffres\n• Matricule fiscal : 1234567/A/M/000\n• Passeport : format libre`,
+        en: `Welcome! 👋\n\nIf you made a purchase with us, you can enter your tax identifier to automatically retrieve your information.\n\n📋 Accepted formats:\n• CIN: 8 digits\n• Tax ID: 1234567/A/M/000\n• Passport: free format`,
+        ar: `مرحباً! 👋\n\nإذا قمت بعملية شراء لدينا، يمكنك إدخال معرّفك الجبائي لاسترجاع معلوماتك تلقائياً.\n\n📋 الصيغ المقبولة:\n• بطاقة التعريف الوطنية: 8 أرقام\n• المعرّف الجبائي: 1234567/أ/م/000\n• جواز السفر: صيغة حرة`,
       },
       client_found: {
         fr: `✅ Client trouvé !`,
