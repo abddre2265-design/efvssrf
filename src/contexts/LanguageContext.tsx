@@ -1945,6 +1945,30 @@ export const translations: Translations = {
   transaction_number_placeholder: { fr: 'Ex: TXN-2024-001', en: 'E.g.: TXN-2024-001', ar: 'مثال: TXN-2024-001' },
   payment_status_description: { fr: 'Indiquez le statut du paiement de votre achat', en: 'Indicate the payment status of your purchase', ar: 'حدد حالة دفع مشترياتك' },
   currency_label: { fr: 'DT', en: 'TND', ar: 'د.ت' },
+
+  // Public request tracking
+  new_request_tab: { fr: 'Nouvelle demande', en: 'New Request', ar: 'طلب جديد' },
+  track_requests_tab: { fr: 'Suivi des demandes', en: 'Track Requests', ar: 'متابعة الطلبات' },
+  search_by_transaction: { fr: 'Rechercher par N° de transaction', en: 'Search by transaction number', ar: 'البحث برقم المعاملة' },
+  search_by_identifier: { fr: 'Rechercher par identifiant', en: 'Search by identifier', ar: 'البحث بالمعرّف' },
+  enter_transaction_number: { fr: 'Saisissez votre N° de transaction', en: 'Enter your transaction number', ar: 'أدخل رقم المعاملة' },
+  enter_your_identifier: { fr: 'Saisissez votre identifiant (CIN, MF, Passeport)', en: 'Enter your identifier (CIN, Tax ID, Passport)', ar: 'أدخل معرّفك (بطاقة التعريف، المعرّف الجبائي، جواز السفر)' },
+  search_button: { fr: 'Rechercher', en: 'Search', ar: 'بحث' },
+  searching: { fr: 'Recherche...', en: 'Searching...', ar: 'جارٍ البحث...' },
+  no_requests_found: { fr: 'Aucune demande trouvée', en: 'No requests found', ar: 'لم يتم العثور على طلبات' },
+  no_requests_found_description: { fr: 'Vérifiez les informations saisies et réessayez', en: 'Check your input and try again', ar: 'تحقق من المعلومات المدخلة وحاول مرة أخرى' },
+  request_status_pending: { fr: 'En attente', en: 'Pending', ar: 'قيد الانتظار' },
+  request_status_processed: { fr: 'Traitée', en: 'Processed', ar: 'تمت المعالجة' },
+  request_status_rejected: { fr: 'Rejetée', en: 'Rejected', ar: 'مرفوض' },
+  request_status_converted: { fr: 'Convertie', en: 'Converted', ar: 'تم التحويل' },
+  download_invoice: { fr: 'Télécharger la facture', en: 'Download Invoice', ar: 'تحميل الفاتورة' },
+  download_duplicate: { fr: 'Télécharger le duplicata', en: 'Download Duplicate', ar: 'تحميل النسخة المكررة' },
+  first_download: { fr: 'Premier téléchargement (original)', en: 'First download (original)', ar: 'أول تحميل (أصلي)' },
+  already_downloaded: { fr: 'Déjà téléchargé - duplicata', en: 'Already downloaded - duplicate', ar: 'تم التحميل سابقاً - نسخة مكررة' },
+  track_description: { fr: 'Suivez l\'état de vos demandes de facture', en: 'Track the status of your invoice requests', ar: 'تابع حالة طلبات الفواتير الخاصة بك' },
+  request_date_label: { fr: 'Date de demande', en: 'Request Date', ar: 'تاريخ الطلب' },
+  purchase_date_label: { fr: 'Date d\'achat', en: 'Purchase Date', ar: 'تاريخ الشراء' },
+  loading_invoice: { fr: 'Chargement de la facture...', en: 'Loading invoice...', ar: 'جارٍ تحميل الفاتورة...' },
 };
 
 
