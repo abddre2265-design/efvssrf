@@ -9,6 +9,7 @@ interface InvoicePrintDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoiceId: string | null;
+  isDuplicate?: boolean;
 }
 
 export const InvoicePrintDialog: React.FC<InvoicePrintDialogProps> = ({
