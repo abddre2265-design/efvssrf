@@ -1967,7 +1967,7 @@ export const translations: Translations = {
   already_downloaded: { fr: 'Déjà téléchargé - duplicata', en: 'Already downloaded - duplicate', ar: 'تم التحميل سابقاً - نسخة مكررة' },
   track_description: { fr: 'Suivez l\'état de vos demandes de facture', en: 'Track the status of your invoice requests', ar: 'تابع حالة طلبات الفواتير الخاصة بك' },
   request_date_label: { fr: 'Date de demande', en: 'Request Date', ar: 'تاريخ الطلب' },
-  purchase_date_label: { fr: 'Date d\'achat', en: 'Purchase Date', ar: 'تاريخ الشراء' },
+  tracking_purchase_date: { fr: 'Date d\'achat', en: 'Purchase Date', ar: 'تاريخ الشراء' },
   loading_invoice: { fr: 'Chargement de la facture...', en: 'Loading invoice...', ar: 'جارٍ تحميل الفاتورة...' },
 };
 
