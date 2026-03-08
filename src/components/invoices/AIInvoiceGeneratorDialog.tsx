@@ -307,7 +307,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     </div>
                     <div className="space-y-2">
                       <Label>{t('vat_rates_to_use')}</Label>
-                      <div className="flex gap-4 flex-wrap">{dynamicVatRates.map(rate => (<div key={rate} className="flex items-center space-x-2"><Checkbox id={`vat-${rate}`} checked={allowedVatRates.includes(rate)} onCheckedChange={() => handleVatRateToggle(rate)} /><label htmlFor={`vat-${rate}`} className="text-sm font-medium">{rate}%</label></div>))}</div>
+                      <div className="flex gap-4 flex-wrap">{[...new Set([...dynamicVatRates, ...products.map(p => p.vat_rate)])].sort((a, b) => a - b).map(rate => (<div key={rate} className="flex items-center space-x-2"><Checkbox id={`vat-${rate}`} checked={allowedVatRates.includes(rate)} onCheckedChange={() => handleVatRateToggle(rate)} /><label htmlFor={`vat-${rate}`} className="text-sm font-medium">{rate}%</label></div>))}</div>
                     </div>
                   </CardContent>
                 </Card>
