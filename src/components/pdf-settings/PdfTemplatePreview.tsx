@@ -136,7 +136,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   color: accentColor,
                   fontWeight: 600
                 }}>
-                  {documentType === 'invoice' ? 'FACTURÉ À' : 'CLIENT'}
+                  {documentType === 'invoice' ? t('pdf_billed_to') : t('pdf_client')}
                 </div>
                 {isClientFieldVisible('client_name') && (
                   <div style={{ fontWeight: 700, fontSize: 9, marginBottom: 3 }}>Client Example</div>
