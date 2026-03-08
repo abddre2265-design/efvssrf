@@ -681,13 +681,13 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
       {/* VAT Breakdown by Rate - Left side */}
       {isEnabled('vat_breakdown') && !isForeign && vatBreakdown.length > 0 && (
         <div className="invoice-vat-breakdown">
-          <div className="invoice-vat-breakdown-title">RÉCAPITULATIF TVA</div>
+          <div className="invoice-vat-breakdown-title">{t('pdf_vat_recap')}</div>
           <table>
             <thead>
               <tr>
-                <th>Taux</th>
-                <th>Base HT</th>
-                <th>TVA</th>
+                <th>{t('pdf_vat_rate')}</th>
+                <th>{t('pdf_vat_base')}</th>
+                <th>{t('pdf_vat')}</th>
               </tr>
             </thead>
             <tbody>
