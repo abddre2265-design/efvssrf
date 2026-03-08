@@ -965,7 +965,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                       <div className="invoice-credit-note-header">
                         <span className="invoice-credit-note-number">{cn.credit_note_number}</span>
                         <span className="invoice-credit-note-type">
-                          {cn.credit_note_type === 'commercial_price' ? 'Avoir Commercial' : 'Avoir Produit'}
+                          {cn.credit_note_type === 'commercial_price' ? t('pdf_commercial_credit') : t('pdf_product_credit')}
                         </span>
                       </div>
                       <div className="invoice-credit-note-details">
