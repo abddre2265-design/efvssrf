@@ -105,22 +105,22 @@ export interface StockBubble {
 
 // Common currencies
 export const CURRENCIES = [
-  { code: 'TND', name: { fr: 'Dinar Tunisien', en: 'Tunisian Dinar', ar: 'الدينار التونسي' }, symbol: 'DT' },
-  { code: 'EUR', name: { fr: 'Euro', en: 'Euro', ar: 'اليورو' }, symbol: '€' },
-  { code: 'USD', name: { fr: 'Dollar US', en: 'US Dollar', ar: 'الدولار الأمريكي' }, symbol: '$' },
-  { code: 'GBP', name: { fr: 'Livre Sterling', en: 'Pound Sterling', ar: 'الجنيه الإسترليني' }, symbol: '£' },
-  { code: 'CAD', name: { fr: 'Dollar Canadien', en: 'Canadian Dollar', ar: 'الدولار الكندي' }, symbol: 'CA$' },
-  { code: 'CHF', name: { fr: 'Franc Suisse', en: 'Swiss Franc', ar: 'الفرنك السويسري' }, symbol: 'CHF' },
-  { code: 'AED', name: { fr: 'Dirham Emirats', en: 'UAE Dirham', ar: 'الدرهم الإماراتي' }, symbol: 'AED' },
-  { code: 'SAR', name: { fr: 'Riyal Saoudien', en: 'Saudi Riyal', ar: 'الريال السعودي' }, symbol: 'SAR' },
-  { code: 'QAR', name: { fr: 'Riyal Qatari', en: 'Qatari Riyal', ar: 'الريال القطري' }, symbol: 'QAR' },
-  { code: 'MAD', name: { fr: 'Dirham Marocain', en: 'Moroccan Dirham', ar: 'الدرهم المغربي' }, symbol: 'MAD' },
-  { code: 'DZD', name: { fr: 'Dinar Algérien', en: 'Algerian Dinar', ar: 'الدينار الجزائري' }, symbol: 'DZD' },
-  { code: 'LYD', name: { fr: 'Dinar Libyen', en: 'Libyan Dinar', ar: 'الدينار الليبي' }, symbol: 'LYD' },
-  { code: 'EGP', name: { fr: 'Livre Égyptienne', en: 'Egyptian Pound', ar: 'الجنيه المصري' }, symbol: 'EGP' },
-  { code: 'TRY', name: { fr: 'Livre Turque', en: 'Turkish Lira', ar: 'الليرة التركية' }, symbol: '₺' },
-  { code: 'CNY', name: { fr: 'Yuan Chinois', en: 'Chinese Yuan', ar: 'اليوان الصيني' }, symbol: '¥' },
-  { code: 'JPY', name: { fr: 'Yen Japonais', en: 'Japanese Yen', ar: 'الين الياباني' }, symbol: '¥' },
+  { code: 'TND', name: { fr: 'Dinar Tunisien', en: 'Tunisian Dinar', ar: 'الدينار التونسي' }, symbol: { fr: 'DT', en: 'TND', ar: 'د.ت' } },
+  { code: 'EUR', name: { fr: 'Euro', en: 'Euro', ar: 'اليورو' }, symbol: { fr: '€', en: '€', ar: '€' } },
+  { code: 'USD', name: { fr: 'Dollar US', en: 'US Dollar', ar: 'الدولار الأمريكي' }, symbol: { fr: '$', en: '$', ar: '$' } },
+  { code: 'GBP', name: { fr: 'Livre Sterling', en: 'Pound Sterling', ar: 'الجنيه الإسترليني' }, symbol: { fr: '£', en: '£', ar: '£' } },
+  { code: 'CAD', name: { fr: 'Dollar Canadien', en: 'Canadian Dollar', ar: 'الدولار الكندي' }, symbol: { fr: 'CA$', en: 'CA$', ar: 'CA$' } },
+  { code: 'CHF', name: { fr: 'Franc Suisse', en: 'Swiss Franc', ar: 'الفرنك السويسري' }, symbol: { fr: 'CHF', en: 'CHF', ar: 'فر.س' } },
+  { code: 'AED', name: { fr: 'Dirham Emirats', en: 'UAE Dirham', ar: 'الدرهم الإماراتي' }, symbol: { fr: 'AED', en: 'AED', ar: 'د.إ' } },
+  { code: 'SAR', name: { fr: 'Riyal Saoudien', en: 'Saudi Riyal', ar: 'الريال السعودي' }, symbol: { fr: 'SAR', en: 'SAR', ar: 'ر.س' } },
+  { code: 'QAR', name: { fr: 'Riyal Qatari', en: 'Qatari Riyal', ar: 'الريال القطري' }, symbol: { fr: 'QAR', en: 'QAR', ar: 'ر.ق' } },
+  { code: 'MAD', name: { fr: 'Dirham Marocain', en: 'Moroccan Dirham', ar: 'الدرهم المغربي' }, symbol: { fr: 'MAD', en: 'MAD', ar: 'د.م' } },
+  { code: 'DZD', name: { fr: 'Dinar Algérien', en: 'Algerian Dinar', ar: 'الدينار الجزائري' }, symbol: { fr: 'DZD', en: 'DZD', ar: 'د.ج' } },
+  { code: 'LYD', name: { fr: 'Dinar Libyen', en: 'Libyan Dinar', ar: 'الدينار الليبي' }, symbol: { fr: 'LYD', en: 'LYD', ar: 'ل.د' } },
+  { code: 'EGP', name: { fr: 'Livre Égyptienne', en: 'Egyptian Pound', ar: 'الجنيه المصري' }, symbol: { fr: 'EGP', en: 'EGP', ar: 'ج.م' } },
+  { code: 'TRY', name: { fr: 'Livre Turque', en: 'Turkish Lira', ar: 'الليرة التركية' }, symbol: { fr: '₺', en: '₺', ar: '₺' } },
+  { code: 'CNY', name: { fr: 'Yuan Chinois', en: 'Chinese Yuan', ar: 'اليوان الصيني' }, symbol: { fr: '¥', en: '¥', ar: '¥' } },
+  { code: 'JPY', name: { fr: 'Yen Japonais', en: 'Japanese Yen', ar: 'الين الياباني' }, symbol: { fr: '¥', en: '¥', ar: '¥' } },
 ];
 
 // Helper to get currency name by language
@@ -128,34 +128,15 @@ export const getCurrencyName = (currency: typeof CURRENCIES[number], language: s
   return currency.name[language as keyof typeof currency.name] || currency.name.fr;
 };
 
-// Invoice number prefixes by language
-export const INVOICE_PREFIXES = {
-  fr: 'FAC',
-  en: 'INV',
-  ar: 'فاتورة',
-} as const;
-
-// VAT rates
-export const VAT_RATES = [0, 7, 13, 19];
-
-// Calculate line totals
-export const calculateLineTotal = (
-  quantity: number,
-  unitPriceHt: number,
-  vatRate: number,
-  discountPercent: number,
-  isForeign: boolean
-): { lineHt: number; lineVat: number; lineTtc: number } => {
-  const lineHt = quantity * unitPriceHt * (1 - discountPercent / 100);
-  const lineVat = isForeign ? 0 : lineHt * (vatRate / 100);
-  const lineTtc = lineHt + lineVat;
-  return { lineHt, lineVat, lineTtc };
+// Helper to get currency symbol by language
+export const getCurrencySymbol = (currency: typeof CURRENCIES[number], language: string = 'fr'): string => {
+  return currency.symbol[language as keyof typeof currency.symbol] || currency.symbol.fr;
 };
 
-// Format currency
-export const formatCurrency = (amount: number, currency: string = 'TND'): string => {
+// Format currency (language-aware)
+export const formatCurrency = (amount: number, currency: string = 'TND', language: string = 'fr'): string => {
   const currencyInfo = CURRENCIES.find(c => c.code === currency);
-  const symbol = currencyInfo?.symbol || currency;
+  const symbol = currencyInfo ? getCurrencySymbol(currencyInfo, language) : currency;
   return `${amount.toFixed(3)} ${symbol}`;
 };
 
