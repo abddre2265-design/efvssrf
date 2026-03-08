@@ -84,6 +84,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [products, setProducts] = useState<Product[]>([]);
   const [maxLines, setMaxLines] = useState<string>('10');
+  const [maxQuantityPerLine, setMaxQuantityPerLine] = useState<string>('50');
   const [minPriceTtc, setMinPriceTtc] = useState<string>('0');
   const [maxPriceTtc, setMaxPriceTtc] = useState<string>('10000');
   const [allowedVatRates, setAllowedVatRates] = useState<number[]>([0, 7, 13, 19]);
@@ -190,7 +191,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
     setGenerationError(null);
     try {
       const response = await supabase.functions.invoke('generate-ai-invoice', {
-        body: { clientId: selectedClientId, invoiceDate: format(invoiceDate, 'yyyy-MM-dd'), invoiceNumber, maxLines: parseInt(maxLines) || 10, minPriceTtc: parseFloat(minPriceTtc) || 0, maxPriceTtc: parseFloat(maxPriceTtc) || 999999, allowedVatRates, vatTargets: activeTargets.map(t => ({ vatRate: t.vatRate, targetHt: parseFloat(t.targetHt) || null, targetTtc: parseFloat(t.targetTtc) || null })), stampDutyEnabled: !isForeignClient && stampDutyEnabled, stampDutyAmount, products, isForeignClient },
+        body: { clientId: selectedClientId, invoiceDate: format(invoiceDate, 'yyyy-MM-dd'), invoiceNumber, maxLines: parseInt(maxLines) || 10, maxQuantityPerLine: parseInt(maxQuantityPerLine) || 50, minPriceTtc: parseFloat(minPriceTtc) || 0, maxPriceTtc: parseFloat(maxPriceTtc) || 999999, allowedVatRates, vatTargets: activeTargets.map(t => ({ vatRate: t.vatRate, targetHt: parseFloat(t.targetHt) || null, targetTtc: parseFloat(t.targetTtc) || null })), stampDutyEnabled: !isForeignClient && stampDutyEnabled, stampDutyAmount, products, isForeignClient },
       });
       if (response.error) throw response.error;
       const data = response.data;
@@ -230,7 +231,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
     } catch (error: any) { toast.error(error.message || t('error_creating_invoice')); setStep('preview'); } finally { setIsSaving(false); }
   };
 
-  const resetForm = () => { setStep('config'); setInvoiceDate(null); setDueDate(null); setSelectedClientId(''); setMaxLines('10'); setMinPriceTtc('0'); setMaxPriceTtc('10000'); setAllowedVatRates([0, 7, 13, 19]); setVatTargets([]); setStampDutyEnabled(true); setGeneratedLines([]); setGenerationSummary(null); setGenerationError(null); };
+  const resetForm = () => { setStep('config'); setInvoiceDate(null); setDueDate(null); setSelectedClientId(''); setMaxLines('10'); setMaxQuantityPerLine('50'); setMinPriceTtc('0'); setMaxPriceTtc('10000'); setAllowedVatRates([0, 7, 13, 19]); setVatTargets([]); setStampDutyEnabled(true); setGeneratedLines([]); setGenerationSummary(null); setGenerationError(null); };
   const getClientName = (client: Client): string => client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim();
 
   const stockBubbles: StockBubble[] = React.useMemo(() => {
@@ -285,8 +286,9 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                 <Card>
                   <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Settings2 className="h-4 w-4" />{t('generation_parameters')}</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                       <div className="space-y-2"><Label>{t('max_lines')}</Label><Input type="number" min="1" max="100" value={maxLines} onChange={(e) => setMaxLines(e.target.value)} /></div>
+                      <div className="space-y-2"><Label>{t('max_qty_per_line')}</Label><Input type="number" min="1" max="1000" value={maxQuantityPerLine} onChange={(e) => setMaxQuantityPerLine(e.target.value)} /></div>
                       <div className="space-y-2"><Label>{t('min_price_ttc')}</Label><Input type="number" min="0" step="0.001" value={minPriceTtc} onChange={(e) => setMinPriceTtc(e.target.value)} /></div>
                       <div className="space-y-2"><Label>{t('max_price_ttc')}</Label><Input type="number" min="0" step="0.001" value={maxPriceTtc} onChange={(e) => setMaxPriceTtc(e.target.value)} /></div>
                     </div>

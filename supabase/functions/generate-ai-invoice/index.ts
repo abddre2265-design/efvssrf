@@ -31,6 +31,7 @@ interface GenerationParams {
   invoiceDate: string;
   invoiceNumber: { prefix: string; year: number; counter: number; number: string };
   maxLines: number;
+  maxQuantityPerLine: number;
   minPriceTtc: number;
   maxPriceTtc: number;
   allowedVatRates: number[];
@@ -72,6 +73,7 @@ serve(async (req) => {
     const params: GenerationParams = await req.json();
     const {
       maxLines,
+      maxQuantityPerLine,
       minPriceTtc,
       maxPriceTtc,
       allowedVatRates,
@@ -79,6 +81,7 @@ serve(async (req) => {
       products,
       isForeignClient,
     } = params;
+    const effectiveMaxQtyPerLine = maxQuantityPerLine || 50;
 
     // Filter products by allowed VAT rates and price range
     const eligibleProducts = products.filter(p => {
@@ -189,9 +192,10 @@ serve(async (req) => {
         let bestDiff = Infinity;
 
         // Try different quantities and discounts
-        const maxQuantity = product.unlimited_stock || product.allow_out_of_stock_sale 
-          ? Math.min(100, Math.ceil(remainingHt / product.price_ht) + 5)
-          : Math.min((product.available_stock ?? 0) - (stockUsed.get(product.id) || 0), Math.ceil(remainingHt / product.price_ht) + 5);
+        const stockLimit = product.unlimited_stock || product.allow_out_of_stock_sale 
+          ? Math.ceil(remainingHt / product.price_ht) + 5
+          : (product.available_stock ?? 0) - (stockUsed.get(product.id) || 0);
+        const maxQuantity = Math.min(effectiveMaxQtyPerLine, stockLimit, Math.ceil(remainingHt / product.price_ht) + 5);
 
         for (let qty = 1; qty <= Math.max(1, maxQuantity); qty++) {
           for (let discount = 0; discount <= maxDiscount; discount += 0.5) {
