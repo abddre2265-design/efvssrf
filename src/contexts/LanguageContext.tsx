@@ -1415,6 +1415,9 @@ export const translations: Translations = {
   error_delivering_invoice: { fr: 'Erreur lors de la livraison', en: 'Error delivering invoice', ar: 'خطأ في التسليم' },
   delivery_status_pending: { fr: 'En attente', en: 'Pending', ar: 'في الانتظار' },
   delivery_status_delivered: { fr: 'Livré', en: 'Delivered', ar: 'تم التسليم' },
+  delivery_pending: { fr: 'En attente', en: 'Pending', ar: 'في الانتظار' },
+  delivery_delivered: { fr: 'Livré', en: 'Delivered', ar: 'تم التسليم' },
+  ai_invoice_generator: { fr: 'Générateur IA', en: 'AI Generator', ar: 'مولد الذكاء الاصطناعي' },
   
   // PDF Components - Delivery Note
   pdf_component_delivery_note_title: { fr: 'Titre "BON DE LIVRAISON"', en: '"DELIVERY NOTE" Title', ar: 'عنوان "سند التسليم"' },
