@@ -261,7 +261,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   </div>
                   {isEnabled('withholding_tax') && documentType === 'invoice' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3, color: '#e53935' }}>
-                      <span>Retenue 1.5%</span>
+                      <span>{t('pdf_preview_withholding')} 1.5%</span>
                       <span>-3.570 DT</span>
                     </div>
                   )}
