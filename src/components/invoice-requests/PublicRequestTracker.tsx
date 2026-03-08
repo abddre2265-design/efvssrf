@@ -342,10 +342,11 @@ export const PublicRequestTracker: React.FC<PublicRequestTrackerProps> = ({ orga
           </div>
 
           <div ref={printRef}>
-            {selectedInvoiceId && (
+            {selectedInvoiceId && preloadedData && (
               <InvoicePdfTemplate
                 invoiceId={selectedInvoiceId}
                 isDuplicate={isDuplicate}
+                preloadedData={preloadedData}
                 onReady={() => setIsPrintReady(true)}
               />
             )}
