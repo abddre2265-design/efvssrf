@@ -51,6 +51,7 @@ export const PublicRequestTracker: React.FC<PublicRequestTrackerProps> = ({ orga
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+  const [preloadedData, setPreloadedData] = useState<any>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const [isPrintReady, setIsPrintReady] = useState(false);
 
@@ -98,7 +99,16 @@ export const PublicRequestTracker: React.FC<PublicRequestTrackerProps> = ({ orga
       if (error) throw error;
 
       setIsDuplicate(data.isDuplicate);
+      setPreloadedData({
+        invoice: data.invoice,
+        client: data.client,
+        organization: data.organization,
+        banks: data.banks,
+        lines: data.lines,
+        creditNotes: data.creditNotes,
+      });
       setSelectedInvoiceId(request.generated_invoice_id);
+      setIsPrintReady(false);
       setPrintDialogOpen(true);
 
       // Update local state
@@ -332,10 +342,11 @@ export const PublicRequestTracker: React.FC<PublicRequestTrackerProps> = ({ orga
           </div>
 
           <div ref={printRef}>
-            {selectedInvoiceId && (
+            {selectedInvoiceId && preloadedData && (
               <InvoicePdfTemplate
                 invoiceId={selectedInvoiceId}
                 isDuplicate={isDuplicate}
+                preloadedData={preloadedData}
                 onReady={() => setIsPrintReady(true)}
               />
             )}
