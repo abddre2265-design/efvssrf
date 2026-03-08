@@ -52,7 +52,7 @@ import {
   RefreshCw,
   Coins
 } from 'lucide-react';
-import { Invoice, formatCurrency, CURRENCIES } from './types';
+import { Invoice, formatCurrency, CURRENCIES, getCurrencyName } from './types';
 import { useTaxRates, DEFAULT_WITHHOLDING_RATES } from '@/hooks/useTaxRates';
 
 interface Payment {

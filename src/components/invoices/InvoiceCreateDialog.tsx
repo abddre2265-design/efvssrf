@@ -44,6 +44,7 @@ import {
   InvoiceLineFormData,
   StockBubble,
   CURRENCIES,
+  getCurrencyName,
   INVOICE_PREFIXES,
   calculateLineTotal,
   generateInvoiceNumber,

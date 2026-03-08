@@ -44,6 +44,7 @@ import {
   InvoiceLineFormData,
   StockBubble,
   CURRENCIES,
+  getCurrencyName,
   calculateLineTotal,
 } from './types';
 
