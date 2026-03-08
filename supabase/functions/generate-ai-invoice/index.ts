@@ -197,7 +197,7 @@ serve(async (req) => {
         // Try different quantities and discounts
         const stockLimit = product.unlimited_stock || product.allow_out_of_stock_sale 
           ? Math.ceil(remainingHt / product.price_ht) + 5
-          : (product.available_stock ?? 0) - (stockUsed.get(product.id) || 0);
+          : ((p.available_stock ?? ((p.current_stock ?? 0) - (p.reserved_stock ?? 0))) - (stockUsed.get(product.id) || 0));
         const maxQuantity = Math.min(effectiveMaxQtyPerLine, stockLimit, Math.ceil(remainingHt / product.price_ht) + 5);
 
         for (let qty = 1; qty <= Math.max(1, maxQuantity); qty++) {
