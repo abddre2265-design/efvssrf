@@ -45,7 +45,8 @@ import {
   Layers,
   Trash2,
   Plus,
-  MessageCircle
+  MessageCircle,
+  Search
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
