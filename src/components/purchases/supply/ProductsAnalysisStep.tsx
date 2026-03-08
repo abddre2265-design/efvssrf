@@ -31,20 +31,20 @@ import { Supplier } from '@/components/suppliers/types';
 
 // Common currencies with symbols
 const CURRENCIES = [
-  { code: 'TND', symbol: 'د.ت', name: 'Dinar Tunisien' },
-  { code: 'USD', symbol: '$', name: 'Dollar US' },
-  { code: 'EUR', symbol: '€', name: 'Euro' },
-  { code: 'GBP', symbol: '£', name: 'Livre Sterling' },
-  { code: 'CNY', symbol: '¥', name: 'Yuan Chinois' },
-  { code: 'JPY', symbol: '¥', name: 'Yen Japonais' },
-  { code: 'AED', symbol: 'د.إ', name: 'Dirham Emirati' },
-  { code: 'SAR', symbol: 'ر.س', name: 'Riyal Saoudien' },
-  { code: 'MAD', symbol: 'د.م', name: 'Dirham Marocain' },
-  { code: 'DZD', symbol: 'د.ج', name: 'Dinar Algérien' },
-  { code: 'LYD', symbol: 'ل.د', name: 'Dinar Libyen' },
-  { code: 'TRY', symbol: '₺', name: 'Lire Turque' },
-  { code: 'CHF', symbol: 'CHF', name: 'Franc Suisse' },
-  { code: 'CAD', symbol: 'C$', name: 'Dollar Canadien' },
+  { code: 'TND', symbol: 'د.ت', name: { fr: 'Dinar Tunisien', en: 'Tunisian Dinar', ar: 'الدينار التونسي' } },
+  { code: 'USD', symbol: '$', name: { fr: 'Dollar US', en: 'US Dollar', ar: 'الدولار الأمريكي' } },
+  { code: 'EUR', symbol: '€', name: { fr: 'Euro', en: 'Euro', ar: 'اليورو' } },
+  { code: 'GBP', symbol: '£', name: { fr: 'Livre Sterling', en: 'Pound Sterling', ar: 'الجنيه الإسترليني' } },
+  { code: 'CNY', symbol: '¥', name: { fr: 'Yuan Chinois', en: 'Chinese Yuan', ar: 'اليوان الصيني' } },
+  { code: 'JPY', symbol: '¥', name: { fr: 'Yen Japonais', en: 'Japanese Yen', ar: 'الين الياباني' } },
+  { code: 'AED', symbol: 'د.إ', name: { fr: 'Dirham Emirati', en: 'UAE Dirham', ar: 'الدرهم الإماراتي' } },
+  { code: 'SAR', symbol: 'ر.س', name: { fr: 'Riyal Saoudien', en: 'Saudi Riyal', ar: 'الريال السعودي' } },
+  { code: 'MAD', symbol: 'د.م', name: { fr: 'Dirham Marocain', en: 'Moroccan Dirham', ar: 'الدرهم المغربي' } },
+  { code: 'DZD', symbol: 'د.ج', name: { fr: 'Dinar Algérien', en: 'Algerian Dinar', ar: 'الدينار الجزائري' } },
+  { code: 'LYD', symbol: 'ل.د', name: { fr: 'Dinar Libyen', en: 'Libyan Dinar', ar: 'الدينار الليبي' } },
+  { code: 'TRY', symbol: '₺', name: { fr: 'Lire Turque', en: 'Turkish Lira', ar: 'الليرة التركية' } },
+  { code: 'CHF', symbol: 'CHF', name: { fr: 'Franc Suisse', en: 'Swiss Franc', ar: 'الفرنك السويسري' } },
+  { code: 'CAD', symbol: 'C$', name: { fr: 'Dollar Canadien', en: 'Canadian Dollar', ar: 'الدولار الكندي' } },
 ];
 
 // Default exchange rates (approximate - should be updated)
@@ -80,7 +80,7 @@ export const ProductsAnalysisStep: React.FC<ProductsAnalysisStepProps> = ({
   organizationId,
   onProductsConfirmed,
 }) => {
-  const { t, isRTL } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   
   // State
   const [supplier, setSupplier] = useState<Supplier | null>(null);
@@ -297,7 +297,7 @@ export const ProductsAnalysisStep: React.FC<ProductsAnalysisStepProps> = ({
                         <span className="flex items-center gap-2">
                           <span className="font-mono">{curr.symbol}</span>
                           <span>{curr.code}</span>
-                          <span className="text-muted-foreground">- {curr.name}</span>
+                          <span className="text-muted-foreground">- {curr.name[language as keyof typeof curr.name] || curr.name.fr}</span>
                         </span>
                       </SelectItem>
                     ))}

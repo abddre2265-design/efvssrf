@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
-import { Invoice, formatCurrency } from './types';
+import { Invoice, formatCurrency, INVOICE_PREFIXES } from './types';
 import { usePdfSettings } from '@/contexts/PdfSettingsContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -241,6 +241,13 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   };
 
   const isForeign = invoice.client_type === 'foreign';
+
+  // Translate invoice number prefix to current language
+  const getTranslatedInvoiceNumber = () => {
+    const currentPrefix = INVOICE_PREFIXES[language as keyof typeof INVOICE_PREFIXES] || INVOICE_PREFIXES.fr;
+    const storedPrefix = invoice.invoice_prefix || 'FAC';
+    return invoice.invoice_number.replace(storedPrefix, currentPrefix);
+  };
 
   const getPaymentStatusLabel = () => {
     switch (invoice.payment_status) {
@@ -888,7 +895,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                   {isEnabled('invoice_title') && <h1>{t('pdf_invoice_title')}</h1>}
                   {isEnabled('invoice_number') && (
                     <div style={{ fontSize: '13px', fontWeight: 700, margin: '4px 0' }}>
-                      {invoice.invoice_number}
+                      {getTranslatedInvoiceNumber()}
                     </div>
                   )}
                   {isEnabled('invoice_date') && (
@@ -940,7 +947,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           ) : (
             /* Continuation pages: Compact header */
             <div className="invoice-continuation-header">
-              <h2>{t('pdf_invoice_title')} {invoice.invoice_number} ({t('pdf_continuation')})</h2>
+              <h2>{t('pdf_invoice_title')} {getTranslatedInvoiceNumber()} ({t('pdf_continuation')})</h2>
               <div style={{ fontSize: '11px', color: '#666' }}>
                 {getClientName()}
               </div>
