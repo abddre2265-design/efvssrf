@@ -857,7 +857,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                     marginBottom: '4px',
                     fontFamily: "'Orbitron', sans-serif",
                   }}>
-                    DUPLICATA
+                    {t('pdf_duplicata')}
                   </div>
                 )}
                 {isEnabled('company_info') && (
