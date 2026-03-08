@@ -321,7 +321,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                     <CardContent className="pt-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2"><Switch id="stamp-duty" checked={stampDutyEnabled} onCheckedChange={setStampDutyEnabled} /><label htmlFor="stamp-duty" className="text-sm">{t('add_stamp_duty')}</label></div>
-                        {stampDutyEnabled && <div className="flex items-center gap-2"><Input type="number" min="0" step="0.001" value={stampDutyAmount} onChange={(e) => setStampDutyAmount(parseFloat(e.target.value) || 0)} className="w-24" /><span className="text-sm text-muted-foreground">DT</span></div>}
+                        {stampDutyEnabled && <div className="flex items-center gap-2"><Input type="number" min="0" step="0.001" value={stampDutyAmount} onChange={(e) => setStampDutyAmount(parseFloat(e.target.value) || 0)} className="w-24" /><span className="text-sm text-muted-foreground">{t('vat_label') === 'VAT' ? 'TND' : 'DT'}</span></div>}
                       </div>
                     </CardContent>
                   </Card>
