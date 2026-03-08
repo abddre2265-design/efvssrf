@@ -1081,7 +1081,7 @@ const PublicInvoiceRequest: React.FC = () => {
                             className="pr-10"
                           />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                            TND
+                            {t('currency_label')}
                           </span>
                         </div>
                         {mixedLines.length > 1 && (
