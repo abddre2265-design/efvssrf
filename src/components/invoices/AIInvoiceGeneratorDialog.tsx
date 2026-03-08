@@ -22,7 +22,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { InvoiceNumberInput } from './InvoiceNumberInput';
 import { StockBubbles } from './StockBubbles';
-import { InvoiceLineFormData, StockBubble, INVOICE_PREFIXES, VAT_RATES, calculateLineTotal, formatCurrency } from './types';
+import { InvoiceLineFormData, StockBubble, INVOICE_PREFIXES, calculateLineTotal, formatCurrency } from './types';
+import { useTaxRates } from '@/hooks/useTaxRates';
 
 interface Client {
   id: string;
