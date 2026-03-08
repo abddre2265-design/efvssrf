@@ -260,8 +260,9 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const getStatusLabel = () => {
     switch (invoice.status) {
       case 'validated': return t('pdf_status_validated');
-      case 'draft': return t('pdf_status_draft');
-      default: return t('pdf_status_created');
+      case 'draft': return t('watermark_cancelled');
+      case 'created': return t('watermark_draft');
+      default: return t('watermark_draft');
     }
   };
 
