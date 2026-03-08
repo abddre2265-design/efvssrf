@@ -1509,6 +1509,7 @@ export const translations: Translations = {
   delivery_status_delivered: { fr: 'Livré', en: 'Delivered', ar: 'تم التسليم' },
   delivery_pending: { fr: 'En attente', en: 'Pending', ar: 'في الانتظار' },
   delivery_delivered: { fr: 'Livré', en: 'Delivered', ar: 'تم التسليم' },
+  delivery: { fr: 'Livraison', en: 'Delivery', ar: 'التسليم' },
   ai_invoice_generator: { fr: 'Générateur IA', en: 'AI Generator', ar: 'مولد الذكاء الاصطناعي' },
   
   // PDF Components - Delivery Note
