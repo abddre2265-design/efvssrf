@@ -166,7 +166,7 @@ serve(async (req) => {
         // Client not found - provide detailed format examples
         return new Response(JSON.stringify({
           action: "not_found",
-          message: `❌ Aucun client trouvé avec cet identifiant.`,
+          message: msg('not_found'),
           clientData: null,
           pendingRequests: searchResults.pendingRequests,
           showFormatHelp: true
