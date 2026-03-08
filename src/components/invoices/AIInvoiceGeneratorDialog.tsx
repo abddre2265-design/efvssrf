@@ -191,7 +191,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
     setGenerationError(null);
     try {
       const response = await supabase.functions.invoke('generate-ai-invoice', {
-        body: { clientId: selectedClientId, invoiceDate: format(invoiceDate, 'yyyy-MM-dd'), invoiceNumber, maxLines: parseInt(maxLines) || 10, minPriceTtc: parseFloat(minPriceTtc) || 0, maxPriceTtc: parseFloat(maxPriceTtc) || 999999, allowedVatRates, vatTargets: activeTargets.map(t => ({ vatRate: t.vatRate, targetHt: parseFloat(t.targetHt) || null, targetTtc: parseFloat(t.targetTtc) || null })), stampDutyEnabled: !isForeignClient && stampDutyEnabled, stampDutyAmount, products, isForeignClient },
+        body: { clientId: selectedClientId, invoiceDate: format(invoiceDate, 'yyyy-MM-dd'), invoiceNumber, maxLines: parseInt(maxLines) || 10, maxQuantityPerLine: parseInt(maxQuantityPerLine) || 50, minPriceTtc: parseFloat(minPriceTtc) || 0, maxPriceTtc: parseFloat(maxPriceTtc) || 999999, allowedVatRates, vatTargets: activeTargets.map(t => ({ vatRate: t.vatRate, targetHt: parseFloat(t.targetHt) || null, targetTtc: parseFloat(t.targetTtc) || null })), stampDutyEnabled: !isForeignClient && stampDutyEnabled, stampDutyAmount, products, isForeignClient },
       });
       if (response.error) throw response.error;
       const data = response.data;
