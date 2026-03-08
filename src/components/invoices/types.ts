@@ -140,7 +140,32 @@ export const formatCurrency = (amount: number, currency: string = 'TND', languag
   return `${amount.toFixed(3)} ${symbol}`;
 };
 
+// Invoice number prefixes by language
+export const INVOICE_PREFIXES = {
+  fr: 'FAC',
+  en: 'INV',
+  ar: 'فاتورة',
+} as const;
+
+// VAT rates
+export const VAT_RATES = [0, 7, 13, 19];
+
+// Calculate line totals
+export const calculateLineTotal = (
+  quantity: number,
+  unitPriceHt: number,
+  vatRate: number,
+  discountPercent: number,
+  isForeign: boolean
+): { lineHt: number; lineVat: number; lineTtc: number } => {
+  const lineHt = quantity * unitPriceHt * (1 - discountPercent / 100);
+  const lineVat = isForeign ? 0 : lineHt * (vatRate / 100);
+  const lineTtc = lineHt + lineVat;
+  return { lineHt, lineVat, lineTtc };
+};
+
 // Generate invoice number
 export const generateInvoiceNumber = (prefix: string, year: number, counter: number): string => {
   return `${prefix}-${year}-${String(counter).padStart(5, '0')}`;
+};
 };
