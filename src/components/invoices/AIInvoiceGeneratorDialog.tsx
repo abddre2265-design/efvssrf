@@ -84,6 +84,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [products, setProducts] = useState<Product[]>([]);
   const [maxLines, setMaxLines] = useState<string>('10');
+  const [maxQuantityPerLine, setMaxQuantityPerLine] = useState<string>('50');
   const [minPriceTtc, setMinPriceTtc] = useState<string>('0');
   const [maxPriceTtc, setMaxPriceTtc] = useState<string>('10000');
   const [allowedVatRates, setAllowedVatRates] = useState<number[]>([0, 7, 13, 19]);
