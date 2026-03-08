@@ -187,13 +187,13 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 15 }}>
               <thead>
                 <tr>
-                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'left' }}>Description</th>
-                  {isEnabled('product_reference') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'left' }}>Réf</th>}
-                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>Qté</th>
-                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'right' }}>P.U HT</th>
-                  {isEnabled('vat_column') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>TVA</th>}
-                  {isEnabled('discount_column') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>Rem</th>}
-                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'right' }}>Total HT</th>
+                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'left' }}>{t('pdf_description')}</th>
+                  {isEnabled('product_reference') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'left' }}>{t('pdf_ref')}</th>}
+                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>{t('pdf_qty')}</th>
+                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'right' }}>{t('pdf_unit_price_ht')}</th>
+                  {isEnabled('vat_column') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>{t('pdf_vat')}</th>}
+                  {isEnabled('discount_column') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>{t('pdf_discount')}</th>}
+                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'right' }}>{t('pdf_total_ht')}</th>
                 </tr>
               </thead>
               <tbody>
