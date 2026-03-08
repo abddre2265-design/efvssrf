@@ -87,8 +87,10 @@ serve(async (req) => {
     const eligibleProducts = products.filter(p => {
       if (!allowedVatRates.includes(p.vat_rate)) return false;
       if (p.price_ttc < minPriceTtc || p.price_ttc > maxPriceTtc) return false;
+
+      const baseAvailableStock = p.available_stock ?? ((p.current_stock ?? 0) - (p.reserved_stock ?? 0));
       // Exclude products with no available stock (unless unlimited or allow out of stock)
-      if (!p.unlimited_stock && !p.allow_out_of_stock_sale && (p.available_stock ?? 0) <= 0) return false;
+      if (!p.unlimited_stock && !p.allow_out_of_stock_sale && baseAvailableStock <= 0) return false;
       return true;
     });
 
@@ -163,7 +165,8 @@ serve(async (req) => {
           if (p.allow_out_of_stock_sale) return true;
           
           const used = stockUsed.get(p.id) || 0;
-          const available = (p.available_stock ?? 0) - used;
+          const baseAvailableStock = p.available_stock ?? ((p.current_stock ?? 0) - (p.reserved_stock ?? 0));
+          const available = baseAvailableStock - used;
           return available > 0;
         });
 
@@ -194,7 +197,7 @@ serve(async (req) => {
         // Try different quantities and discounts
         const stockLimit = product.unlimited_stock || product.allow_out_of_stock_sale 
           ? Math.ceil(remainingHt / product.price_ht) + 5
-          : (product.available_stock ?? 0) - (stockUsed.get(product.id) || 0);
+          : ((product.available_stock ?? ((product.current_stock ?? 0) - (product.reserved_stock ?? 0))) - (stockUsed.get(product.id) || 0));
         const maxQuantity = Math.min(effectiveMaxQtyPerLine, stockLimit, Math.ceil(remainingHt / product.price_ht) + 5);
 
         for (let qty = 1; qty <= Math.max(1, maxQuantity); qty++) {
@@ -213,7 +216,8 @@ serve(async (req) => {
         // Validate stock one more time
         if (!product.unlimited_stock && !product.allow_out_of_stock_sale) {
           const used = stockUsed.get(product.id) || 0;
-          const available = (product.available_stock ?? 0) - used;
+          const baseAvailableStock = product.available_stock ?? ((product.current_stock ?? 0) - (product.reserved_stock ?? 0));
+          const available = baseAvailableStock - used;
           if (bestQuantity > available) {
             bestQuantity = Math.max(1, available);
           }
