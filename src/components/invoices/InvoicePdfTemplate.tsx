@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, arSA } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice, formatCurrency } from './types';
 import { usePdfSettings } from '@/contexts/PdfSettingsContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Organization {
   id: string;
@@ -75,6 +76,8 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   isDuplicate = false,
 }) => {
   const { isComponentEnabled } = usePdfSettings();
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'ar' ? arSA : language === 'en' ? enUS : fr;
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [lines, setLines] = useState<InvoiceLineWithProduct[]>([]);
@@ -241,17 +244,17 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
   const getPaymentStatusLabel = () => {
     switch (invoice.payment_status) {
-      case 'paid': return 'PAYÉ';
-      case 'partial': return 'PARTIEL';
-      default: return 'IMPAYÉ';
+      case 'paid': return t('pdf_payment_paid');
+      case 'partial': return t('pdf_payment_partial');
+      default: return t('pdf_payment_unpaid');
     }
   };
 
   const getStatusLabel = () => {
     switch (invoice.status) {
-      case 'validated': return 'VALIDÉE';
-      case 'draft': return 'BROUILLON';
-      default: return 'CRÉÉE';
+      case 'validated': return t('pdf_status_validated');
+      case 'draft': return t('pdf_status_draft');
+      default: return t('pdf_status_created');
     }
   };
 
@@ -643,13 +646,13 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const renderTableHeader = () => (
     <thead>
       <tr>
-        <th>Description</th>
-        <th>Réf</th>
-        <th>Qté</th>
-        <th>P.U {isForeign ? '' : 'HT'}</th>
-        {!isForeign && <th>TVA</th>}
-        <th>Remise</th>
-        <th>Total {isForeign ? '' : 'HT'}</th>
+        <th>{t('pdf_description')}</th>
+        <th>{t('pdf_ref')}</th>
+        <th>{t('pdf_qty')}</th>
+        <th>{isForeign ? t('pdf_unit_price') : t('pdf_unit_price_ht')}</th>
+        {!isForeign && <th>{t('pdf_vat')}</th>}
+        <th>{t('pdf_discount')}</th>
+        <th>{isForeign ? t('pdf_total') : t('pdf_total_ht')}</th>
       </tr>
     </thead>
   );
@@ -678,13 +681,13 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
       {/* VAT Breakdown by Rate - Left side */}
       {isEnabled('vat_breakdown') && !isForeign && vatBreakdown.length > 0 && (
         <div className="invoice-vat-breakdown">
-          <div className="invoice-vat-breakdown-title">RÉCAPITULATIF TVA</div>
+          <div className="invoice-vat-breakdown-title">{t('pdf_vat_recap')}</div>
           <table>
             <thead>
               <tr>
-                <th>Taux</th>
-                <th>Base HT</th>
-                <th>TVA</th>
+                <th>{t('pdf_vat_rate')}</th>
+                <th>{t('pdf_vat_base')}</th>
+                <th>{t('pdf_vat')}</th>
               </tr>
             </thead>
             <tbody>
@@ -713,11 +716,11 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           {!isForeign && (
             <>
               <p>
-                <span>Total HT</span>
+                <span>{t('pdf_total_ht')}</span>
                 <span>{formatCurrency(invoice.subtotal_ht, invoice.currency)}</span>
               </p>
               <p>
-                <span>TVA</span>
+                <span>{t('pdf_vat')}</span>
                 <span>{formatCurrency(invoice.total_vat, invoice.currency)}</span>
               </p>
             </>
@@ -725,14 +728,14 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           
           {invoice.total_discount > 0 && (
             <p>
-              <span>Remise</span>
+              <span>{t('pdf_discount')}</span>
               <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.total_discount, invoice.currency)}</span>
             </p>
           )}
           
           {!isForeign && (
             <p>
-              <span>Total TTC</span>
+              <span>{t('pdf_total_ttc')}</span>
               <span>{formatCurrency(invoice.total_ttc, invoice.currency)}</span>
             </p>
           )}
@@ -740,20 +743,20 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           {/* Withholding Tax / Retenue à la source - calculated on TTC */}
           {isEnabled('withholding_tax') && invoice.withholding_applied && invoice.withholding_rate > 0 && (
             <p>
-              <span>RETENUE À LA SOURCE ({invoice.withholding_rate}%)</span>
+              <span>{t('pdf_withholding')} ({invoice.withholding_rate}%)</span>
               <span style={{ color: '#e53935' }}>-{formatCurrency(invoice.total_ttc * (invoice.withholding_rate / 100), invoice.currency)}</span>
             </p>
           )}
           
           {isEnabled('stamp_duty') && !isForeign && invoice.stamp_duty_enabled && (
             <p>
-              <span>TIMBRE FISCAL</span>
+              <span>{t('pdf_stamp_duty')}</span>
               <span>{formatCurrency(invoice.stamp_duty_amount, 'TND')}</span>
             </p>
           )}
           
           <p className="invoice-grand">
-            <span>NET À PAYER</span>
+            <span>{t('pdf_net_payable')}</span>
             <span>{formatCurrency(invoice.net_payable, invoice.currency)}</span>
           </p>
         </div>
@@ -767,8 +770,8 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
         <div className="invoice-footer-bank">
           {banks.length > 0 && (
             <>
-              <div><strong>IBAN :</strong> {banks[0].iban}</div>
-              {banks[0].bank_name && <div><strong>Banque :</strong> {banks[0].bank_name}</div>}
+              <div><strong>{t('pdf_iban')} :</strong> {banks[0].iban}</div>
+              {banks[0].bank_name && <div><strong>{t('pdf_bank')} :</strong> {banks[0].bank_name}</div>}
             </>
           )}
         </div>
@@ -776,7 +779,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
       {isEnabled('signature_area') && (
         <div className="invoice-footer-signature">
           <div className="invoice-footer-signature-line"></div>
-          <div>Signature autorisée</div>
+          <div>{t('pdf_signature')}</div>
         </div>
       )}
     </div>
@@ -785,19 +788,19 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
   const getWatermarkInfo = (): { text: string; className: string } | null => {
     const status = invoice.status as string;
     if (status === 'created' || status === 'draft') {
-      return { text: 'ANNULÉE', className: 'invoice-watermark-cancelled' };
+      return { text: t('watermark_cancelled'), className: 'invoice-watermark-cancelled' };
     }
     if (status === 'cancelled') {
-      return { text: 'ANNULÉE', className: 'invoice-watermark-cancelled' };
+      return { text: t('watermark_cancelled'), className: 'invoice-watermark-cancelled' };
     }
     if (status === 'validated') {
       switch (invoice.payment_status) {
         case 'paid':
-          return { text: 'PAYÉ', className: 'invoice-watermark-paid' };
+          return { text: t('watermark_paid'), className: 'invoice-watermark-paid' };
         case 'partial':
-          return { text: 'PARTIELLEMENT PAYÉ', className: 'invoice-watermark-partial' };
+          return { text: t('watermark_partial'), className: 'invoice-watermark-partial' };
         default:
-          return { text: 'IMPAYÉ', className: 'invoice-watermark-unpaid' };
+          return { text: t('watermark_unpaid'), className: 'invoice-watermark-unpaid' };
       }
     }
     return null;
@@ -854,7 +857,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                     marginBottom: '4px',
                     fontFamily: "'Orbitron', sans-serif",
                   }}>
-                    DUPLICATA
+                    {t('pdf_duplicata')}
                   </div>
                 )}
                 {isEnabled('company_info') && (
@@ -873,8 +876,8 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                         <div>{organization.postal_code}, {organization.governorate}</div>
                       </>
                     )}
-                    {isCompanyFieldVisible('company_phone') && <div>Tel : {organization.phone}</div>}
-                    {isCompanyFieldVisible('company_email') && organization.email && <div>Email : {organization.email}</div>}
+                    {isCompanyFieldVisible('company_phone') && <div>{t('pdf_tel')} : {organization.phone}</div>}
+                    {isCompanyFieldVisible('company_email') && organization.email && <div>{t('pdf_email')} : {organization.email}</div>}
                     {isCompanyFieldVisible('company_identifier') && organization.identifier && (
                       <div>{organization.identifier_type} : {organization.identifier}</div>
                     )}
@@ -882,7 +885,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                 )}
 
                 <div className="invoice-box">
-                  {isEnabled('invoice_title') && <h1>FACTURE</h1>}
+                  {isEnabled('invoice_title') && <h1>{t('pdf_invoice_title')}</h1>}
                   {isEnabled('invoice_number') && (
                     <div style={{ fontSize: '13px', fontWeight: 700, margin: '4px 0' }}>
                       {invoice.invoice_number}
@@ -890,12 +893,12 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                   )}
                   {isEnabled('invoice_date') && (
                     <div style={{ fontSize: '11px', margin: '3px 0' }}>
-                      Date : {format(new Date(invoice.invoice_date), 'dd/MM/yyyy', { locale: fr })}
+                      {t('pdf_date')} : {format(new Date(invoice.invoice_date), 'dd/MM/yyyy', { locale: dateLocale })}
                     </div>
                   )}
                   {isEnabled('due_date') && invoice.due_date && (
                     <div style={{ fontSize: '11px', margin: '3px 0' }}>
-                      Échéance : {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: fr })}
+                      {t('pdf_due_date')} : {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: dateLocale })}
                     </div>
                   )}
                   {isEnabled('status_badge') && <span className="invoice-badge">{getStatusLabel()}</span>}
@@ -905,7 +908,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
               {/* Client & Payment Info */}
               <div className="invoice-info">
                 {isEnabled('client_info') && (
-                  <div className="invoice-card" data-label="FACTURÉ À">
+                  <div className="invoice-card" data-label={t('pdf_billed_to')}>
                     {isClientFieldVisible('client_name') && (
                       <p style={{ fontWeight: 700, fontSize: '12px' }}>{getClientName()}</p>
                     )}
@@ -917,16 +920,16 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                 )}
 
                 {isEnabled('payment_status') && (
-                  <div className="invoice-card" data-label="RÈGLEMENT & STATUT">
-                    <p>Paiement : <strong>{getPaymentStatusLabel()}</strong></p>
+                  <div className="invoice-card" data-label={t('pdf_payment_status')}>
+                    <p>{t('pdf_payment_label')} : <strong>{getPaymentStatusLabel()}</strong></p>
                     {invoice.paid_amount > 0 && (
-                      <p>Montant payé : {formatCurrency(invoice.paid_amount, invoice.currency)}</p>
+                      <p>{t('pdf_paid_amount')} : {formatCurrency(invoice.paid_amount, invoice.currency)}</p>
                     )}
                     {isForeign && (
                       <>
-                        <p>Devise : {invoice.currency}</p>
+                        <p>{t('pdf_currency_label')} : {invoice.currency}</p>
                         {invoice.exchange_rate !== 1 && (
-                          <p>Taux de change : {invoice.exchange_rate}</p>
+                          <p>{t('pdf_exchange_rate')} : {invoice.exchange_rate}</p>
                         )}
                       </>
                     )}
@@ -937,7 +940,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           ) : (
             /* Continuation pages: Compact header */
             <div className="invoice-continuation-header">
-              <h2>FACTURE {invoice.invoice_number} (suite)</h2>
+              <h2>{t('pdf_invoice_title')} {invoice.invoice_number} ({t('pdf_continuation')})</h2>
               <div style={{ fontSize: '11px', color: '#666' }}>
                 {getClientName()}
               </div>
@@ -956,18 +959,18 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
               {renderTotals()}
               {creditNotes.length > 0 && (
                 <div className="invoice-credit-notes-block">
-                  <div className="invoice-credit-notes-title">AVOIRS ASSOCIÉS</div>
+                  <div className="invoice-credit-notes-title">{t('pdf_associated_credits')}</div>
                   {creditNotes.map((cn) => (
                     <div key={cn.id} className="invoice-credit-note-item">
                       <div className="invoice-credit-note-header">
                         <span className="invoice-credit-note-number">{cn.credit_note_number}</span>
                         <span className="invoice-credit-note-type">
-                          {cn.credit_note_type === 'commercial_price' ? 'Avoir Commercial' : 'Avoir Produit'}
+                          {cn.credit_note_type === 'commercial_price' ? t('pdf_commercial_credit') : t('pdf_product_credit')}
                         </span>
                       </div>
                       <div className="invoice-credit-note-details">
-                        <span>Date : {format(new Date(cn.credit_note_date), 'dd/MM/yyyy', { locale: fr })}</span>
-                        <span>Méthode : {cn.credit_note_method === 'lines' ? 'Par ligne' : 'Sur total'}</span>
+                        <span>{t('pdf_date')} : {format(new Date(cn.credit_note_date), 'dd/MM/yyyy', { locale: dateLocale })}</span>
+                        <span>{t('pdf_method')} : {cn.credit_note_method === 'lines' ? t('pdf_by_line') : t('pdf_on_total')}</span>
                       </div>
 
                       {/* Line-by-line details table */}
@@ -975,14 +978,14 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '6px', fontSize: '9px' }}>
                           <thead>
                             <tr style={{ background: '#f4faff' }}>
-                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Produit</th>
-                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Réf</th>
-                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Montant HT</th>
-                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Remise HT</th>
-                              <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Taux</th>
-                              {!isForeign && <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>TVA</th>}
-                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Remise TTC</th>
-                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>Nouveau HT</th>
+                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_product')}</th>
+                              <th style={{ textAlign: 'left', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_ref')}</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_amount_ht')}</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_discount_ht')}</th>
+                              <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_vat_rate')}</th>
+                              {!isForeign && <th style={{ textAlign: 'center', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_vat')}</th>}
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_discount_ttc')}</th>
+                              <th style={{ textAlign: 'right', padding: '3px 5px', borderBottom: '1px solid #b0bec5' }}>{t('pdf_new_ht')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1003,16 +1006,16 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                       )}
 
                       <div className="invoice-credit-note-details" style={{ marginTop: '6px', borderTop: '1px solid #b0bec5', paddingTop: '4px' }}>
-                        <span>Réduction HT : {formatCurrency(cn.subtotal_ht, invoice.currency)}</span>
-                        <span>TVA : {formatCurrency(cn.total_vat, invoice.currency)}</span>
-                        <span>Réduction TTC : {formatCurrency(cn.total_ttc, invoice.currency)}</span>
-                        {cn.stamp_duty_amount > 0 && <span>Timbre : {formatCurrency(cn.stamp_duty_amount, 'TND')}</span>}
-                        {cn.withholding_amount > 0 && <span>Retenue : {formatCurrency(cn.withholding_amount, invoice.currency)}</span>}
-                        <span><strong>Nouveau Net : {formatCurrency(cn.new_net_payable, invoice.currency)}</strong></span>
+                        <span>{t('pdf_reduction_ht')} : {formatCurrency(cn.subtotal_ht, invoice.currency)}</span>
+                        <span>{t('pdf_vat')} : {formatCurrency(cn.total_vat, invoice.currency)}</span>
+                        <span>{t('pdf_reduction_ttc')} : {formatCurrency(cn.total_ttc, invoice.currency)}</span>
+                        {cn.stamp_duty_amount > 0 && <span>{t('pdf_stamp')} : {formatCurrency(cn.stamp_duty_amount, 'TND')}</span>}
+                        {cn.withholding_amount > 0 && <span>{t('pdf_withholding_short')} : {formatCurrency(cn.withholding_amount, invoice.currency)}</span>}
+                        <span><strong>{t('pdf_new_net')} : {formatCurrency(cn.new_net_payable, invoice.currency)}</strong></span>
                       </div>
                       {cn.reason && (
                         <div style={{ marginTop: '3px', fontStyle: 'italic', color: '#666' }}>
-                          Motif : {cn.reason}
+                          {t('pdf_reason')} : {cn.reason}
                         </div>
                       )}
                     </div>
@@ -1026,7 +1029,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           {/* Page number */}
           {totalPages > 1 && (
             <div className="invoice-page-number">
-              Page {pageIndex + 1} / {totalPages}
+              {t('pdf_page')} {pageIndex + 1} / {totalPages}
             </div>
           )}
         </div>
