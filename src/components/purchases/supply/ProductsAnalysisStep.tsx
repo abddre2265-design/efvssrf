@@ -297,7 +297,7 @@ export const ProductsAnalysisStep: React.FC<ProductsAnalysisStepProps> = ({
                         <span className="flex items-center gap-2">
                           <span className="font-mono">{curr.symbol}</span>
                           <span>{curr.code}</span>
-                          <span className="text-muted-foreground">- {curr.name}</span>
+                          <span className="text-muted-foreground">- {curr.name[language as keyof typeof curr.name] || curr.name.fr}</span>
                         </span>
                       </SelectItem>
                     ))}
