@@ -750,7 +750,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           
           {isEnabled('stamp_duty') && !isForeign && invoice.stamp_duty_enabled && (
             <p>
-              <span>TIMBRE FISCAL</span>
+              <span>{t('pdf_stamp_duty')}</span>
               <span>{formatCurrency(invoice.stamp_duty_amount, 'TND')}</span>
             </p>
           )}
