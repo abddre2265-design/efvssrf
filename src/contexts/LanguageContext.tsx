@@ -1933,7 +1933,6 @@ export const translations: Translations = {
   paid_amount_suffix: { fr: 'payés', en: 'paid', ar: 'مدفوع' },
   modify_this_request: { fr: 'Modifier cette demande', en: 'Modify this request', ar: 'تعديل هذا الطلب' },
   request_will_be_updated: { fr: 'La demande sera mise à jour avec vos modifications', en: 'The request will be updated with your changes', ar: 'سيتم تحديث الطلب بتعديلاتك' },
-  not_specified: { fr: 'Non spécifié', en: 'Not specified', ar: 'غير محدد' },
   unknown_store: { fr: 'Magasin inconnu', en: 'Unknown store', ar: 'متجر غير معروف' },
 };
 
