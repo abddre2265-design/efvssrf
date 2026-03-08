@@ -240,7 +240,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
     } catch (error: any) { toast.error(error.message || t('error_creating_invoice')); setStep('preview'); } finally { setIsSaving(false); }
   };
 
-  const resetForm = () => { setStep('config'); setInvoiceDate(null); setDueDate(null); setSelectedClientId(''); setMaxLines('10'); setMaxQuantityPerLine('50'); setMinPriceTtc('0'); setMaxPriceTtc('10000'); setAllowedVatRates([0, 7, 13, 19]); setVatTargets([]); setStampDutyEnabled(true); setGeneratedLines([]); setGenerationSummary(null); setGenerationError(null); };
+  const resetForm = () => { setStep('config'); setInvoiceDate(null); setDueDate(null); setSelectedClientId(''); setMaxLines('10'); setMaxQuantityPerLine('50'); setMinPriceTtc('0'); setMaxPriceTtc('10000'); setAllowedVatRates(dynamicVatRates); setVatTargets([]); setStampDutyEnabled(true); setGeneratedLines([]); setGenerationSummary(null); setGenerationError(null); };
   const getClientName = (client: Client): string => client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim();
 
   const stockBubbles: StockBubble[] = React.useMemo(() => {
