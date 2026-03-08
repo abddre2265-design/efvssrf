@@ -770,8 +770,8 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
         <div className="invoice-footer-bank">
           {banks.length > 0 && (
             <>
-              <div><strong>IBAN :</strong> {banks[0].iban}</div>
-              {banks[0].bank_name && <div><strong>Banque :</strong> {banks[0].bank_name}</div>}
+              <div><strong>{t('pdf_iban')} :</strong> {banks[0].iban}</div>
+              {banks[0].bank_name && <div><strong>{t('pdf_bank')} :</strong> {banks[0].bank_name}</div>}
             </>
           )}
         </div>
