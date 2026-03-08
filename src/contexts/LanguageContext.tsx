@@ -590,6 +590,7 @@ export const translations: Translations = {
   pdf_duplicata: { fr: 'DUPLICATA', en: 'DUPLICATE', ar: 'نسخة مكررة' },
   print_duplicate: { fr: 'Duplicata', en: 'Duplicate', ar: 'نسخة مكررة' },
   print_invoice: { fr: 'Aperçu Facture', en: 'Invoice Preview', ar: 'معاينة الفاتورة' },
+  print: { fr: 'Imprimer', en: 'Print', ar: 'طباعة' },
 
   // Watermark labels
   watermark_cancelled: { fr: 'ANNULÉE', en: 'CANCELLED', ar: 'ملغاة' },
