@@ -1988,8 +1988,11 @@ export type Database = {
           expected_delivery_date: string | null
           id: string
           notes: string | null
+          order_counter: number
           order_date: string
           order_number: string
+          order_prefix: string
+          order_year: number
           organization_id: string
           status: string
           subtotal_ht: number
@@ -2005,8 +2008,11 @@ export type Database = {
           expected_delivery_date?: string | null
           id?: string
           notes?: string | null
+          order_counter?: number
           order_date?: string
           order_number: string
+          order_prefix?: string
+          order_year?: number
           organization_id: string
           status?: string
           subtotal_ht?: number
@@ -2022,8 +2028,11 @@ export type Database = {
           expected_delivery_date?: string | null
           id?: string
           notes?: string | null
+          order_counter?: number
           order_date?: string
           order_number?: string
+          order_prefix?: string
+          order_year?: number
           organization_id?: string
           status?: string
           subtotal_ht?: number
