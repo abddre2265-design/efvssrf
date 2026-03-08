@@ -374,14 +374,14 @@ const PublicInvoiceRequest: React.FC = () => {
     try {
       // Build payment methods JSON
       let paymentMethods = null;
-      if (paymentStatus !== 'unpaid') {
+      if (paidAmountNumber > 0) {
         if (paymentMethod === 'mixed') {
           paymentMethods = mixedLines.map(line => ({
             method: line.method,
             amount: parseFloat(line.amount) || 0
           }));
         } else {
-          paymentMethods = [{ method: paymentMethod, amount: paymentStatus === 'paid' ? parseFloat(totalTTC) : parseFloat(paidAmount) }];
+          paymentMethods = [{ method: paymentMethod, amount: paidAmountNumber }];
         }
       }
 
@@ -406,10 +406,12 @@ const PublicInvoiceRequest: React.FC = () => {
         transaction_number: transactionNumber,
         receipt_number: receiptNumber || null,
         order_number: orderNumber || null,
-        total_ttc: parseFloat(totalTTC),
-        payment_status: paymentStatus,
-        paid_amount: paymentStatus === 'paid' ? parseFloat(totalTTC) : (paymentStatus === 'partial' ? parseFloat(paidAmount) : 0),
+        total_ttc: totalTTCAmount,
+        payment_status: calculatedPaymentStatus,
+        paid_amount: paidAmountNumber,
         payment_methods: paymentMethods,
+        linked_client_id: linkedClientId,
+      };
         linked_client_id: linkedClientId,
       };
 
