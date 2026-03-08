@@ -69,7 +69,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   )}
                   {isCompanyFieldVisible('company_address') && (
                     <>
-                      <div>123 Rue Example</div>
+                      <div>{t('pdf_preview_address')}</div>
                       <div>1000, Tunis</div>
                     </>
                   )}
