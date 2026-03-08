@@ -885,7 +885,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                 )}
 
                 <div className="invoice-box">
-                  {isEnabled('invoice_title') && <h1>FACTURE</h1>}
+                  {isEnabled('invoice_title') && <h1>{t('pdf_invoice_title')}</h1>}
                   {isEnabled('invoice_number') && (
                     <div style={{ fontSize: '13px', fontWeight: 700, margin: '4px 0' }}>
                       {invoice.invoice_number}
