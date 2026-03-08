@@ -1512,6 +1512,10 @@ export const translations: Translations = {
   delivery_delivered: { fr: 'Livré', en: 'Delivered', ar: 'تم التسليم' },
   delivery: { fr: 'Livraison', en: 'Delivery', ar: 'التسليم' },
   ai_invoice_generator: { fr: 'Générateur IA', en: 'AI Generator', ar: 'مولد الذكاء الاصطناعي' },
+  products_available: { fr: 'produits disponibles', en: 'products available', ar: 'منتجات متوفرة' },
+  matching_vat_rates: { fr: 'correspondent aux taux TVA', en: 'matching VAT rates', ar: 'تطابق معدلات الضريبة' },
+  max_qty: { fr: 'Qté max', en: 'Max qty', ar: 'الكمية القصوى' },
+  max_discount_label: { fr: 'Remise max', en: 'Max discount', ar: 'الخصم الأقصى' },
   
   // PDF Components - Delivery Note
   pdf_component_delivery_note_title: { fr: 'Titre "BON DE LIVRAISON"', en: '"DELIVERY NOTE" Title', ar: 'عنوان "سند التسليم"' },
