@@ -593,6 +593,40 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
       color: #0a84ff;
     }
 
+    .invoice-watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-35deg);
+      font-size: 72px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 8px;
+      pointer-events: none;
+      z-index: 0;
+      white-space: nowrap;
+    }
+
+    .invoice-watermark-paid {
+      color: rgba(34, 197, 94, 0.12);
+    }
+
+    .invoice-watermark-partial {
+      color: rgba(245, 158, 11, 0.12);
+    }
+
+    .invoice-watermark-unpaid {
+      color: rgba(239, 68, 68, 0.12);
+    }
+
+    .invoice-watermark-draft {
+      color: rgba(107, 114, 128, 0.15);
+    }
+
+    .invoice-watermark-cancelled {
+      color: rgba(239, 68, 68, 0.15);
+    }
+
     @media print {
       body { padding: 0; margin: 0; }
       .invoice-pdf-page { border: none; }
@@ -741,6 +775,34 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
     </div>
   );
 
+  const getWatermarkInfo = (): { text: string; className: string } | null => {
+    if (invoice.status === 'created') {
+      return { text: 'BROUILLON', className: 'invoice-watermark-draft' };
+    }
+    // Validated invoices show payment status
+    if (invoice.status === 'validated') {
+      switch (invoice.payment_status) {
+        case 'paid':
+          return { text: 'PAYÉ', className: 'invoice-watermark-paid' };
+        case 'partial':
+          return { text: 'PARTIELLEMENT PAYÉ', className: 'invoice-watermark-partial' };
+        default:
+          return { text: 'IMPAYÉ', className: 'invoice-watermark-unpaid' };
+      }
+    }
+    return null;
+  };
+
+  const renderWatermark = () => {
+    const info = getWatermarkInfo();
+    if (!info) return null;
+    return (
+      <div className={`invoice-watermark ${info.className}`}>
+        {info.text}
+      </div>
+    );
+  };
+
   const renderCorners = () => (
     isEnabled('decorative_corners') ? (
       <>
@@ -758,6 +820,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
 
       {pages.map((pageLines, pageIndex) => (
         <div key={pageIndex} className="invoice-pdf-page">
+          {renderWatermark()}
           {renderCorners()}
 
           {pageIndex === 0 ? (
