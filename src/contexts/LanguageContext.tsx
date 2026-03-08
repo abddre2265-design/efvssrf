@@ -1952,7 +1952,7 @@ export const translations: Translations = {
   search_by_transaction: { fr: 'Rechercher par N° de transaction', en: 'Search by transaction number', ar: 'البحث برقم المعاملة' },
   search_by_identifier: { fr: 'Rechercher par identifiant', en: 'Search by identifier', ar: 'البحث بالمعرّف' },
   enter_transaction_number: { fr: 'Saisissez votre N° de transaction', en: 'Enter your transaction number', ar: 'أدخل رقم المعاملة' },
-  enter_your_identifier: { fr: 'Saisissez votre identifiant (CIN, MF, Passeport)', en: 'Enter your identifier (CIN, Tax ID, Passport)', ar: 'أدخل معرّفك (بطاقة التعريف، المعرّف الجبائي، جواز السفر)' },
+  enter_identifier_tracking: { fr: 'Saisissez votre identifiant (CIN, MF, Passeport)', en: 'Enter your identifier (CIN, Tax ID, Passport)', ar: 'أدخل معرّفك (بطاقة التعريف، المعرّف الجبائي، جواز السفر)' },
   search_button: { fr: 'Rechercher', en: 'Search', ar: 'بحث' },
   searching: { fr: 'Recherche...', en: 'Searching...', ar: 'جارٍ البحث...' },
   no_requests_found: { fr: 'Aucune demande trouvée', en: 'No requests found', ar: 'لم يتم العثور على طلبات' },
