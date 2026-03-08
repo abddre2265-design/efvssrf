@@ -1881,7 +1881,6 @@ export const translations: Translations = {
   low_stock_products: { fr: 'Produits stock faible', en: 'Low stock products', ar: 'منتجات منخفضة المخزون' },
 
   // Public Form AI Assistant
-  ai_assistant: { fr: 'Assistant IA', en: 'AI Assistant', ar: 'المساعد الذكي' },
   automatic_recovery: { fr: 'Récupération automatique', en: 'Automatic recovery', ar: 'استرجاع تلقائي' },
   welcome_ai_fallback: { fr: 'Bienvenue ! 👋\n\nSi vous avez effectué un achat chez', en: 'Welcome! 👋\n\nIf you made a purchase at', ar: 'مرحبًا! 👋\n\nإذا قمت بشراء من' },
   ai_fallback_suffix: { fr: ', vous pouvez saisir votre identifiant fiscal pour récupérer automatiquement vos informations.', en: ', you can enter your tax ID to automatically retrieve your information.', ar: '، يمكنك إدخال معرفك الضريبي لاسترجاع معلوماتك تلقائيًا.' },
@@ -1894,7 +1893,7 @@ export const translations: Translations = {
   i_understand_not_you: { fr: "Je comprends, ce n'est pas vous.", en: "I understand, that's not you.", ar: 'أفهم، هذا ليس أنت.' },
   enter_your_identifier: { fr: 'Saisissez votre identifiant...', en: 'Enter your identifier...', ar: 'أدخل معرّفك...' },
   or_word: { fr: 'Ou', en: 'Or', ar: 'أو' },
-  fill_manually: { fr: 'remplir manuellement', en: 'fill manually', ar: 'ملء يدوي' },
+  fill_manually_link: { fr: 'remplir manuellement', en: 'fill manually', ar: 'ملء يدوي' },
   form_prefilled: { fr: 'Formulaire pré-rempli ✨', en: 'Form pre-filled ✨', ar: 'تم ملء النموذج مسبقًا ✨' },
   fill_form_manually: { fr: '📝 Veuillez remplir le formulaire manuellement.\n\nLa prochaine fois, ce sera plus rapide car vos informations seront enregistrées ! 🚀', en: '📝 Please fill the form manually.\n\nNext time, it will be faster as your information will be saved! 🚀', ar: '📝 يرجى ملء النموذج يدويًا.\n\nفي المرة القادمة، سيكون الأمر أسرع لأن معلوماتك ستكون محفوظة! 🚀' },
   are_you_foreign_client: { fr: '🤔 Êtes-vous un client étranger ?\n\nSi oui, essayez avec votre numéro de passeport.', en: '🤔 Are you a foreign client?\n\nIf so, try with your passport number.', ar: '🤔 هل أنت عميل أجنبي؟\n\nإذا كان الأمر كذلك، جرب رقم جواز السفر.' },
