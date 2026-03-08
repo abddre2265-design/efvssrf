@@ -93,6 +93,7 @@ const PublicInvoiceRequest: React.FC = () => {
   const [stores, setStores] = useState<StoreData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [activePublicTab, setActivePublicTab] = useState<'request' | 'track'>('request');
   
   // Confirmation dialog for partial payment treated as paid
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
