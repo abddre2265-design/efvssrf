@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, arSA } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice, formatCurrency } from './types';
 import { usePdfSettings } from '@/contexts/PdfSettingsContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Organization {
   id: string;
