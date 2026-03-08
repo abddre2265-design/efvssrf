@@ -65,6 +65,8 @@ export const OrganizationSettingsDialog: React.FC = () => {
     logoFile: null,
     logoPreview: '',
     isIdentifierLocked: false,
+    defaultWithholdingRate: 0,
+    withholdingMinAmount: 0,
   });
 
   // Load organization data when dialog opens
