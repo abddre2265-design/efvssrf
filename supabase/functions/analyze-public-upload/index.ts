@@ -71,7 +71,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'google/gemini-1.5-flash',
+        model: 'google/gemini-2.5-flash',
         messages: [
           {
             role: 'user',
