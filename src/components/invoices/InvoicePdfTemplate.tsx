@@ -947,7 +947,7 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
           ) : (
             /* Continuation pages: Compact header */
             <div className="invoice-continuation-header">
-              <h2>{t('pdf_invoice_title')} {invoice.invoice_number} ({t('pdf_continuation')})</h2>
+              <h2>{t('pdf_invoice_title')} {getTranslatedInvoiceNumber()} ({t('pdf_continuation')})</h2>
               <div style={{ fontSize: '11px', color: '#666' }}>
                 {getClientName()}
               </div>
