@@ -292,7 +292,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                     paddingTop: 3,
                     marginTop: 3
                   }}>
-                    <span>Net à payer</span>
+                    <span>{t('pdf_net_payable')}</span>
                     <span>235.430 DT</span>
                   </div>
                 </div>
