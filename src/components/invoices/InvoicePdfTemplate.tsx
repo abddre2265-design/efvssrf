@@ -969,8 +969,8 @@ export const InvoicePdfTemplate: React.FC<InvoicePdfTemplateProps> = ({
                         </span>
                       </div>
                       <div className="invoice-credit-note-details">
-                        <span>Date : {format(new Date(cn.credit_note_date), 'dd/MM/yyyy', { locale: fr })}</span>
-                        <span>Méthode : {cn.credit_note_method === 'lines' ? 'Par ligne' : 'Sur total'}</span>
+                        <span>{t('pdf_date')} : {format(new Date(cn.credit_note_date), 'dd/MM/yyyy', { locale: dateLocale })}</span>
+                        <span>{t('pdf_method')} : {cn.credit_note_method === 'lines' ? t('pdf_by_line') : t('pdf_on_total')}</span>
                       </div>
 
                       {/* Line-by-line details table */}
