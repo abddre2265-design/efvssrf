@@ -216,7 +216,8 @@ serve(async (req) => {
         // Validate stock one more time
         if (!product.unlimited_stock && !product.allow_out_of_stock_sale) {
           const used = stockUsed.get(product.id) || 0;
-          const available = (product.available_stock ?? 0) - used;
+          const baseAvailableStock = product.available_stock ?? ((product.current_stock ?? 0) - (product.reserved_stock ?? 0));
+          const available = baseAvailableStock - used;
           if (bestQuantity > available) {
             bestQuantity = Math.max(1, available);
           }
