@@ -16,6 +16,7 @@ export const InvoicePrintDialog: React.FC<InvoicePrintDialogProps> = ({
   open,
   onOpenChange,
   invoiceId,
+  isDuplicate = false,
 }) => {
   const { t, isRTL } = useLanguage();
   const printRef = useRef<HTMLDivElement>(null);

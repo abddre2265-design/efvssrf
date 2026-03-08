@@ -21,7 +21,8 @@ import {
   RotateCcw,
   Wallet,
   Printer,
-  ClipboardList
+  ClipboardList,
+  Copy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
