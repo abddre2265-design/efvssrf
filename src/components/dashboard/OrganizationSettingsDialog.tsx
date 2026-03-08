@@ -119,6 +119,8 @@ export const OrganizationSettingsDialog: React.FC = () => {
           logoFile: null,
           logoPreview: org.logo_url || '',
           isIdentifierLocked: org.identifier_locked,
+          defaultWithholdingRate: (org as any).default_withholding_rate ?? 0,
+          withholdingMinAmount: (org as any).withholding_min_amount ?? 0,
         });
       }
     } catch (error) {
