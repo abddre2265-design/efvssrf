@@ -60,10 +60,20 @@ interface InvoiceLineWithProduct {
   } | null;
 }
 
+interface PreloadedData {
+  invoice: any;
+  client: any;
+  organization: any;
+  banks: any[];
+  lines: any[];
+  creditNotes: any[];
+}
+
 interface InvoicePdfTemplateProps {
   invoiceId: string;
   onReady?: () => void;
   isDuplicate?: boolean;
+  preloadedData?: PreloadedData;
 }
 
 // Constants for pagination
