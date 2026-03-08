@@ -99,7 +99,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                 <div style={{ marginBottom: 3 }}>{t('pdf_date')} : 21/01/2025</div>
               )}
               {isEnabled('due_date') && documentType === 'invoice' && (
-                <div style={{ marginBottom: 3 }}>Échéance : 21/02/2025</div>
+                <div style={{ marginBottom: 3 }}>{t('pdf_due_date')} : 21/02/2025</div>
               )}
               {isEnabled('status_badge') && (
                 <span style={{ 
