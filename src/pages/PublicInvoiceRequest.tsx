@@ -519,6 +519,9 @@ const PublicInvoiceRequest: React.FC = () => {
           <CardHeader className="text-center">
             <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
             <CardTitle>{t('request_sent_success')}</CardTitle>
+            {organizationName && (
+              <p className="text-sm font-medium text-primary">{organizationName}</p>
+            )}
             <CardDescription>
               {t('request_sent_description')}
             </CardDescription>
