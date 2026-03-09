@@ -502,16 +502,11 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
     resetLookup();
   };
 
-  const handlePaymentPromptClose = (processPayment: boolean) => {
-    setPaymentPromptOpen(false);
+  const handleWorkflowClose = () => {
+    setWorkflowOpen(false);
     onCreated();
     onOpenChange(false);
     resetForm();
-    
-    if (processPayment && createdInvoiceId) {
-      // Navigate to invoices page with payment dialog open
-      window.location.href = `/dashboard/invoices?openPayment=${createdInvoiceId}`;
-    }
   };
 
   if (isLoading || isLooking) {
