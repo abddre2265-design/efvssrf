@@ -306,7 +306,7 @@ const Invoices: React.FC = () => {
         .from('credit_notes')
         .select('id, credit_note_number, status')
         .eq('invoice_id', invoice.id)
-        .in('status', ['created', 'draft'])
+        .in('status', ['created', 'draft', 'validated_partial'])
         .limit(1)
         .maybeSingle();
 
