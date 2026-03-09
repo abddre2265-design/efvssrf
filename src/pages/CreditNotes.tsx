@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import { recalculateFinancialCredit } from '@/utils/financialCreditUtils';
 import { CreditNoteTable, CreditNoteViewDialog, ProductReturnValidationDialog, CreditNote } from '@/components/credit-notes';
 import { ProductReturnCreditNoteDialog } from '@/components/invoices/ProductReturnCreditNoteDialog';
 import { Invoice } from '@/components/invoices/types';
