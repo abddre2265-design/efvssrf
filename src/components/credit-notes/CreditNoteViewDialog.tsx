@@ -78,6 +78,7 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
+      created: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
       draft: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
       validated: 'bg-green-500/10 text-green-600 border-green-500/30',
       cancelled: 'bg-red-500/10 text-red-600 border-red-500/30',
