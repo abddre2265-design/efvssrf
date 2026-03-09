@@ -144,35 +144,111 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
           }
         }
 
+        // In edit mode, fetch existing credit note lines to get validated_quantity and returned_quantity
+        let existingCnLines: Record<string, { returned_quantity: number; validated_quantity: number; id: string }> = {};
+        if (isEditMode && editCreditNoteId) {
+          const { data: cnLines } = await supabase
+            .from('credit_note_lines')
+            .select('id, invoice_line_id, returned_quantity, validated_quantity')
+            .eq('credit_note_id', editCreditNoteId);
+          if (cnLines) {
+            cnLines.forEach((cl: any) => {
+              existingCnLines[cl.invoice_line_id] = {
+                returned_quantity: cl.returned_quantity,
+                validated_quantity: cl.validated_quantity,
+                id: cl.id,
+              };
+            });
+          }
+        }
+
         const stampDuty = invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0;
 
         // Build return lines
         const builtReturnLines: ReturnLine[] = lines.map(line => {
           const alreadyReturned = returnedByLine[line.id] || 0;
-          const returnableQty = line.quantity - alreadyReturned;
           const totalCommercialDiscount = commercialDiscountByLine[line.id] || 0;
-          // Adjusted line HT = original line HT - commercial discounts
           const adjustedLineHt = line.line_total_ht - totalCommercialDiscount;
-          // Adjusted unit price = adjusted line HT / original quantity
           const adjustedUnitPrice = line.quantity > 0 ? adjustedLineHt / line.quantity : line.unit_price_ht;
           const vatRate = isForeign ? 0 : line.vat_rate;
 
-          return {
-            lineId: line.id,
-            productId: line.product_id,
-            productName: line.product?.name || '-',
-            productReference: line.product?.reference || null,
-            invoicedQuantity: line.quantity,
-            alreadyReturnedQuantity: alreadyReturned,
-            returnableQuantity: returnableQty,
-            returnQuantity: 0,
-            originalUnitPriceHt: line.unit_price_ht,
-            adjustedUnitPriceHt: adjustedUnitPrice,
-            vatRate,
-            lineHt: 0,
-            lineVat: 0,
-            lineTtc: 0,
-          };
+          const existingLine = existingCnLines[line.id];
+
+          if (isEditMode && existingLine) {
+            // In edit mode: validated quantities are locked, remaining is editable and pre-filled
+            const validatedQty = existingLine.validated_quantity;
+            const currentReturnedQty = existingLine.returned_quantity;
+            // The "already returned by OTHER credit notes" (exclude this CN's returned qty)
+            const otherReturned = alreadyReturned - currentReturnedQty;
+            // Max returnable = invoiced - other returns - validated in this CN
+            const editableMax = line.quantity - otherReturned - validatedQty;
+            // Pre-fill with current non-validated quantity
+            const prefilledQty = currentReturnedQty - validatedQty;
+            const lineHt = prefilledQty * adjustedUnitPrice;
+            const lineVat = lineHt * (vatRate / 100);
+            const lineTtc = lineHt + lineVat;
+
+            return {
+              lineId: line.id,
+              productId: line.product_id,
+              productName: line.product?.name || '-',
+              productReference: line.product?.reference || null,
+              invoicedQuantity: line.quantity,
+              alreadyReturnedQuantity: otherReturned + validatedQty,
+              returnableQuantity: editableMax,
+              returnQuantity: prefilledQty,
+              originalUnitPriceHt: line.unit_price_ht,
+              adjustedUnitPriceHt: adjustedUnitPrice,
+              vatRate,
+              lineHt,
+              lineVat,
+              lineTtc,
+              validatedQuantity: validatedQty,
+              isLocked: editableMax <= 0,
+            };
+          } else if (isEditMode && !existingLine) {
+            // Line not in existing CN - treat as new addable line
+            const returnableQty = line.quantity - alreadyReturned;
+            return {
+              lineId: line.id,
+              productId: line.product_id,
+              productName: line.product?.name || '-',
+              productReference: line.product?.reference || null,
+              invoicedQuantity: line.quantity,
+              alreadyReturnedQuantity: alreadyReturned,
+              returnableQuantity: returnableQty,
+              returnQuantity: 0,
+              originalUnitPriceHt: line.unit_price_ht,
+              adjustedUnitPriceHt: adjustedUnitPrice,
+              vatRate,
+              lineHt: 0,
+              lineVat: 0,
+              lineTtc: 0,
+              validatedQuantity: 0,
+              isLocked: returnableQty <= 0,
+            };
+          } else {
+            // Create mode
+            const returnableQty = line.quantity - alreadyReturned;
+            return {
+              lineId: line.id,
+              productId: line.product_id,
+              productName: line.product?.name || '-',
+              productReference: line.product?.reference || null,
+              invoicedQuantity: line.quantity,
+              alreadyReturnedQuantity: alreadyReturned,
+              returnableQuantity: returnableQty,
+              returnQuantity: 0,
+              originalUnitPriceHt: line.unit_price_ht,
+              adjustedUnitPriceHt: adjustedUnitPrice,
+              vatRate,
+              lineHt: 0,
+              lineVat: 0,
+              lineTtc: 0,
+              validatedQuantity: 0,
+              isLocked: returnableQty <= 0,
+            };
+          }
         });
 
         setDetails({ invoice, lines, returnLines: builtReturnLines, stampDuty });
@@ -186,7 +262,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
       }
     };
     fetchDetails();
-  }, [invoice, open]);
+  }, [invoice, open, editCreditNoteId, isEditMode]);
 
   const isForeign = details?.invoice.client_type === 'foreign';
 
