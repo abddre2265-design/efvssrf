@@ -254,11 +254,19 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
         open={confirmOpen}
         onOpenChange={(isOpen) => {
           if (!isOpen) {
+            if (isConfirmAction) {
+              setIsConfirmAction(false);
+              return;
+            }
             config.onSkip();
+            return;
           }
-          setConfirmOpen(isOpen);
+          setConfirmOpen(true);
         }}
-        onConfirm={config.onConfirm}
+        onConfirm={async () => {
+          setIsConfirmAction(true);
+          await config.onConfirm();
+        }}
         title={config.title}
         description={config.description}
         confirmText={config.confirmText}
