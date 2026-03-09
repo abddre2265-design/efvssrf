@@ -477,15 +477,10 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
       toast.success(t('invoice_created_from_request'));
       
-      // Check if payment should be processed
-      if (request.payment_status !== 'unpaid' && request.paid_amount > 0) {
-        setCreatedInvoiceId(invoice.id);
-        setPaymentPromptOpen(true);
-      } else {
-        onCreated();
-        onOpenChange(false);
-        resetForm();
-      }
+      // Show post-invoice workflow
+      setCreatedInvoiceId(invoice.id);
+      setCreatedClientId(finalClientId!);
+      setWorkflowOpen(true);
     } catch (error: any) {
       console.error('Error creating invoice:', error);
       toast.error(error.message || t('error_creating_invoice'));
