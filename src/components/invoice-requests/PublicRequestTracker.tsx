@@ -34,6 +34,7 @@ interface TrackedRequest {
   request_date: string;
   generated_invoice_id: string | null;
   pdf_download_count: number;
+  rejection_reason: string | null;
   store: { name: string } | null;
 }
 
