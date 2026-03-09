@@ -52,6 +52,7 @@ interface PendingRequest {
   paid_amount?: number | null;
   payment_methods?: any;
   linked_client_id?: string | null;
+  payment_date?: string | null;
 }
 
 interface StoreData {
