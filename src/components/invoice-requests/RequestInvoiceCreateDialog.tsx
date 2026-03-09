@@ -509,8 +509,9 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
   const handleWorkflowClose = () => {
     setWorkflowOpen(false);
+    setCreatedInvoiceId(null);
+    setCreatedClientId(null);
     onCreated();
-    onOpenChange(false);
     resetForm();
   };
 
