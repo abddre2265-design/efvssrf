@@ -18,7 +18,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
 
   const accentColor = documentType === 'invoice' ? '#0a84ff' : '#e53935';
   const gradientEnd = documentType === 'invoice' ? '#00c6ff' : '#ff6f60';
-  const title = documentType === 'invoice' ? t('pdf_invoice_title') || 'FACTURE' : t('pdf_credit_note_title') || 'AVOIR';
+  const title = documentType === 'invoice' ? t('pdf_invoice_title') || 'FACTURE' : t('pdf_delivery_note_title') || 'BON DE LIVRAISON';
 
   // Check if parent is enabled for child visibility
   const isCompanyFieldVisible = (fieldId: string) => {
