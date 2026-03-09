@@ -519,38 +519,7 @@ export const InvoiceCreateDialog: React.FC<InvoiceCreateDialogProps> = ({
         }
       }
 
-      // Update stock for each product (non-reservation lines only affect available stock)
-      for (const bubble of stockBubbles) {
-        if (!bubble.unlimited_stock) {
-          // Create stock movement
-          const { data: product } = await supabase
-            .from('products')
-            .select('current_stock')
-            .eq('id', bubble.product_id)
-            .single();
-
-          const previousStock = product?.current_stock || 0;
-          const newStock = previousStock - bubble.quantity_used;
-
-          await supabase
-            .from('stock_movements')
-            .insert({
-              product_id: bubble.product_id,
-              movement_type: 'remove',
-              quantity: bubble.quantity_used,
-              previous_stock: previousStock,
-              new_stock: newStock,
-              reason_category: 'commercial',
-              reason_detail: `Facture ${invoiceNumber.number}`,
-            });
-
-          // Update product stock
-          await supabase
-            .from('products')
-            .update({ current_stock: newStock })
-            .eq('id', bubble.product_id);
-        }
-      }
+      // Stock is NOT deducted at creation — it will be deducted at validation
 
       toast.success(t('invoice_created_success'));
       onCreated();

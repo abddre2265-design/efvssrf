@@ -192,6 +192,51 @@ const Invoices: React.FC = () => {
 
   const handleValidate = async (invoice: Invoice) => {
     try {
+      // 1. Fetch invoice lines to deduct stock
+      const { data: invoiceLines, error: linesError } = await supabase
+        .from('invoice_lines')
+        .select('product_id, quantity')
+        .eq('invoice_id', invoice.id);
+
+      if (linesError) throw linesError;
+
+      // 2. Deduct stock for each line
+      if (invoiceLines && invoiceLines.length > 0) {
+        for (const line of invoiceLines) {
+          const { data: product, error: productError } = await supabase
+            .from('products')
+            .select('current_stock, unlimited_stock')
+            .eq('id', line.product_id)
+            .maybeSingle();
+
+          if (productError) throw productError;
+          if (!product || product.unlimited_stock) continue;
+
+          const previousStock = product.current_stock ?? 0;
+          const newStock = previousStock - line.quantity;
+
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({ current_stock: newStock })
+            .eq('id', line.product_id);
+
+          if (updateError) throw updateError;
+
+          await supabase
+            .from('stock_movements')
+            .insert([{
+              product_id: line.product_id,
+              movement_type: 'remove' as const,
+              quantity: line.quantity,
+              previous_stock: previousStock,
+              new_stock: newStock,
+              reason_category: 'commercial',
+              reason_detail: `${t('validate_invoice')} ${invoice.invoice_number}`,
+            }]);
+        }
+      }
+
+      // 3. Update invoice status
       const { error } = await supabase
         .from('invoices')
         .update({ status: 'validated' })
