@@ -70,6 +70,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
   open,
   onOpenChange,
   invoice,
+  editCreditNoteId,
   onComplete,
 }) => {
   const { t, isRTL } = useLanguage();
