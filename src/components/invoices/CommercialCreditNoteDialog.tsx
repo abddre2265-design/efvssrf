@@ -570,6 +570,9 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
                       <tbody>
                         {details.lines.map((line, idx) => {
                           const ld = lineDiscounts.find(d => d.lineId === line.id);
+                          const remaining = details.remainingLineAmounts[line.id];
+                          const displayHt = remaining?.remainingHt ?? line.line_total_ht;
+                          const displayTtc = remaining?.remainingTtc ?? line.line_total_ttc;
                           return (
                             <tr key={line.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
                               <td className="p-3">
@@ -578,15 +581,15 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
                                   <div className="text-xs text-muted-foreground font-mono">{line.product.reference}</div>
                                 )}
                               </td>
-                              <td className="text-end p-3 font-mono">{formatCurrency(line.line_total_ht, 'TND')}</td>
+                              <td className="text-end p-3 font-mono">{formatCurrency(displayHt, 'TND')}</td>
                               {!isForeign && <td className="text-center p-3">{line.vat_rate}%</td>}
-                              <td className="text-end p-3 font-mono">{formatCurrency(line.line_total_ttc, 'TND')}</td>
+                              <td className="text-end p-3 font-mono">{formatCurrency(displayTtc, 'TND')}</td>
                               <td className="p-2">
                                 <Input
                                   type="number"
                                   step="0.001"
                                   min={0}
-                                  max={line.line_total_ht}
+                                  max={displayHt}
                                   value={ld?.discountHt || ''}
                                   onChange={(e) => updateLineDiscount(line.id, 'ht', parseFloat(e.target.value) || 0)}
                                   className="w-24 h-8 text-sm mx-auto"
@@ -598,7 +601,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
                                   type="number"
                                   step="0.001"
                                   min={0}
-                                  max={line.line_total_ttc}
+                                  max={displayTtc}
                                   value={ld?.discountTtc || ''}
                                   onChange={(e) => updateLineDiscount(line.id, 'ttc', parseFloat(e.target.value) || 0)}
                                   className="w-24 h-8 text-sm mx-auto"
