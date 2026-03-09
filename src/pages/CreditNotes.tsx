@@ -36,6 +36,7 @@ const CreditNotes: React.FC = () => {
   // Edit product return credit note
   const [editProductReturnOpen, setEditProductReturnOpen] = useState(false);
   const [editProductReturnInvoice, setEditProductReturnInvoice] = useState<Invoice | null>(null);
+  const [editProductReturnCnId, setEditProductReturnCnId] = useState<string | null>(null);
 
   const fetchCreditNotes = async () => {
     try {
@@ -68,7 +69,6 @@ const CreditNotes: React.FC = () => {
 
   const handleEdit = async (cn: CreditNote) => {
     if (cn.credit_note_type === 'product_return') {
-      // Fetch the invoice to pass to the edit dialog
       const { data: invoice } = await supabase
         .from('invoices')
         .select('*')
@@ -76,6 +76,7 @@ const CreditNotes: React.FC = () => {
         .single();
       if (invoice) {
         setEditProductReturnInvoice(invoice as unknown as Invoice);
+        setEditProductReturnCnId(cn.id);
         setEditProductReturnOpen(true);
       }
     }
@@ -239,6 +240,7 @@ const CreditNotes: React.FC = () => {
         open={editProductReturnOpen}
         onOpenChange={setEditProductReturnOpen}
         invoice={editProductReturnInvoice}
+        editCreditNoteId={editProductReturnCnId}
         onComplete={fetchCreditNotes}
       />
 

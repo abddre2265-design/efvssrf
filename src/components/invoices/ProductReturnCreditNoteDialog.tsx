@@ -27,6 +27,7 @@ interface ProductReturnCreditNoteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoice: Invoice | null;
+  editCreditNoteId?: string | null;
   onComplete?: () => void;
 }
 
@@ -54,6 +55,8 @@ interface ReturnLine {
   lineHt: number;
   lineVat: number;
   lineTtc: number;
+  validatedQuantity: number; // locked validated qty in edit mode
+  isLocked: boolean; // true if fully validated (no editable remainder)
 }
 
 interface InvoiceReturnDetails {
@@ -67,6 +70,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
   open,
   onOpenChange,
   invoice,
+  editCreditNoteId,
   onComplete,
 }) => {
   const { t, isRTL } = useLanguage();
@@ -74,6 +78,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
   const [isLoading, setIsLoading] = useState(false);
   const [returnLines, setReturnLines] = useState<ReturnLine[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const isEditMode = !!editCreditNoteId;
 
   // Withholding
   const [withholdingOverride, setWithholdingOverride] = useState<number | null>(null);
@@ -139,35 +144,111 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
           }
         }
 
+        // In edit mode, fetch existing credit note lines to get validated_quantity and returned_quantity
+        let existingCnLines: Record<string, { returned_quantity: number; validated_quantity: number; id: string }> = {};
+        if (isEditMode && editCreditNoteId) {
+          const { data: cnLines } = await supabase
+            .from('credit_note_lines')
+            .select('id, invoice_line_id, returned_quantity, validated_quantity')
+            .eq('credit_note_id', editCreditNoteId);
+          if (cnLines) {
+            cnLines.forEach((cl: any) => {
+              existingCnLines[cl.invoice_line_id] = {
+                returned_quantity: cl.returned_quantity,
+                validated_quantity: cl.validated_quantity,
+                id: cl.id,
+              };
+            });
+          }
+        }
+
         const stampDuty = invoice.stamp_duty_enabled ? invoice.stamp_duty_amount : 0;
 
         // Build return lines
         const builtReturnLines: ReturnLine[] = lines.map(line => {
           const alreadyReturned = returnedByLine[line.id] || 0;
-          const returnableQty = line.quantity - alreadyReturned;
           const totalCommercialDiscount = commercialDiscountByLine[line.id] || 0;
-          // Adjusted line HT = original line HT - commercial discounts
           const adjustedLineHt = line.line_total_ht - totalCommercialDiscount;
-          // Adjusted unit price = adjusted line HT / original quantity
           const adjustedUnitPrice = line.quantity > 0 ? adjustedLineHt / line.quantity : line.unit_price_ht;
           const vatRate = isForeign ? 0 : line.vat_rate;
 
-          return {
-            lineId: line.id,
-            productId: line.product_id,
-            productName: line.product?.name || '-',
-            productReference: line.product?.reference || null,
-            invoicedQuantity: line.quantity,
-            alreadyReturnedQuantity: alreadyReturned,
-            returnableQuantity: returnableQty,
-            returnQuantity: 0,
-            originalUnitPriceHt: line.unit_price_ht,
-            adjustedUnitPriceHt: adjustedUnitPrice,
-            vatRate,
-            lineHt: 0,
-            lineVat: 0,
-            lineTtc: 0,
-          };
+          const existingLine = existingCnLines[line.id];
+
+          if (isEditMode && existingLine) {
+            // In edit mode: validated quantities are locked, remaining is editable and pre-filled
+            const validatedQty = existingLine.validated_quantity;
+            const currentReturnedQty = existingLine.returned_quantity;
+            // The "already returned by OTHER credit notes" (exclude this CN's returned qty)
+            const otherReturned = alreadyReturned - currentReturnedQty;
+            // Max returnable = invoiced - other returns - validated in this CN
+            const editableMax = line.quantity - otherReturned - validatedQty;
+            // Pre-fill with current non-validated quantity
+            const prefilledQty = currentReturnedQty - validatedQty;
+            const lineHt = prefilledQty * adjustedUnitPrice;
+            const lineVat = lineHt * (vatRate / 100);
+            const lineTtc = lineHt + lineVat;
+
+            return {
+              lineId: line.id,
+              productId: line.product_id,
+              productName: line.product?.name || '-',
+              productReference: line.product?.reference || null,
+              invoicedQuantity: line.quantity,
+              alreadyReturnedQuantity: otherReturned + validatedQty,
+              returnableQuantity: editableMax,
+              returnQuantity: prefilledQty,
+              originalUnitPriceHt: line.unit_price_ht,
+              adjustedUnitPriceHt: adjustedUnitPrice,
+              vatRate,
+              lineHt,
+              lineVat,
+              lineTtc,
+              validatedQuantity: validatedQty,
+              isLocked: editableMax <= 0,
+            };
+          } else if (isEditMode && !existingLine) {
+            // Line not in existing CN - treat as new addable line
+            const returnableQty = line.quantity - alreadyReturned;
+            return {
+              lineId: line.id,
+              productId: line.product_id,
+              productName: line.product?.name || '-',
+              productReference: line.product?.reference || null,
+              invoicedQuantity: line.quantity,
+              alreadyReturnedQuantity: alreadyReturned,
+              returnableQuantity: returnableQty,
+              returnQuantity: 0,
+              originalUnitPriceHt: line.unit_price_ht,
+              adjustedUnitPriceHt: adjustedUnitPrice,
+              vatRate,
+              lineHt: 0,
+              lineVat: 0,
+              lineTtc: 0,
+              validatedQuantity: 0,
+              isLocked: returnableQty <= 0,
+            };
+          } else {
+            // Create mode
+            const returnableQty = line.quantity - alreadyReturned;
+            return {
+              lineId: line.id,
+              productId: line.product_id,
+              productName: line.product?.name || '-',
+              productReference: line.product?.reference || null,
+              invoicedQuantity: line.quantity,
+              alreadyReturnedQuantity: alreadyReturned,
+              returnableQuantity: returnableQty,
+              returnQuantity: 0,
+              originalUnitPriceHt: line.unit_price_ht,
+              adjustedUnitPriceHt: adjustedUnitPrice,
+              vatRate,
+              lineHt: 0,
+              lineVat: 0,
+              lineTtc: 0,
+              validatedQuantity: 0,
+              isLocked: returnableQty <= 0,
+            };
+          }
         });
 
         setDetails({ invoice, lines, returnLines: builtReturnLines, stampDuty });
@@ -181,7 +262,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
       }
     };
     fetchDetails();
-  }, [invoice, open]);
+  }, [invoice, open, editCreditNoteId, isEditMode]);
 
   const isForeign = details?.invoice.client_type === 'foreign';
 
@@ -245,82 +326,126 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
     }
     setIsSaving(true);
     try {
-      const currentYear = new Date().getFullYear();
-      const { data: lastCn } = await supabase
-        .from('credit_notes')
-        .select('credit_note_counter')
-        .eq('credit_note_year', currentYear)
-        .order('credit_note_counter', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Build credit note lines data
+      const buildCnLineData = (rl: ReturnLine, idx: number) => ({
+        invoice_line_id: rl.lineId,
+        product_id: rl.productId,
+        product_name: rl.productName,
+        product_reference: rl.productReference,
+        original_quantity: rl.invoicedQuantity,
+        original_unit_price_ht: rl.originalUnitPriceHt,
+        original_line_total_ht: rl.adjustedUnitPriceHt * rl.invoicedQuantity,
+        original_line_vat: 0,
+        original_line_total_ttc: 0,
+        returned_quantity: rl.returnQuantity + rl.validatedQuantity, // total = editable + validated
+        validated_quantity: rl.validatedQuantity, // preserve validated
+        discount_ht: rl.lineHt,
+        discount_ttc: rl.lineTtc,
+        discount_rate: 0,
+        new_line_total_ht: 0,
+        new_line_vat: 0,
+        new_line_total_ttc: 0,
+        vat_rate: rl.vatRate,
+        line_order: idx,
+      });
 
-      const nextCounter = ((lastCn as any)?.credit_note_counter || 0) + 1;
-      const cnNumber = `AV-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
+      if (isEditMode && editCreditNoteId) {
+        // UPDATE existing credit note
+        const { error: cnError } = await supabase
+          .from('credit_notes')
+          .update({
+            subtotal_ht: totalHt,
+            total_vat: totalVat,
+            total_ttc: totalTtc,
+            withholding_rate: effectiveWithholdingRate,
+            withholding_amount: returnWithholdingAmount,
+            original_net_payable: currentOperationalNetPayable,
+            new_net_payable: newNetPayable,
+            financial_credit: financialCredit,
+          } as any)
+          .eq('id', editCreditNoteId);
+        if (cnError) throw cnError;
 
-      // Build credit note lines (only lines with return > 0)
-      const cnLines = returnLines
-        .filter(rl => rl.returnQuantity > 0)
-        .map((rl, idx) => ({
-          invoice_line_id: rl.lineId,
-          product_id: rl.productId,
-          product_name: rl.productName,
-          product_reference: rl.productReference,
-          original_quantity: rl.invoicedQuantity,
-          original_unit_price_ht: rl.originalUnitPriceHt,
-          original_line_total_ht: rl.adjustedUnitPriceHt * rl.invoicedQuantity,
-          original_line_vat: 0,
-          original_line_total_ttc: 0,
-          returned_quantity: rl.returnQuantity,
-          discount_ht: rl.lineHt,
-          discount_ttc: rl.lineTtc,
-          discount_rate: 0,
-          new_line_total_ht: 0,
-          new_line_vat: 0,
-          new_line_total_ttc: 0,
-          vat_rate: rl.vatRate,
-          line_order: idx,
+        // Delete old non-validated lines, then re-insert
+        await supabase
+          .from('credit_note_lines')
+          .delete()
+          .eq('credit_note_id', editCreditNoteId);
+
+        const cnLines = returnLines
+          .filter(rl => rl.returnQuantity > 0 || rl.validatedQuantity > 0)
+          .map((rl, idx) => ({
+            ...buildCnLineData(rl, idx),
+            credit_note_id: editCreditNoteId,
+          }));
+
+        if (cnLines.length > 0) {
+          const { error: linesError } = await supabase
+            .from('credit_note_lines')
+            .insert(cnLines as any);
+          if (linesError) throw linesError;
+        }
+
+        toast.success(t('credit_note_updated') || 'Avoir produit mis à jour');
+      } else {
+        // CREATE new credit note
+        const currentYear = new Date().getFullYear();
+        const { data: lastCn } = await supabase
+          .from('credit_notes')
+          .select('credit_note_counter')
+          .eq('credit_note_year', currentYear)
+          .order('credit_note_counter', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const nextCounter = ((lastCn as any)?.credit_note_counter || 0) + 1;
+        const cnNumber = `AV-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
+
+        const cnLines = returnLines
+          .filter(rl => rl.returnQuantity > 0)
+          .map((rl, idx) => buildCnLineData(rl, idx));
+
+        const { data: cnData, error: cnError } = await supabase
+          .from('credit_notes')
+          .insert({
+            organization_id: invoice.organization_id,
+            invoice_id: invoice.id,
+            client_id: invoice.client_id,
+            credit_note_number: cnNumber,
+            credit_note_prefix: 'AV',
+            credit_note_year: currentYear,
+            credit_note_counter: nextCounter,
+            credit_note_type: 'product_return',
+            credit_note_method: 'lines',
+            subtotal_ht: totalHt,
+            total_vat: totalVat,
+            total_ttc: totalTtc,
+            stamp_duty_amount: stampDuty,
+            withholding_rate: effectiveWithholdingRate,
+            withholding_amount: returnWithholdingAmount,
+            original_net_payable: currentOperationalNetPayable,
+            new_net_payable: newNetPayable,
+            financial_credit: financialCredit,
+            status: 'created',
+          } as any)
+          .select()
+          .single();
+
+        if (cnError) throw cnError;
+
+        const linesWithCnId = cnLines.map(l => ({
+          ...l,
+          credit_note_id: (cnData as any).id,
         }));
 
-      const { data: cnData, error: cnError } = await supabase
-        .from('credit_notes')
-        .insert({
-          organization_id: invoice.organization_id,
-          invoice_id: invoice.id,
-          client_id: invoice.client_id,
-          credit_note_number: cnNumber,
-          credit_note_prefix: 'AV',
-          credit_note_year: currentYear,
-          credit_note_counter: nextCounter,
-          credit_note_type: 'product_return',
-          credit_note_method: 'lines',
-          subtotal_ht: totalHt,
-          total_vat: totalVat,
-          total_ttc: totalTtc,
-          stamp_duty_amount: stampDuty,
-          withholding_rate: effectiveWithholdingRate,
-          withholding_amount: returnWithholdingAmount,
-          original_net_payable: currentOperationalNetPayable,
-          new_net_payable: newNetPayable,
-          financial_credit: financialCredit,
-          status: 'created',
-        } as any)
-        .select()
-        .single();
+        const { error: linesError } = await supabase
+          .from('credit_note_lines')
+          .insert(linesWithCnId as any);
+        if (linesError) throw linesError;
 
-      if (cnError) throw cnError;
+        toast.success(t('credit_note_created') || 'Avoir produit créé');
+      }
 
-      const linesWithCnId = cnLines.map(l => ({
-        ...l,
-        credit_note_id: (cnData as any).id,
-      }));
-
-      const { error: linesError } = await supabase
-        .from('credit_note_lines')
-        .insert(linesWithCnId as any);
-
-      if (linesError) throw linesError;
-
-      toast.success(t('credit_note_created') || 'Avoir produit créé');
       onOpenChange(false);
       onComplete?.();
     } catch (error) {
@@ -362,6 +487,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
                       <th className="text-start p-3 font-medium">{t('product')}</th>
                       <th className="text-center p-3 font-medium">{t('invoiced_qty') || 'Qté facturée'}</th>
                       <th className="text-center p-3 font-medium">{t('already_returned_qty') || 'Déjà retournée'}</th>
+                      {isEditMode && <th className="text-center p-3 font-medium">{t('validated_locked') || 'Validée (bloquée)'}</th>}
                       <th className="text-center p-3 font-medium">{t('returnable_qty') || 'Retournable'}</th>
                       <th className="text-center p-3 font-medium">{t('return_qty') || 'Qté à retourner'}</th>
                       <th className="text-end p-3 font-medium">{t('adjusted_unit_price') || 'PU ajusté HT'}</th>
@@ -384,13 +510,20 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
                             <Badge variant="secondary">{rl.alreadyReturnedQuantity}</Badge>
                           ) : '0'}
                         </td>
+                        {isEditMode && (
+                          <td className="text-center p-3 font-mono">
+                            {rl.validatedQuantity > 0 ? (
+                              <Badge variant="default" className="bg-green-600">{rl.validatedQuantity}</Badge>
+                            ) : '0'}
+                          </td>
+                        )}
                         <td className="text-center p-3 font-mono font-medium">
                           {rl.returnableQuantity > 0 ? rl.returnableQuantity : (
                             <Badge variant="destructive" className="text-xs">{t('fully_returned') || 'Retourné'}</Badge>
                           )}
                         </td>
                         <td className="p-2">
-                          {rl.returnableQuantity > 0 ? (
+                          {rl.returnableQuantity > 0 && !rl.isLocked ? (
                             <Input
                               type="number"
                               step="1"
@@ -514,7 +647,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
               onClick={handleSave}
               disabled={!hasReturn || exceedsInvoice || isSaving}
             >
-              {isSaving ? t('saving') || 'Enregistrement...' : t('create_credit_note') || 'Créer l\'avoir'}
+              {isSaving ? t('saving') || 'Enregistrement...' : isEditMode ? (t('update_credit_note') || 'Mettre à jour l\'avoir') : (t('create_credit_note') || 'Créer l\'avoir')}
             </Button>
           </div>
         </DialogContent>
