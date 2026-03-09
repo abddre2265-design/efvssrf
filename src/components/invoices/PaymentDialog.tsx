@@ -1080,104 +1080,53 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
               {/* Step 2: Execute Payment */}
               <TabsContent value="payment" className="mt-4 space-y-4">
-                {/* Client Credit Cards - Separated by source */}
+                {/* Client Balance Card */}
                 {clientBalance > 0 && remainingBalance > 0 && (
                   <div className="space-y-3">
-                    {/* Credit Notes (Avoirs) Card */}
-                    {creditNoteBalance > 0 && (
-                      <div className="rounded-xl border-2 border-blue-500/30 bg-gradient-to-r from-blue-500/5 to-blue-500/10 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                              <FileText className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">{t('credit_from_avoirs')}</p>
-                              <p className="text-xl font-bold text-blue-600">{formatCurrency(creditNoteBalance, 'TND')}</p>
-                            </div>
+                    <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <Wallet className="h-5 w-5 text-primary" />
                           </div>
-                          <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30">
-                            <FileText className="h-3 w-3 mr-1" />
-                            {t('credit_note')}
-                          </Badge>
-                        </div>
-                        
-                        {/* Quick apply button */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-blue-500/20">
-                          <div className="flex-1 text-sm">
-                            <span className="text-muted-foreground">{t('max_applicable')}: </span>
-                            <span className="font-mono font-semibold text-blue-600">
-                              {formatCurrency(Math.min(creditNoteBalance, isForeign ? remainingBalanceInTND : remainingBalance), 'TND')}
-                            </span>
+                          <div>
+                            <p className="text-xs text-muted-foreground">{t('client_balance')}</p>
+                            <p className="text-xl font-bold text-primary">{formatCurrency(clientBalance, 'TND')}</p>
                           </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
-                            onClick={() => {
-                              setPaymentMethod('client_credit_note');
-                              if (isForeign) {
-                                const maxInCurrency = Math.min(creditNoteBalance / parsedPaymentExchangeRate, remainingBalance);
-                                setAmount(maxInCurrency.toFixed(3));
-                              } else {
-                                setAmount(Math.min(creditNoteBalance, remainingBalance).toFixed(3));
-                              }
-                            }}
-                          >
-                            <FileText className="h-4 w-4 mr-1" />
-                            {t('apply_credit_note')}
-                          </Button>
                         </div>
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                          <Wallet className="h-3 w-3 mr-1" />
+                          {t('client_balance')}
+                        </Badge>
                       </div>
-                    )}
-
-                    {/* Deposits Card */}
-                    {depositBalance > 0 && (
-                      <div className="rounded-xl border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-emerald-500/10 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                              <PiggyBank className="h-5 w-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">{t('credit_from_deposits')}</p>
-                              <p className="text-xl font-bold text-emerald-600">{formatCurrency(depositBalance, 'TND')}</p>
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
-                            <PiggyBank className="h-3 w-3 mr-1" />
-                            {t('direct_deposit')}
-                          </Badge>
+                      
+                      {/* Quick apply button */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-primary/20">
+                        <div className="flex-1 text-sm">
+                          <span className="text-muted-foreground">{t('max_applicable')}: </span>
+                          <span className="font-mono font-semibold text-primary">
+                            {formatCurrency(maxClientBalanceAmount, 'TND')}
+                          </span>
                         </div>
-                        
-                        {/* Quick apply button */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-emerald-500/20">
-                          <div className="flex-1 text-sm">
-                            <span className="text-muted-foreground">{t('max_applicable')}: </span>
-                            <span className="font-mono font-semibold text-emerald-600">
-                              {formatCurrency(Math.min(depositBalance, isForeign ? remainingBalanceInTND : remainingBalance), 'TND')}
-                            </span>
-                          </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
-                            onClick={() => {
-                              setPaymentMethod('client_deposit');
-                              if (isForeign) {
-                                const maxInCurrency = Math.min(depositBalance / parsedPaymentExchangeRate, remainingBalance);
-                                setAmount(maxInCurrency.toFixed(3));
-                              } else {
-                                setAmount(Math.min(depositBalance, remainingBalance).toFixed(3));
-                              }
-                            }}
-                          >
-                            <PiggyBank className="h-4 w-4 mr-1" />
-                            {t('apply_deposit')}
-                          </Button>
-                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-8"
+                          onClick={() => {
+                            setPaymentMethod('client_balance');
+                            if (isForeign) {
+                              const maxInCurrency = Math.min(clientBalance / parsedPaymentExchangeRate, remainingBalance);
+                              setAmount(maxInCurrency.toFixed(3));
+                            } else {
+                              setAmount(Math.min(clientBalance, remainingBalance).toFixed(3));
+                            }
+                          }}
+                        >
+                          <Wallet className="h-4 w-4 mr-1" />
+                          {t('apply_client_balance')}
+                        </Button>
                       </div>
-                    )}
+                    </div>
                     
                     <p className="text-xs text-muted-foreground italic">
                       {t('credit_will_be_debited')}
