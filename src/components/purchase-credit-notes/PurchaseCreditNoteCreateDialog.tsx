@@ -371,7 +371,7 @@ export const PurchaseCreditNoteCreateDialog: React.FC<PurchaseCreditNoteCreateDi
                     onClick={() => setCreditNoteType('product_return')}
                   >
                     <div className="text-lg font-semibold">{t('credit_note_product') || 'Avoir produit'}</div>
-                    <p className="text-sm text-muted-foreground">{t('product_return_description') || 'Retour de marchandise au fournisseur'}</p>
+                    <p className="text-sm text-muted-foreground">{t('purchase_product_return_description') || 'Retour de marchandise au fournisseur'}</p>
                   </button>
                 </div>
                 <div className="flex justify-between">
