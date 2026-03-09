@@ -480,7 +480,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
           original_net_payable: currentOperationalNetPayable,
           new_net_payable: newNetPayable,
           financial_credit: financialCredit,
-          status: 'validated',
+          status: 'created',
         } as any)
         .select()
         .single();
