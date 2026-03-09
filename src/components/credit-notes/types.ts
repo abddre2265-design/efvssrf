@@ -19,7 +19,7 @@ export interface CreditNote {
   original_net_payable: number;
   new_net_payable: number;
   financial_credit: number;
-  status: 'created' | 'draft' | 'validated' | 'cancelled';
+  status: 'created' | 'draft' | 'validated' | 'validated_partial' | 'cancelled';
   reason: string | null;
   notes: string | null;
   created_at: string;
@@ -50,6 +50,8 @@ export interface CreditNoteLine {
   original_line_total_ht: number;
   original_line_vat: number;
   original_line_total_ttc: number;
+  returned_quantity: number;
+  validated_quantity: number;
   discount_ht: number;
   discount_ttc: number;
   discount_rate: number;

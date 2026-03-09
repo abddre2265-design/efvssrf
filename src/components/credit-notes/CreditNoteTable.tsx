@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, Trash2, FileText, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { Eye, Trash2, FileText, CheckCircle, XCircle, RotateCcw, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
 import { CreditNote } from './types';
@@ -23,6 +23,7 @@ interface CreditNoteTableProps {
   onValidate?: (cn: CreditNote) => void;
   onCancel?: (cn: CreditNote) => void;
   onRestore?: (cn: CreditNote) => void;
+  onEdit?: (cn: CreditNote) => void;
 }
 
 export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
@@ -33,6 +34,7 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
   onValidate,
   onCancel,
   onRestore,
+  onEdit,
 }) => {
   const { t, language, isRTL } = useLanguage();
 
@@ -50,11 +52,26 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
     return `${cn.client.first_name || ''} ${cn.client.last_name || ''}`.trim() || '-';
   };
 
-  const getTypeBadge = (type: string) => {
-    if (type === 'commercial_price') {
-      return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">{t('credit_note_commercial_price')}</Badge>;
+  const getTypeBadge = (cn: CreditNote) => {
+    if (cn.credit_note_type === 'commercial_price') {
+      return (
+        <div className="flex flex-col gap-1">
+          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">
+            {t('credit_note_commercial_price')}
+          </Badge>
+        </div>
+      );
     }
-    return <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/30">{t('credit_note_product')}</Badge>;
+    return (
+      <div className="flex flex-col gap-1">
+        <Badge variant="outline" className="bg-purple-500/10 text-purple-600 border-purple-500/30">
+          {t('credit_note_product') || 'Avoir produit'}
+        </Badge>
+        <Badge variant="secondary" className="text-xs">
+          {t('product_returns') || 'Retours produit'}
+        </Badge>
+      </div>
+    );
   };
 
   const getMethodBadge = (method: string) => {
@@ -66,9 +83,35 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
       created: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
       draft: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
       validated: 'bg-green-500/10 text-green-600 border-green-500/30',
+      validated_partial: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
       cancelled: 'bg-red-500/10 text-red-600 border-red-500/30',
     };
-    return <Badge variant="outline" className={variants[status] || ''}>{t(`status_${status}`)}</Badge>;
+    const labels: Record<string, string> = {
+      created: t('status_created') || 'Créé',
+      draft: t('status_draft') || 'Brouillon',
+      validated: t('status_validated') || 'Validé total',
+      validated_partial: t('status_validated_partial') || 'Validé partiel',
+      cancelled: t('status_cancelled') || 'Annulé',
+    };
+    return <Badge variant="outline" className={variants[status] || ''}>{labels[status] || status}</Badge>;
+  };
+
+  // Determine allowed actions based on type and status
+  const canEdit = (cn: CreditNote) =>
+    (cn.status === 'created' || cn.status === 'validated_partial') && cn.credit_note_type === 'product_return';
+  const canValidate = (cn: CreditNote) =>
+    cn.status === 'created' || cn.status === 'validated_partial';
+  const canCancel = (cn: CreditNote) =>
+    cn.status === 'created' || cn.status === 'validated_partial';
+  const canRestore = (cn: CreditNote) =>
+    cn.status === 'draft';
+  const canDelete = (cn: CreditNote) => {
+    if (cn.credit_note_type === 'product_return') {
+      // Product return: delete only in draft
+      return cn.status === 'draft';
+    }
+    // Commercial: delete in created or draft
+    return cn.status === 'created' || cn.status === 'draft';
   };
 
   if (isLoading) {
@@ -111,10 +154,8 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
             <tr key={cn.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
               <td className="p-3 font-mono font-medium">{cn.credit_note_number}</td>
               <td className="p-3">
-                <div className="flex flex-col gap-1">
-                  {getTypeBadge(cn.credit_note_type)}
-                  {getMethodBadge(cn.credit_note_method)}
-                </div>
+                {getTypeBadge(cn)}
+                {cn.credit_note_type === 'commercial_price' && getMethodBadge(cn.credit_note_method)}
               </td>
               <td className="p-3">{getClientName(cn)}</td>
               <td className="p-3 font-mono text-xs">{cn.invoice?.invoice_number || '-'}</td>
@@ -142,29 +183,36 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                       <Eye className="mr-2 h-4 w-4" />
                       {t('view')}
                     </DropdownMenuItem>
-                    {/* Validate: only for 'created' status */}
-                    {cn.status === 'created' && onValidate && (
+                    {/* Edit: product return in created or validated_partial */}
+                    {canEdit(cn) && onEdit && (
+                      <DropdownMenuItem onClick={() => onEdit(cn)}>
+                        <Pencil className="mr-2 h-4 w-4 text-blue-600" />
+                        {t('edit') || 'Modifier'}
+                      </DropdownMenuItem>
+                    )}
+                    {/* Validate */}
+                    {canValidate(cn) && onValidate && (
                       <DropdownMenuItem onClick={() => onValidate(cn)}>
                         <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
                         {t('validate')}
                       </DropdownMenuItem>
                     )}
-                    {/* Cancel: only for 'created' status → moves to draft */}
-                    {cn.status === 'created' && onCancel && (
+                    {/* Cancel → draft */}
+                    {canCancel(cn) && onCancel && (
                       <DropdownMenuItem onClick={() => onCancel(cn)}>
                         <XCircle className="mr-2 h-4 w-4 text-amber-600" />
                         {t('cancel')}
                       </DropdownMenuItem>
                     )}
-                    {/* Restore: only for 'draft' status → moves back to created */}
-                    {cn.status === 'draft' && onRestore && (
+                    {/* Restore from draft */}
+                    {canRestore(cn) && onRestore && (
                       <DropdownMenuItem onClick={() => onRestore(cn)}>
                         <RotateCcw className="mr-2 h-4 w-4 text-blue-600" />
                         {t('restore')}
                       </DropdownMenuItem>
                     )}
-                    {/* Delete: only for 'created' or 'draft' status */}
-                    {(cn.status === 'created' || cn.status === 'draft') && onDelete && (
+                    {/* Delete */}
+                    {canDelete(cn) && onDelete && (
                       <DropdownMenuItem onClick={() => onDelete(cn)} className="text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" />
                         {t('delete')}
