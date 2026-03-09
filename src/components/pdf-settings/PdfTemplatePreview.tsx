@@ -2,6 +2,8 @@ import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DocumentType, PdfComponent } from '@/pages/PdfSettings';
+import { INVOICE_PREFIXES } from '@/components/invoices/types';
+import { DELIVERY_NOTE_PREFIXES } from '@/components/delivery-notes/types';
 
 interface PdfTemplatePreviewProps {
   documentType: DocumentType;
@@ -12,13 +14,35 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
   documentType,
   components,
 }) => {
-  const { t } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
 
   const isEnabled = (id: string) => components.find(c => c.id === id)?.enabled ?? false;
 
   const accentColor = documentType === 'invoice' ? '#0a84ff' : '#e53935';
   const gradientEnd = documentType === 'invoice' ? '#00c6ff' : '#ff6f60';
-  const title = documentType === 'invoice' ? t('pdf_invoice_title') || 'FACTURE' : t('pdf_delivery_note_title') || 'BON DE LIVRAISON';
+  const title = documentType === 'invoice'
+    ? t('pdf_invoice_title') || 'FACTURE'
+    : t('delivery_note_title') || 'BON DE LIVRAISON';
+
+  // Localized document number
+  const getDocumentNumber = () => {
+    if (documentType === 'invoice') {
+      const prefix = INVOICE_PREFIXES[language as keyof typeof INVOICE_PREFIXES] || INVOICE_PREFIXES.fr;
+      return `${prefix}-2025-00001`;
+    }
+    const prefix = DELIVERY_NOTE_PREFIXES[language as keyof typeof DELIVERY_NOTE_PREFIXES] || DELIVERY_NOTE_PREFIXES.fr;
+    return `${prefix}-2025-00001`;
+  };
+
+  // Localized currency symbol
+  const getCurrencyLabel = () => {
+    switch (language) {
+      case 'ar': return 'د.ت';
+      case 'en': return 'TND';
+      default: return 'DT';
+    }
+  };
+  const cur = getCurrencyLabel();
 
   // Check if parent is enabled for child visibility
   const isCompanyFieldVisible = (fieldId: string) => {
@@ -28,6 +52,10 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
   const isClientFieldVisible = (fieldId: string) => {
     return isEnabled('client_info') && isEnabled(fieldId);
   };
+
+  const direction = isRTL ? 'rtl' : 'ltr';
+  const textAlignEnd = isRTL ? 'left' : 'right';
+  const textAlignStart = isRTL ? 'right' : 'left';
 
   return (
     <ScrollArea className="h-[550px] rounded-lg border bg-white">
@@ -42,6 +70,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             fontSize: '8px',
             padding: '20px',
             border: '1px solid #cfd8dc',
+            direction,
           }}
         >
           {/* Decorative corners */}
@@ -70,7 +99,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   {isCompanyFieldVisible('company_address') && (
                     <>
                       <div>{t('pdf_preview_address')}</div>
-                      <div>1000, Tunis</div>
+                      <div>1000, {t('tunis') || 'Tunis'}</div>
                     </>
                   )}
                   {isCompanyFieldVisible('company_phone') && (
@@ -80,19 +109,19 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                     <div>{t('pdf_email')} : contact@exemple.tn</div>
                   )}
                   {isCompanyFieldVisible('company_identifier') && (
-                    <div>MF : 1234567/A/M/000</div>
+                    <div>{t('taxId') || 'MF'} : 1234567/A/M/000</div>
                   )}
                 </>
               )}
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div style={{ textAlign: textAlignEnd }}>
               {(isEnabled('invoice_title') || isEnabled('delivery_note_title')) && (
                 <div style={{ fontSize: 18, fontWeight: 700, color: accentColor, marginBottom: 3 }}>{title}</div>
               )}
               {(isEnabled('invoice_number') || isEnabled('delivery_note_number')) && (
                 <div style={{ fontSize: 9, fontWeight: 700, marginBottom: 3 }}>
-                  {documentType === 'invoice' ? 'FAC-2025-00001' : 'BL-2025-00001'}
+                  {getDocumentNumber()}
                 </div>
               )}
               {(isEnabled('invoice_date') || isEnabled('delivery_note_date')) && (
@@ -116,6 +145,26 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             </div>
           </div>
 
+          {/* Invoice Reference (delivery note only) */}
+          {documentType === 'delivery-note' && isEnabled('invoice_reference') && (
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: 4,
+              padding: '6px 10px',
+              marginBottom: 12,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: 7,
+            }}>
+              <span style={{ color: '#92400e' }}>{t('linked_invoice')} :</span>
+              <span style={{ fontWeight: 700, color: '#92400e' }}>
+                {INVOICE_PREFIXES[language as keyof typeof INVOICE_PREFIXES] || 'FAC'}-2025-00001
+              </span>
+            </div>
+          )}
+
           {/* Client & Payment Info */}
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 15 }}>
             {isEnabled('client_info') && (
@@ -129,7 +178,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                 <div style={{ 
                   position: 'absolute', 
                   top: -6, 
-                  left: 6, 
+                  [isRTL ? 'right' : 'left']: 6, 
                   background: '#fff', 
                   padding: '0 4px',
                   fontSize: 7,
@@ -145,7 +194,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   <div>{t('pdf_preview_client_address')}</div>
                 )}
                 {isClientFieldVisible('client_identifier') && (
-                  <div>MF : 9876543/B/M/000</div>
+                  <div>{t('taxId') || 'MF'} : 9876543/B/M/000</div>
                 )}
                 {isClientFieldVisible('client_phone') && (
                   <div>{t('pdf_tel')} : +216 XX XXX XXX</div>
@@ -167,7 +216,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                 <div style={{ 
                   position: 'absolute', 
                   top: -6, 
-                  left: 6, 
+                  [isRTL ? 'right' : 'left']: 6, 
                   background: '#fff', 
                   padding: '0 4px',
                   fontSize: 7,
@@ -179,7 +228,6 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                 <div>{t('pdf_preview_payment')} : <strong>{t('pdf_payment_unpaid')}</strong></div>
               </div>
             )}
-
           </div>
 
           {/* Products Table */}
@@ -187,13 +235,13 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 15 }}>
               <thead>
                 <tr>
-                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'left' }}>{t('pdf_description')}</th>
-                  {isEnabled('product_reference') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'left' }}>{t('pdf_ref')}</th>}
+                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: textAlignStart }}>{t('pdf_description')}</th>
+                  {isEnabled('product_reference') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: textAlignStart }}>{t('pdf_ref')}</th>}
                   <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>{t('pdf_qty')}</th>
-                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'right' }}>{t('pdf_unit_price_ht')}</th>
+                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: textAlignEnd }}>{t('pdf_unit_price_ht')}</th>
                   {isEnabled('vat_column') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>{t('pdf_vat')}</th>}
                   {isEnabled('discount_column') && <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'center' }}>{t('pdf_discount')}</th>}
-                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: 'right' }}>{t('pdf_total_ht')}</th>
+                  <th style={{ background: `linear-gradient(90deg, ${accentColor}, ${gradientEnd})`, color: '#fff', padding: 5, fontSize: 7, textAlign: textAlignEnd }}>{t('pdf_total_ht')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,10 +252,10 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   </td>
                   {isEnabled('product_reference') && <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7 }}>REF001</td>}
                   <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'center' }}>2</td>
-                  <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'right' }}>100.000 DT</td>
+                  <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: textAlignEnd }}>100.000 {cur}</td>
                   {isEnabled('vat_column') && <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'center' }}>19%</td>}
                   {isEnabled('discount_column') && <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'center' }}>-</td>}
-                  <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: 'right' }}>200.000 DT</td>
+                  <td style={{ border: '1px solid #b0bec5', padding: 5, fontSize: 7, textAlign: textAlignEnd }}>200.000 {cur}</td>
                 </tr>
               </tbody>
             </table>
@@ -225,23 +273,23 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                   <table style={{ width: '100%', fontSize: 6, borderCollapse: 'collapse' }}>
                     <thead>
                       <tr>
-                        <th style={{ textAlign: 'left', fontWeight: 600 }}>{t('pdf_vat_rate')}</th>
-                        <th style={{ textAlign: 'right', fontWeight: 600 }}>{t('pdf_vat_base')}</th>
-                        <th style={{ textAlign: 'right', fontWeight: 600 }}>{t('pdf_vat')}</th>
+                        <th style={{ textAlign: textAlignStart, fontWeight: 600 }}>{t('pdf_vat_rate')}</th>
+                        <th style={{ textAlign: textAlignEnd, fontWeight: 600 }}>{t('pdf_vat_base')}</th>
+                        <th style={{ textAlign: textAlignEnd, fontWeight: 600 }}>{t('pdf_vat')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
                         <td>19%</td>
-                        <td style={{ textAlign: 'right' }}>200.00</td>
-                        <td style={{ textAlign: 'right' }}>38.00</td>
+                        <td style={{ textAlign: textAlignEnd }}>200.00</td>
+                        <td style={{ textAlign: textAlignEnd }}>38.00</td>
                       </tr>
                     </tbody>
                     <tfoot>
                       <tr style={{ fontWeight: 700, borderTop: `1px solid ${accentColor}` }}>
-                        <td>Total</td>
-                        <td style={{ textAlign: 'right' }}>200.00</td>
-                        <td style={{ textAlign: 'right' }}>38.00</td>
+                        <td>{t('total') || 'Total'}</td>
+                        <td style={{ textAlign: textAlignEnd }}>200.00</td>
+                        <td style={{ textAlign: textAlignEnd }}>38.00</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -253,33 +301,33 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                 <div style={{ width: 150, border: `2px solid ${accentColor}`, padding: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
                     <span>{t('pdf_total_ht')}</span>
-                    <span>200.000 DT</span>
+                    <span>200.000 {cur}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
                     <span>{t('pdf_vat')}</span>
-                    <span>38.000 DT</span>
+                    <span>38.000 {cur}</span>
                   </div>
                   {isEnabled('withholding_tax') && documentType === 'invoice' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3, color: '#e53935' }}>
                       <span>{t('pdf_preview_withholding')} 1.5%</span>
-                      <span>-3.570 DT</span>
+                      <span>-3.570 {cur}</span>
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
                     <span>{t('pdf_total_ttc')}</span>
-                    <span>238.000 DT</span>
+                    <span>238.000 {cur}</span>
                   </div>
                   {/* Custom taxes before stamp */}
                   {isEnabled('custom_taxes') && documentType === 'invoice' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3, color: '#1565c0' }}>
                       <span>{t('pdf_preview_custom_tax')}</span>
-                      <span>+5.000 DT</span>
+                      <span>+5.000 {cur}</span>
                     </div>
                   )}
                   {isEnabled('stamp_duty') && documentType === 'invoice' && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3 }}>
                       <span>{t('pdf_stamp')}</span>
-                      <span>1.000 DT</span>
+                      <span>1.000 {cur}</span>
                     </div>
                   )}
                   <div style={{ 
@@ -292,14 +340,13 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
                     paddingTop: 3,
                     marginTop: 3
                   }}>
-                    <span>{t('pdf_net_payable')}</span>
-                    <span>235.430 DT</span>
+                    <span>{documentType === 'invoice' ? t('pdf_net_payable') : t('pdf_total_ttc')}</span>
+                    <span>{documentType === 'invoice' ? `235.430 ${cur}` : `238.000 ${cur}`}</span>
                   </div>
                 </div>
               )}
             </div>
           )}
-
 
           {/* Legal mentions */}
           {isEnabled('legal_mentions') && (
@@ -321,7 +368,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             <div style={{ 
               position: 'absolute',
               bottom: 70,
-              right: 20,
+              [isRTL ? 'left' : 'right']: 20,
               width: 50,
               height: 50,
               background: '#e0e0e0',
@@ -340,7 +387,7 @@ export const PdfTemplatePreview: React.FC<PdfTemplatePreviewProps> = ({
             <div style={{ 
               position: 'absolute',
               bottom: 80,
-              left: 20,
+              [isRTL ? 'right' : 'left']: 20,
               width: 60,
               height: 60,
               border: '2px solid #666',
