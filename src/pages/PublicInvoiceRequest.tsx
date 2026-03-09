@@ -1170,6 +1170,28 @@ const PublicInvoiceRequest: React.FC = () => {
             </div>
 
             {paidAmountNumber > 0 && (
+              <div className="space-y-2">
+                <Label>{t('payment_date')}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {paymentDate ? format(paymentDate, 'PPP', { locale: getDateLocale() }) : t('select_date')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={paymentDate}
+                      onSelect={(date) => setPaymentDate(date || undefined)}
+                      initialFocus
+                      locale={getDateLocale()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
               <>
                 <Separator />
 
