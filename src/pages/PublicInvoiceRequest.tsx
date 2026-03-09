@@ -466,6 +466,12 @@ const PublicInvoiceRequest: React.FC = () => {
       return;
     }
 
+    // Check if withholding applies and no certificate yet uploaded
+    if (shouldApplyWithholding && appliedWithholdingRate > 0 && paymentDate && !withholdingCertificatePath) {
+      setShowCertificateDialog(true);
+      return;
+    }
+
     await submitRequest();
   };
 
