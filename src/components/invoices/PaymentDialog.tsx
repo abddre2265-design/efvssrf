@@ -1236,7 +1236,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                           type="number"
                           step="0.001"
                           min="0.001"
-                          max={remainingBalance}
+                          max={liveRemainingBalance}
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           className="h-9 text-sm"
