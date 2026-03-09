@@ -19,7 +19,7 @@ export interface CreditNote {
   original_net_payable: number;
   new_net_payable: number;
   financial_credit: number;
-  status: 'draft' | 'validated' | 'cancelled';
+  status: 'created' | 'draft' | 'validated' | 'cancelled';
   reason: string | null;
   notes: string | null;
   created_at: string;
