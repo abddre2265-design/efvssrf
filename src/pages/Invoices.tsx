@@ -66,6 +66,7 @@ const Invoices: React.FC = () => {
   const [creditNoteChoiceOpen, setCreditNoteChoiceOpen] = useState(false);
   const [creditNoteInvoice, setCreditNoteInvoice] = useState<Invoice | null>(null);
   const [commercialCreditOpen, setCommercialCreditOpen] = useState(false);
+  const [productReturnCreditOpen, setProductReturnCreditOpen] = useState(false);
 
   const fetchInvoices = async () => {
     try {
