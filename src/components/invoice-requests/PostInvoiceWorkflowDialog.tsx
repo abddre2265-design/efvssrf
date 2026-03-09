@@ -37,6 +37,7 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
 
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(getInitialStep());
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isConfirmAction, setIsConfirmAction] = useState(false);
 
   // Sync open state
   React.useEffect(() => {

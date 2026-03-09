@@ -27,6 +27,7 @@ import { InvoiceRequest } from './types';
 import { RequestTTCComparisonBubble } from './RequestTTCComparisonBubble';
 import { ClientLookupBanner } from './ClientLookupBanner';
 import { useClientLookup, PendingClientData } from '@/hooks/useClientLookup';
+import { PostInvoiceWorkflowDialog } from './PostInvoiceWorkflowDialog';
 
 interface Product {
   id: string;
