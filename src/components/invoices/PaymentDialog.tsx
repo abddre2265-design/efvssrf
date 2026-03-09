@@ -44,7 +44,7 @@ import {
   X,
   AlertCircle,
   Lock,
-  PiggyBank,
+  
   Calculator,
   CheckCircle2,
   Settings2,
