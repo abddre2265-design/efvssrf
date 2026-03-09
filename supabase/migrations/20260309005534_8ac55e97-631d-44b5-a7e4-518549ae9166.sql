@@ -1,0 +1,1 @@
+ALTER TABLE public.invoice_requests ADD COLUMN payment_date date DEFAULT NULL;
