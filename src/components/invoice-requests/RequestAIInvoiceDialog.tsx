@@ -901,6 +901,18 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
         currentTTC={step === 'preview' ? totals.totalTtc + (isForeignClient ? 0 : stampDutyEnabled ? stampDutyAmount : 0) : currentTTC}
       />
     )}
+
+    {/* Post-Invoice Workflow */}
+    {createdInvoiceId && createdClientId && organizationId && (
+      <PostInvoiceWorkflowDialog
+        open={workflowOpen}
+        onClose={handleWorkflowClose}
+        request={request}
+        invoiceId={createdInvoiceId}
+        clientId={createdClientId}
+        organizationId={organizationId}
+      />
+    )}
     </>
   );
 };
