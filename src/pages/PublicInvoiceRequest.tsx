@@ -696,6 +696,7 @@ const PublicInvoiceRequest: React.FC = () => {
                   setStoreId('');
                   setPurchaseDate(new Date());
                   setPaidAmount('');
+                  setPaymentDate(undefined);
                   setPaymentMethod('');
                   setLinkedClientId(null);
                   toast.info(t('new_request_form_reset'));
