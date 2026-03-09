@@ -338,9 +338,10 @@ const Invoices: React.FC = () => {
 
   const handleDeliver = async (invoice: Invoice) => {
     try {
-      // 1. Get current year and next counter for delivery note
       const currentYear = new Date().getFullYear();
-      
+      const isForeign = invoice.client_type === 'foreign';
+
+      // 1. Get next delivery note counter
       const { data: lastNote } = await supabase
         .from('delivery_notes')
         .select('delivery_note_counter')
@@ -352,7 +353,126 @@ const Invoices: React.FC = () => {
       const nextCounter = (lastNote?.delivery_note_counter || 0) + 1;
       const deliveryNoteNumber = `BL-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
 
-      // 2. Create delivery note
+      // 2. Fetch invoice lines
+      const { data: invoiceLines } = await supabase
+        .from('invoice_lines')
+        .select('*')
+        .eq('invoice_id', invoice.id);
+
+      if (!invoiceLines || invoiceLines.length === 0) {
+        toast.error(t('no_invoice_lines'));
+        return;
+      }
+
+      // 3. Fetch all validated credit notes for this invoice
+      const { data: creditNotes } = await supabase
+        .from('credit_notes')
+        .select('id, credit_note_type, status')
+        .eq('invoice_id', invoice.id)
+        .in('status', ['validated', 'validated_partial']);
+
+      // 4. Fetch credit note lines for validated credit notes
+      let creditNoteLines: any[] = [];
+      if (creditNotes && creditNotes.length > 0) {
+        const cnIds = creditNotes.map(cn => cn.id);
+        const { data: cnLines } = await supabase
+          .from('credit_note_lines')
+          .select('*')
+          .in('credit_note_id', cnIds);
+        creditNoteLines = cnLines || [];
+      }
+
+      // 5. Build a map of adjustments per invoice_line_id
+      // For product returns: reduce quantity by validated_quantity
+      // For commercial: track discount amounts per line
+      const productReturnCnIds = (creditNotes || [])
+        .filter(cn => cn.credit_note_type === 'product_return')
+        .map(cn => cn.id);
+      const commercialCnIds = (creditNotes || [])
+        .filter(cn => cn.credit_note_type === 'commercial_price')
+        .map(cn => cn.id);
+
+      // Map: invoice_line_id -> total validated returned quantity
+      const returnedQtyMap: Record<string, number> = {};
+      // Map: invoice_line_id -> total discount_ht from commercial credit notes
+      const commercialDiscountHtMap: Record<string, number> = {};
+      const commercialDiscountVatMap: Record<string, number> = {};
+
+      for (const cnLine of creditNoteLines) {
+        if (productReturnCnIds.includes(cnLine.credit_note_id)) {
+          returnedQtyMap[cnLine.invoice_line_id] = 
+            (returnedQtyMap[cnLine.invoice_line_id] || 0) + (cnLine.validated_quantity || 0);
+        }
+        if (commercialCnIds.includes(cnLine.credit_note_id)) {
+          commercialDiscountHtMap[cnLine.invoice_line_id] = 
+            (commercialDiscountHtMap[cnLine.invoice_line_id] || 0) + (cnLine.discount_ht || 0);
+          commercialDiscountVatMap[cnLine.invoice_line_id] = 
+            (commercialDiscountVatMap[cnLine.invoice_line_id] || 0) + 
+            ((cnLine.original_line_vat || 0) - (cnLine.new_line_vat || 0));
+        }
+      }
+
+      // 6. Build adjusted delivery note lines
+      const adjustedLines = invoiceLines
+        .map(line => {
+          const returnedQty = returnedQtyMap[line.id] || 0;
+          const adjustedQty = line.quantity - returnedQty;
+
+          if (adjustedQty <= 0) return null; // fully returned, skip
+
+          const commercialDiscountHt = commercialDiscountHtMap[line.id] || 0;
+          const commercialDiscountVat = commercialDiscountVatMap[line.id] || 0;
+
+          // Adjusted line totals
+          const originalLineHt = line.line_total_ht;
+          const originalLineVat = line.line_vat;
+
+          // Proportional adjustment for quantity reduction
+          const qtyRatio = adjustedQty / line.quantity;
+          const lineHtAfterQty = originalLineHt * qtyRatio;
+          const lineVatAfterQty = isForeign ? 0 : originalLineVat * qtyRatio;
+
+          // Apply commercial discount proportionally to remaining quantity
+          const commercialDiscountForRemaining = line.quantity > 0 
+            ? commercialDiscountHt * qtyRatio 
+            : 0;
+          const commercialVatDiscountForRemaining = line.quantity > 0
+            ? commercialDiscountVat * qtyRatio
+            : 0;
+
+          const finalLineHt = lineHtAfterQty - commercialDiscountForRemaining;
+          const finalLineVat = lineVatAfterQty - commercialVatDiscountForRemaining;
+          const finalLineTtc = finalLineHt + finalLineVat;
+
+          // Effective unit price after commercial discounts
+          const effectiveUnitPrice = adjustedQty > 0 ? finalLineHt / adjustedQty : 0;
+
+          return {
+            product_id: line.product_id,
+            description: line.description,
+            quantity: adjustedQty,
+            unit_price_ht: Number(effectiveUnitPrice.toFixed(3)),
+            vat_rate: line.vat_rate,
+            discount_percent: line.discount_percent,
+            line_total_ht: Number(finalLineHt.toFixed(3)),
+            line_vat: Number(finalLineVat.toFixed(3)),
+            line_total_ttc: Number(finalLineTtc.toFixed(3)),
+            line_order: line.line_order,
+          };
+        })
+        .filter(Boolean) as any[];
+
+      if (adjustedLines.length === 0) {
+        toast.error(t('all_products_returned'));
+        return;
+      }
+
+      // 7. Calculate delivery note totals
+      const dnSubtotalHt = adjustedLines.reduce((sum, l) => sum + l.line_total_ht, 0);
+      const dnTotalVat = adjustedLines.reduce((sum, l) => sum + l.line_vat, 0);
+      const dnTotalTtc = dnSubtotalHt + dnTotalVat;
+
+      // 8. Create delivery note with adjusted totals
       const { data: deliveryNote, error: dnError } = await supabase
         .from('delivery_notes')
         .insert({
@@ -364,11 +484,11 @@ const Invoices: React.FC = () => {
           delivery_note_year: currentYear,
           delivery_note_counter: nextCounter,
           currency: invoice.currency,
-          exchange_rate: invoice.exchange_rate,
-          subtotal_ht: invoice.subtotal_ht,
-          total_vat: invoice.total_vat,
+          exchange_rate: invoice.exchange_rate || 1,
+          subtotal_ht: Number(dnSubtotalHt.toFixed(3)),
+          total_vat: Number(dnTotalVat.toFixed(3)),
           total_discount: invoice.total_discount,
-          total_ttc: invoice.total_ttc,
+          total_ttc: Number(dnTotalTtc.toFixed(3)),
           notes: invoice.notes,
         })
         .select()
@@ -376,31 +496,15 @@ const Invoices: React.FC = () => {
 
       if (dnError) throw dnError;
 
-      // 3. Copy invoice lines to delivery note lines
-      const { data: invoiceLines } = await supabase
-        .from('invoice_lines')
-        .select('*')
-        .eq('invoice_id', invoice.id);
+      // 9. Insert adjusted delivery note lines
+      const deliveryNoteLines = adjustedLines.map(line => ({
+        delivery_note_id: deliveryNote.id,
+        ...line,
+      }));
 
-      if (invoiceLines && invoiceLines.length > 0) {
-        const deliveryNoteLines = invoiceLines.map(line => ({
-          delivery_note_id: deliveryNote.id,
-          product_id: line.product_id,
-          description: line.description,
-          quantity: line.quantity,
-          unit_price_ht: line.unit_price_ht,
-          vat_rate: line.vat_rate,
-          discount_percent: line.discount_percent,
-          line_total_ht: line.line_total_ht,
-          line_vat: line.line_vat,
-          line_total_ttc: line.line_total_ttc,
-          line_order: line.line_order,
-        }));
+      await supabase.from('delivery_note_lines').insert(deliveryNoteLines);
 
-        await supabase.from('delivery_note_lines').insert(deliveryNoteLines);
-      }
-
-      // 4. Update invoice delivery status
+      // 10. Update invoice delivery status
       await supabase
         .from('invoices')
         .update({ delivery_status: 'delivered' })
