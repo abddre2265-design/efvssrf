@@ -841,6 +841,10 @@ export const translations: Translations = {
   max_usable: { fr: 'Max utilisable', en: 'Max usable', ar: 'الحد الأقصى' },
   insufficient_balance: { fr: 'Solde insuffisant pour ce montant', en: 'Insufficient balance for this amount', ar: 'رصيد غير كافٍ لهذا المبلغ' },
   payment_method_client_balance: { fr: 'Solde client', en: 'Client Balance', ar: 'رصيد العميل' },
+  apply_client_balance: { fr: 'Utiliser le solde', en: 'Use balance', ar: 'استخدام الرصيد' },
+  payment_from_client_balance: { fr: 'Paiement par solde client', en: 'Payment from client balance', ar: 'الدفع من رصيد العميل' },
+  insufficient_client_balance: { fr: 'Solde client insuffisant', en: 'Insufficient client balance', ar: 'رصيد العميل غير كافٍ' },
+  client_balance: { fr: 'Solde client', en: 'Client balance', ar: 'رصيد العميل' },
   // Credit notes
   create_credit_note: { fr: 'Créer un avoir', en: 'Create credit note', ar: 'إنشاء إشعار دائن' },
   credit_note: { fr: 'Avoir', en: 'Credit note', ar: 'إشعار دائن' },

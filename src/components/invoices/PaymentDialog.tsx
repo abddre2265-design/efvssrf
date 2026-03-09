@@ -44,7 +44,7 @@ import {
   X,
   AlertCircle,
   Lock,
-  PiggyBank,
+  
   Calculator,
   CheckCircle2,
   Settings2,
@@ -90,12 +90,11 @@ const PAYMENT_METHODS = [
   { value: 'iban_transfer', icon: Building2, requiresReference: true },
   { value: 'swift_transfer', icon: Globe, requiresReference: true },
   { value: 'bank_deposit', icon: Wallet, requiresReference: true },
-  { value: 'client_credit_note', icon: FileText, requiresReference: false },
-  { value: 'client_deposit', icon: PiggyBank, requiresReference: false },
+  { value: 'client_balance', icon: Wallet, requiresReference: false },
   { value: 'mixed', icon: Layers, requiresReference: false },
 ];
 
-const MIXED_PAYMENT_METHODS = PAYMENT_METHODS.filter(m => m.value !== 'mixed' && m.value !== 'client_credit_note' && m.value !== 'client_deposit');
+const MIXED_PAYMENT_METHODS = PAYMENT_METHODS.filter(m => m.value !== 'mixed' && m.value !== 'client_balance');
 
 // Available currencies for foreign payments (most common)
 const FOREIGN_CURRENCIES = ['EUR', 'USD', 'GBP', 'CAD', 'CHF', 'AED', 'SAR', 'QAR', 'MAD', 'TRY', 'CNY'];
@@ -117,10 +116,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   // Active tab state
   const [activeTab, setActiveTab] = useState<string>('config');
   
-  // Client balance state - separated by source
+  // Client balance state
   const [clientBalance, setClientBalance] = useState<number>(0);
-  const [creditNoteBalance, setCreditNoteBalance] = useState<number>(0);
-  const [depositBalance, setDepositBalance] = useState<number>(0);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   
   // Withholding configuration state (Step 1 for local clients)
@@ -316,12 +313,11 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
     }
   }, [selectedCurrency, isForeign, open]);
 
-  // Load client balance - separated by source (credit notes vs deposits)
+  // Load client balance
   const loadClientBalance = async () => {
     if (!invoice?.client_id) return;
     setIsLoadingBalance(true);
     try {
-      // Get total balance from client
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('account_balance')
@@ -329,49 +325,10 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
         .single();
       
       if (clientError) throw clientError;
-      const totalBalance = clientData?.account_balance || 0;
-      setClientBalance(totalBalance);
-      
-      // Get movements to calculate breakdown
-      const { data: movements, error: movementsError } = await supabase
-        .from('client_account_movements')
-        .select('movement_type, amount, source_type')
-        .eq('client_id', invoice.client_id);
-      
-      if (movementsError) throw movementsError;
-      
-      // Calculate credits from each source
-      const creditNoteCredits = movements
-        ?.filter(m => m.movement_type === 'credit' && (m.source_type === 'credit_note' || m.source_type === 'credit_note_unblock'))
-        .reduce((sum, m) => sum + m.amount, 0) || 0;
-      
-      const depositCredits = movements
-        ?.filter(m => m.movement_type === 'credit' && m.source_type === 'direct_deposit')
-        .reduce((sum, m) => sum + m.amount, 0) || 0;
-      
-      // Calculate all debits
-      const totalDebits = movements
-        ?.filter(m => m.movement_type === 'debit')
-        .reduce((sum, m) => sum + m.amount, 0) || 0;
-      
-      // Distribute the current balance proportionally based on credit sources
-      // Or prioritize: first use deposits, then credit notes
-      const totalCredits = creditNoteCredits + depositCredits;
-      if (totalCredits > 0 && totalBalance > 0) {
-        // Distribute remaining balance proportionally
-        const availableCreditNotes = Math.max(0, (creditNoteCredits / totalCredits) * totalBalance);
-        const availableDeposits = Math.max(0, (depositCredits / totalCredits) * totalBalance);
-        setCreditNoteBalance(availableCreditNotes);
-        setDepositBalance(availableDeposits);
-      } else {
-        setCreditNoteBalance(0);
-        setDepositBalance(0);
-      }
+      setClientBalance(clientData?.account_balance || 0);
     } catch (error: any) {
       console.error('Error loading client balance:', error);
       setClientBalance(0);
-      setCreditNoteBalance(0);
-      setDepositBalance(0);
     } finally {
       setIsLoadingBalance(false);
     }
@@ -409,15 +366,9 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const selectedMethod = PAYMENT_METHODS.find(m => m.value === paymentMethod);
   const requiresReference = selectedMethod?.requiresReference || false;
   const isMixedPayment = paymentMethod === 'mixed';
-  const isClientCreditNotePayment = paymentMethod === 'client_credit_note';
-  const isClientDepositPayment = paymentMethod === 'client_deposit';
-  const isClientBalancePayment = isClientCreditNotePayment || isClientDepositPayment;
+  const isClientBalancePayment = paymentMethod === 'client_balance';
   
-  // Maximum amount when using credit note balance
-  const maxCreditNoteAmount = Math.min(creditNoteBalance, remainingBalanceInTND);
-  // Maximum amount when using deposit balance
-  const maxDepositAmount = Math.min(depositBalance, remainingBalanceInTND);
-  // Total client balance for validation
+  // Maximum amount when using client balance
   const maxClientBalanceAmount = Math.min(clientBalance, remainingBalanceInTND);
 
   const parsedAmount = parseFloat(amount) || 0;
@@ -441,14 +392,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   });
 
   // Validation for client balance payment (in TND)
-  const getMaxBalanceForMethod = () => {
-    if (isClientCreditNotePayment) return creditNoteBalance;
-    if (isClientDepositPayment) return depositBalance;
-    return clientBalance;
-  };
-  
   const isClientBalanceValid = isClientBalancePayment 
-    ? (amountInTND > 0 && amountInTND <= getMaxBalanceForMethod() && parsedAmount <= remainingBalance)
+    ? (amountInTND > 0 && amountInTND <= clientBalance && parsedAmount <= remainingBalance)
     : true;
 
   const canSavePayment = isMixedPayment
@@ -599,14 +544,13 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
       if (paymentError) throw paymentError;
 
-      // If using client balance (credit note or deposit), create a debit movement (always in TND)
+      // If using client balance, create a debit movement (always in TND)
       if (isClientBalancePayment && paymentData) {
         const debitAmount = isForeign ? amountInTND : parsedAmount;
         const newBalance = clientBalance - debitAmount;
         
-        // Determine the source type based on payment method
-        const debitSourceType = isClientCreditNotePayment ? 'credit_note_payment' : 'deposit_payment';
-        const notePrefix = isClientCreditNotePayment ? t('payment_method_client_credit_note') : t('payment_method_client_deposit');
+        const debitSourceType = 'client_balance_payment';
+        const notePrefix = t('payment_method_client_balance');
         
         const { error: movementError } = await supabase
           .from('client_account_movements')
@@ -1136,104 +1080,53 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
               {/* Step 2: Execute Payment */}
               <TabsContent value="payment" className="mt-4 space-y-4">
-                {/* Client Credit Cards - Separated by source */}
+                {/* Client Balance Card */}
                 {clientBalance > 0 && remainingBalance > 0 && (
                   <div className="space-y-3">
-                    {/* Credit Notes (Avoirs) Card */}
-                    {creditNoteBalance > 0 && (
-                      <div className="rounded-xl border-2 border-blue-500/30 bg-gradient-to-r from-blue-500/5 to-blue-500/10 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                              <FileText className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">{t('credit_from_avoirs')}</p>
-                              <p className="text-xl font-bold text-blue-600">{formatCurrency(creditNoteBalance, 'TND')}</p>
-                            </div>
+                    <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <Wallet className="h-5 w-5 text-primary" />
                           </div>
-                          <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30">
-                            <FileText className="h-3 w-3 mr-1" />
-                            {t('credit_note')}
-                          </Badge>
-                        </div>
-                        
-                        {/* Quick apply button */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-blue-500/20">
-                          <div className="flex-1 text-sm">
-                            <span className="text-muted-foreground">{t('max_applicable')}: </span>
-                            <span className="font-mono font-semibold text-blue-600">
-                              {formatCurrency(Math.min(creditNoteBalance, isForeign ? remainingBalanceInTND : remainingBalance), 'TND')}
-                            </span>
+                          <div>
+                            <p className="text-xs text-muted-foreground">{t('client_balance')}</p>
+                            <p className="text-xl font-bold text-primary">{formatCurrency(clientBalance, 'TND')}</p>
                           </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
-                            onClick={() => {
-                              setPaymentMethod('client_credit_note');
-                              if (isForeign) {
-                                const maxInCurrency = Math.min(creditNoteBalance / parsedPaymentExchangeRate, remainingBalance);
-                                setAmount(maxInCurrency.toFixed(3));
-                              } else {
-                                setAmount(Math.min(creditNoteBalance, remainingBalance).toFixed(3));
-                              }
-                            }}
-                          >
-                            <FileText className="h-4 w-4 mr-1" />
-                            {t('apply_credit_note')}
-                          </Button>
                         </div>
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                          <Wallet className="h-3 w-3 mr-1" />
+                          {t('client_balance')}
+                        </Badge>
                       </div>
-                    )}
-
-                    {/* Deposits Card */}
-                    {depositBalance > 0 && (
-                      <div className="rounded-xl border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 to-emerald-500/10 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                              <PiggyBank className="h-5 w-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">{t('credit_from_deposits')}</p>
-                              <p className="text-xl font-bold text-emerald-600">{formatCurrency(depositBalance, 'TND')}</p>
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
-                            <PiggyBank className="h-3 w-3 mr-1" />
-                            {t('direct_deposit')}
-                          </Badge>
+                      
+                      {/* Quick apply button */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-primary/20">
+                        <div className="flex-1 text-sm">
+                          <span className="text-muted-foreground">{t('max_applicable')}: </span>
+                          <span className="font-mono font-semibold text-primary">
+                            {formatCurrency(maxClientBalanceAmount, 'TND')}
+                          </span>
                         </div>
-                        
-                        {/* Quick apply button */}
-                        <div className="flex items-center gap-2 pt-2 border-t border-emerald-500/20">
-                          <div className="flex-1 text-sm">
-                            <span className="text-muted-foreground">{t('max_applicable')}: </span>
-                            <span className="font-mono font-semibold text-emerald-600">
-                              {formatCurrency(Math.min(depositBalance, isForeign ? remainingBalanceInTND : remainingBalance), 'TND')}
-                            </span>
-                          </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
-                            onClick={() => {
-                              setPaymentMethod('client_deposit');
-                              if (isForeign) {
-                                const maxInCurrency = Math.min(depositBalance / parsedPaymentExchangeRate, remainingBalance);
-                                setAmount(maxInCurrency.toFixed(3));
-                              } else {
-                                setAmount(Math.min(depositBalance, remainingBalance).toFixed(3));
-                              }
-                            }}
-                          >
-                            <PiggyBank className="h-4 w-4 mr-1" />
-                            {t('apply_deposit')}
-                          </Button>
-                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-8"
+                          onClick={() => {
+                            setPaymentMethod('client_balance');
+                            if (isForeign) {
+                              const maxInCurrency = Math.min(clientBalance / parsedPaymentExchangeRate, remainingBalance);
+                              setAmount(maxInCurrency.toFixed(3));
+                            } else {
+                              setAmount(Math.min(clientBalance, remainingBalance).toFixed(3));
+                            }
+                          }}
+                        >
+                          <Wallet className="h-4 w-4 mr-1" />
+                          {t('apply_client_balance')}
+                        </Button>
                       </div>
-                    )}
+                    </div>
                     
                     <p className="text-xs text-muted-foreground italic">
                       {t('credit_will_be_debited')}
@@ -1380,15 +1273,15 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                       </Select>
                     </div>
 
-                    {/* Client Credit Note Payment Info */}
-                    {isClientCreditNotePayment && (
-                      <div className="p-4 rounded-lg bg-blue-500/10 border-2 border-blue-500/30 space-y-3">
+                    {/* Client Balance Payment Info */}
+                    {isClientBalancePayment && (
+                      <div className="p-4 rounded-lg bg-primary/10 border-2 border-primary/30 space-y-3">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <FileText className="h-5 w-5 text-blue-600" />
+                          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <Wallet className="h-5 w-5 text-primary" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-semibold text-blue-700 dark:text-blue-400">{t('payment_from_credit_note')}</p>
+                            <p className="font-semibold text-primary">{t('payment_from_client_balance')}</p>
                             <p className="text-xs text-muted-foreground">
                               {t('credit_will_be_debited')}
                             </p>
@@ -1397,8 +1290,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                         
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div className="p-2 rounded bg-muted/50">
-                            <span className="text-muted-foreground text-xs">{t('credit_from_avoirs')}:</span>
-                            <p className="font-mono font-semibold text-blue-600">{formatCurrency(creditNoteBalance, 'TND')}</p>
+                            <span className="text-muted-foreground text-xs">{t('client_balance')}:</span>
+                            <p className="font-mono font-semibold text-primary">{formatCurrency(clientBalance, 'TND')}</p>
                           </div>
                           <div className="p-2 rounded bg-muted/50">
                             <span className="text-muted-foreground text-xs">{t('to_debit')}:</span>
@@ -1406,89 +1299,32 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                           </div>
                         </div>
                         
-                        {amountInTND > creditNoteBalance && (
+                        {amountInTND > clientBalance && (
                           <div className="flex items-center gap-2 p-2 rounded bg-destructive/10 border border-destructive/30">
                             <AlertCircle className="h-4 w-4 text-destructive" />
                             <p className="text-xs text-destructive font-medium">
-                              {t('insufficient_credit_note_balance')}
+                              {t('insufficient_client_balance')}
                             </p>
                           </div>
                         )}
                         
-                        {/* Quick amount buttons for credit note */}
-                        <div className="flex gap-2 pt-2 border-t border-blue-500/20">
+                        {/* Quick amount button */}
+                        <div className="flex gap-2 pt-2 border-t border-primary/20">
                           <Button 
                             type="button" 
                             variant="outline" 
                             size="sm"
-                            className="flex-1 h-7 text-xs border-blue-500/30 text-blue-700 hover:bg-blue-500/10"
+                            className="flex-1 h-7 text-xs"
                             onClick={() => {
                               if (isForeign) {
-                                const maxInCurrency = Math.min(creditNoteBalance / parsedPaymentExchangeRate, remainingBalance);
+                                const maxInCurrency = Math.min(clientBalance / parsedPaymentExchangeRate, remainingBalance);
                                 setAmount(maxInCurrency.toFixed(3));
                               } else {
-                                setAmount(Math.min(creditNoteBalance, remainingBalance).toFixed(3));
+                                setAmount(Math.min(clientBalance, remainingBalance).toFixed(3));
                               }
                             }}
                           >
-                            {t('apply_full_credit')} ({formatCurrency(Math.min(creditNoteBalance, isForeign ? remainingBalanceInTND : remainingBalance), 'TND')})
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Client Deposit Payment Info */}
-                    {isClientDepositPayment && (
-                      <div className="p-4 rounded-lg bg-emerald-500/10 border-2 border-emerald-500/30 space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                            <PiggyBank className="h-5 w-5 text-emerald-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-semibold text-emerald-700 dark:text-emerald-400">{t('payment_from_deposit')}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {t('credit_will_be_debited')}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="p-2 rounded bg-muted/50">
-                            <span className="text-muted-foreground text-xs">{t('credit_from_deposits')}:</span>
-                            <p className="font-mono font-semibold text-emerald-600">{formatCurrency(depositBalance, 'TND')}</p>
-                          </div>
-                          <div className="p-2 rounded bg-muted/50">
-                            <span className="text-muted-foreground text-xs">{t('to_debit')}:</span>
-                            <p className="font-mono font-semibold text-primary">{formatCurrency(amountInTND, 'TND')}</p>
-                          </div>
-                        </div>
-                        
-                        {amountInTND > depositBalance && (
-                          <div className="flex items-center gap-2 p-2 rounded bg-destructive/10 border border-destructive/30">
-                            <AlertCircle className="h-4 w-4 text-destructive" />
-                            <p className="text-xs text-destructive font-medium">
-                              {t('insufficient_deposit_balance')}
-                            </p>
-                          </div>
-                        )}
-                        
-                        {/* Quick amount buttons for deposit */}
-                        <div className="flex gap-2 pt-2 border-t border-emerald-500/20">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm"
-                            className="flex-1 h-7 text-xs border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10"
-                            onClick={() => {
-                              if (isForeign) {
-                                const maxInCurrency = Math.min(depositBalance / parsedPaymentExchangeRate, remainingBalance);
-                                setAmount(maxInCurrency.toFixed(3));
-                              } else {
-                                setAmount(Math.min(depositBalance, remainingBalance).toFixed(3));
-                              }
-                            }}
-                          >
-                            {t('apply_full_credit')} ({formatCurrency(Math.min(depositBalance, isForeign ? remainingBalanceInTND : remainingBalance), 'TND')})
+                            {t('apply_full_credit')} ({formatCurrency(maxClientBalanceAmount, 'TND')})
                           </Button>
                         </div>
                       </div>
