@@ -377,6 +377,17 @@ const PublicInvoiceRequest: React.FC = () => {
       }
     }
 
+    // Check if paid amount exceeds net payable - show warning
+    if (paidAmountNumber > netPayableAmount && netPayableAmount > 0) {
+      setShowOverpaymentWarning(true);
+      return;
+    }
+
+    await submitRequest();
+  };
+
+  const handleConfirmOverpayment = async () => {
+    setShowOverpaymentWarning(false);
     await submitRequest();
   };
 
