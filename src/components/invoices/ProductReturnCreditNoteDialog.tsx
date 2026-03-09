@@ -326,82 +326,126 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
     }
     setIsSaving(true);
     try {
-      const currentYear = new Date().getFullYear();
-      const { data: lastCn } = await supabase
-        .from('credit_notes')
-        .select('credit_note_counter')
-        .eq('credit_note_year', currentYear)
-        .order('credit_note_counter', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Build credit note lines data
+      const buildCnLineData = (rl: ReturnLine, idx: number) => ({
+        invoice_line_id: rl.lineId,
+        product_id: rl.productId,
+        product_name: rl.productName,
+        product_reference: rl.productReference,
+        original_quantity: rl.invoicedQuantity,
+        original_unit_price_ht: rl.originalUnitPriceHt,
+        original_line_total_ht: rl.adjustedUnitPriceHt * rl.invoicedQuantity,
+        original_line_vat: 0,
+        original_line_total_ttc: 0,
+        returned_quantity: rl.returnQuantity + rl.validatedQuantity, // total = editable + validated
+        validated_quantity: rl.validatedQuantity, // preserve validated
+        discount_ht: rl.lineHt,
+        discount_ttc: rl.lineTtc,
+        discount_rate: 0,
+        new_line_total_ht: 0,
+        new_line_vat: 0,
+        new_line_total_ttc: 0,
+        vat_rate: rl.vatRate,
+        line_order: idx,
+      });
 
-      const nextCounter = ((lastCn as any)?.credit_note_counter || 0) + 1;
-      const cnNumber = `AV-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
+      if (isEditMode && editCreditNoteId) {
+        // UPDATE existing credit note
+        const { error: cnError } = await supabase
+          .from('credit_notes')
+          .update({
+            subtotal_ht: totalHt,
+            total_vat: totalVat,
+            total_ttc: totalTtc,
+            withholding_rate: effectiveWithholdingRate,
+            withholding_amount: returnWithholdingAmount,
+            original_net_payable: currentOperationalNetPayable,
+            new_net_payable: newNetPayable,
+            financial_credit: financialCredit,
+          } as any)
+          .eq('id', editCreditNoteId);
+        if (cnError) throw cnError;
 
-      // Build credit note lines (only lines with return > 0)
-      const cnLines = returnLines
-        .filter(rl => rl.returnQuantity > 0)
-        .map((rl, idx) => ({
-          invoice_line_id: rl.lineId,
-          product_id: rl.productId,
-          product_name: rl.productName,
-          product_reference: rl.productReference,
-          original_quantity: rl.invoicedQuantity,
-          original_unit_price_ht: rl.originalUnitPriceHt,
-          original_line_total_ht: rl.adjustedUnitPriceHt * rl.invoicedQuantity,
-          original_line_vat: 0,
-          original_line_total_ttc: 0,
-          returned_quantity: rl.returnQuantity,
-          discount_ht: rl.lineHt,
-          discount_ttc: rl.lineTtc,
-          discount_rate: 0,
-          new_line_total_ht: 0,
-          new_line_vat: 0,
-          new_line_total_ttc: 0,
-          vat_rate: rl.vatRate,
-          line_order: idx,
+        // Delete old non-validated lines, then re-insert
+        await supabase
+          .from('credit_note_lines')
+          .delete()
+          .eq('credit_note_id', editCreditNoteId);
+
+        const cnLines = returnLines
+          .filter(rl => rl.returnQuantity > 0 || rl.validatedQuantity > 0)
+          .map((rl, idx) => ({
+            ...buildCnLineData(rl, idx),
+            credit_note_id: editCreditNoteId,
+          }));
+
+        if (cnLines.length > 0) {
+          const { error: linesError } = await supabase
+            .from('credit_note_lines')
+            .insert(cnLines as any);
+          if (linesError) throw linesError;
+        }
+
+        toast.success(t('credit_note_updated') || 'Avoir produit mis à jour');
+      } else {
+        // CREATE new credit note
+        const currentYear = new Date().getFullYear();
+        const { data: lastCn } = await supabase
+          .from('credit_notes')
+          .select('credit_note_counter')
+          .eq('credit_note_year', currentYear)
+          .order('credit_note_counter', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const nextCounter = ((lastCn as any)?.credit_note_counter || 0) + 1;
+        const cnNumber = `AV-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
+
+        const cnLines = returnLines
+          .filter(rl => rl.returnQuantity > 0)
+          .map((rl, idx) => buildCnLineData(rl, idx));
+
+        const { data: cnData, error: cnError } = await supabase
+          .from('credit_notes')
+          .insert({
+            organization_id: invoice.organization_id,
+            invoice_id: invoice.id,
+            client_id: invoice.client_id,
+            credit_note_number: cnNumber,
+            credit_note_prefix: 'AV',
+            credit_note_year: currentYear,
+            credit_note_counter: nextCounter,
+            credit_note_type: 'product_return',
+            credit_note_method: 'lines',
+            subtotal_ht: totalHt,
+            total_vat: totalVat,
+            total_ttc: totalTtc,
+            stamp_duty_amount: stampDuty,
+            withholding_rate: effectiveWithholdingRate,
+            withholding_amount: returnWithholdingAmount,
+            original_net_payable: currentOperationalNetPayable,
+            new_net_payable: newNetPayable,
+            financial_credit: financialCredit,
+            status: 'created',
+          } as any)
+          .select()
+          .single();
+
+        if (cnError) throw cnError;
+
+        const linesWithCnId = cnLines.map(l => ({
+          ...l,
+          credit_note_id: (cnData as any).id,
         }));
 
-      const { data: cnData, error: cnError } = await supabase
-        .from('credit_notes')
-        .insert({
-          organization_id: invoice.organization_id,
-          invoice_id: invoice.id,
-          client_id: invoice.client_id,
-          credit_note_number: cnNumber,
-          credit_note_prefix: 'AV',
-          credit_note_year: currentYear,
-          credit_note_counter: nextCounter,
-          credit_note_type: 'product_return',
-          credit_note_method: 'lines',
-          subtotal_ht: totalHt,
-          total_vat: totalVat,
-          total_ttc: totalTtc,
-          stamp_duty_amount: stampDuty,
-          withholding_rate: effectiveWithholdingRate,
-          withholding_amount: returnWithholdingAmount,
-          original_net_payable: currentOperationalNetPayable,
-          new_net_payable: newNetPayable,
-          financial_credit: financialCredit,
-          status: 'created',
-        } as any)
-        .select()
-        .single();
+        const { error: linesError } = await supabase
+          .from('credit_note_lines')
+          .insert(linesWithCnId as any);
+        if (linesError) throw linesError;
 
-      if (cnError) throw cnError;
+        toast.success(t('credit_note_created') || 'Avoir produit créé');
+      }
 
-      const linesWithCnId = cnLines.map(l => ({
-        ...l,
-        credit_note_id: (cnData as any).id,
-      }));
-
-      const { error: linesError } = await supabase
-        .from('credit_note_lines')
-        .insert(linesWithCnId as any);
-
-      if (linesError) throw linesError;
-
-      toast.success(t('credit_note_created') || 'Avoir produit créé');
       onOpenChange(false);
       onComplete?.();
     } catch (error) {
