@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Clock, CheckCircle, XCircle, FileCheck } from 'lucide-react';
+import { Eye, Clock, CheckCircle, XCircle, FileCheck, TrendingUp } from 'lucide-react';
 import { InvoiceRequest } from './types';
 import { motion } from 'framer-motion';
 
@@ -77,9 +77,13 @@ export const InvoiceRequestTable: React.FC<InvoiceRequestTableProps> = ({
     }
   };
 
-  const getPaymentStatusBadge = (status: string, paidAmount: number, totalTtc: number) => {
-    // Normalize: if paid_amount >= total_ttc, treat as "paid" regardless of stored status
-    const effectiveStatus = (status === 'partial' && paidAmount >= totalTtc) ? 'paid' : status;
+  const getPaymentStatusBadge = (request: InvoiceRequest) => {
+    const { payment_status, paid_amount, net_payable, total_ttc } = request;
+    const netPayable = net_payable || total_ttc;
+    
+    // Normalize: if paid_amount >= netPayable, treat as "paid"
+    const effectiveStatus = (payment_status === 'partial' && paid_amount >= netPayable) ? 'paid' : payment_status;
+    
     switch (effectiveStatus) {
       case 'paid':
         return (
@@ -90,7 +94,7 @@ export const InvoiceRequestTable: React.FC<InvoiceRequestTableProps> = ({
       case 'partial':
         return (
           <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30">
-            {t('partial')} ({paidAmount.toFixed(3)} / {totalTtc.toFixed(3)})
+            {t('partial')} ({paid_amount.toFixed(3)} / {netPayable.toFixed(3)})
           </Badge>
         );
       case 'unpaid':
@@ -100,8 +104,22 @@ export const InvoiceRequestTable: React.FC<InvoiceRequestTableProps> = ({
           </Badge>
         );
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary">{payment_status}</Badge>;
     }
+  };
+
+  const getExtraBadge = (request: InvoiceRequest) => {
+    const netPayable = request.net_payable || request.total_ttc;
+    const extra = request.paid_amount - netPayable;
+    if (extra > 0.001) {
+      return (
+        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 gap-1">
+          <TrendingUp className="h-3 w-3" />
+          +{extra.toFixed(3)}
+        </Badge>
+      );
+    }
+    return null;
   };
 
   const getClientName = (request: InvoiceRequest) => {
@@ -137,6 +155,7 @@ export const InvoiceRequestTable: React.FC<InvoiceRequestTableProps> = ({
             <TableHead>{t('client')}</TableHead>
             <TableHead>{t('store')}</TableHead>
             <TableHead className="text-right">{t('total_ttc')}</TableHead>
+            <TableHead className="text-right">{t('net_payable_request')}</TableHead>
             <TableHead>{t('payment_status')}</TableHead>
             <TableHead>{t('status')}</TableHead>
             <TableHead className="text-right">{t('actions')}</TableHead>
@@ -158,8 +177,14 @@ export const InvoiceRequestTable: React.FC<InvoiceRequestTableProps> = ({
               <TableCell className="text-right font-mono">
                 {request.total_ttc.toFixed(3)} TND
               </TableCell>
+              <TableCell className="text-right font-mono">
+                {(request.net_payable || request.total_ttc).toFixed(3)} TND
+              </TableCell>
               <TableCell>
-                {getPaymentStatusBadge(request.payment_status, request.paid_amount, request.total_ttc)}
+                <div className="flex flex-col gap-1">
+                  {getPaymentStatusBadge(request)}
+                  {getExtraBadge(request)}
+                </div>
               </TableCell>
               <TableCell>{getStatusBadge(request.status)}</TableCell>
               <TableCell className="text-right">
