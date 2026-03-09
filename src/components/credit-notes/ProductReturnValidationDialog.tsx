@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { recalculateFinancialCredit } from '@/utils/financialCreditUtils';
 import { CreditNote, CreditNoteLine } from './types';
 import { formatCurrency } from '@/components/invoices/types';
 import { toast } from 'sonner';
@@ -164,6 +165,12 @@ export const ProductReturnValidationDialog: React.FC<ProductReturnValidationDial
         .from('credit_notes')
         .update({ status: newStatus })
         .eq('id', creditNote.id);
+
+      // 4. Recalculate financial credit
+      const fcResult = await recalculateFinancialCredit(creditNote.invoice_id, t);
+      if (fcResult && fcResult.delta > 0) {
+        toast.info(`${t('financial_credit_created') || 'Avoir financier créé'}: ${fcResult.financialCredit.toFixed(3)} TND`);
+      }
 
       toast.success(
         isFullValidation
