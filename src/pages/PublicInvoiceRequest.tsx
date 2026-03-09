@@ -231,6 +231,74 @@ const PublicInvoiceRequest: React.FC = () => {
     validateToken();
   }, [token]);
 
+  // Real-time subscription for organization data changes
+  useEffect(() => {
+    if (!organizationId) return;
+
+    // Subscribe to organization changes (name, logo, withholding settings)
+    const orgChannel = supabase
+      .channel(`public-org-${organizationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'organizations',
+          filter: `id=eq.${organizationId}`,
+        },
+        async () => {
+          // Refresh org info
+          const { data: orgInfo } = await supabase
+            .rpc('get_organization_public_info', { org_id: organizationId })
+            .maybeSingle();
+          if (orgInfo) {
+            setOrganizationName(orgInfo.name);
+            setOrganizationLogo(orgInfo.logo_url);
+          }
+          // Refresh withholding settings
+          const { data: withholdingData } = await supabase
+            .rpc('get_organization_public_withholding', { org_id: organizationId })
+            .maybeSingle();
+          if (withholdingData) {
+            setWithholdingSettings({
+              rate: Number(withholdingData.default_withholding_rate) || 0,
+              minAmount: Number(withholdingData.withholding_min_amount) || 0,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to stamp duty changes
+    const stampChannel = supabase
+      .channel(`public-stamp-${organizationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stamp_duty_settings',
+          filter: `organization_id=eq.${organizationId}`,
+        },
+        async () => {
+          const { data: stampData } = await supabase
+            .from('stamp_duty_settings')
+            .select('amount')
+            .eq('organization_id', organizationId)
+            .maybeSingle();
+          if (stampData?.amount !== undefined && stampData?.amount !== null) {
+            setStampDutyAmount(Number(stampData.amount) || 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(orgChannel);
+      supabase.removeChannel(stampChannel);
+    };
+  }, [organizationId]);
+
   // Reset identifier type when client type changes
   useEffect(() => {
     const availableTypes = IDENTIFIER_TYPES[clientType];
