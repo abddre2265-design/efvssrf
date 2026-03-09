@@ -332,8 +332,7 @@ const Invoices: React.FC = () => {
     if (type === 'commercial_price') {
       setCommercialCreditOpen(true);
     } else {
-      // TODO: product credit note
-      console.log('Product credit note for:', creditNoteInvoice?.invoice_number);
+      setProductReturnCreditOpen(true);
     }
   };
 
