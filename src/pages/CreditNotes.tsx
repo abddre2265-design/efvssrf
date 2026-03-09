@@ -112,12 +112,148 @@ const CreditNotes: React.FC = () => {
 
   const handleCancel = async (cn: CreditNote) => {
     try {
-      const { error } = await supabase
-        .from('credit_notes')
-        .update({ status: 'draft' })
-        .eq('id', cn.id);
-      if (error) throw error;
-      toast.success(t('credit_note_cancelled') || 'Avoir annulé');
+      // If partially validated, split into two: validated lines stay, non-validated go to draft
+      if (cn.status === 'validated_partial' && cn.credit_note_type === 'product_return') {
+        // Fetch all lines
+        const { data: lines, error: linesErr } = await supabase
+          .from('credit_note_lines')
+          .select('*')
+          .eq('credit_note_id', cn.id);
+        if (linesErr) throw linesErr;
+
+        const allLines = (lines || []) as any[];
+        const validatedLines = allLines.filter(l => l.validated_quantity > 0);
+        const nonValidatedLines = allLines.filter(l => l.validated_quantity <= 0);
+
+        // 1. Update original CN: keep only validated lines, set status to 'validated'
+        // Update original CN totals based on validated lines only
+        const validatedTotalHt = validatedLines.reduce((s: number, l: any) => {
+          const unitHt = l.returned_quantity > 0 ? l.discount_ht / l.returned_quantity : 0;
+          return s + unitHt * l.validated_quantity;
+        }, 0);
+        const validatedTotalTtc = validatedLines.reduce((s: number, l: any) => {
+          const unitTtc = l.returned_quantity > 0 ? l.discount_ttc / l.returned_quantity : 0;
+          return s + unitTtc * l.validated_quantity;
+        }, 0);
+        const validatedTotalVat = validatedTotalTtc - validatedTotalHt;
+
+        await supabase
+          .from('credit_notes')
+          .update({
+            status: 'validated',
+            subtotal_ht: validatedTotalHt,
+            total_vat: validatedTotalVat,
+            total_ttc: validatedTotalTtc,
+          } as any)
+          .eq('id', cn.id);
+
+        // Update validated lines: set returned_quantity = validated_quantity
+        for (const vl of validatedLines) {
+          const unitHt = vl.returned_quantity > 0 ? vl.discount_ht / vl.returned_quantity : 0;
+          const unitTtc = vl.returned_quantity > 0 ? vl.discount_ttc / vl.returned_quantity : 0;
+          await supabase
+            .from('credit_note_lines')
+            .update({
+              returned_quantity: vl.validated_quantity,
+              discount_ht: unitHt * vl.validated_quantity,
+              discount_ttc: unitTtc * vl.validated_quantity,
+            } as any)
+            .eq('id', vl.id);
+        }
+
+        // Remove non-validated lines from original CN
+        for (const nvl of nonValidatedLines) {
+          await supabase
+            .from('credit_note_lines')
+            .delete()
+            .eq('id', nvl.id);
+        }
+
+        // 2. Create new CN in draft with non-validated lines (if any)
+        if (nonValidatedLines.length > 0) {
+          const currentYear = new Date().getFullYear();
+          const { data: lastCn } = await supabase
+            .from('credit_notes')
+            .select('credit_note_counter')
+            .eq('credit_note_year', currentYear)
+            .order('credit_note_counter', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          const nextCounter = ((lastCn as any)?.credit_note_counter || 0) + 1;
+          const cnNumber = `AV-${currentYear}-${String(nextCounter).padStart(5, '0')}`;
+
+          const draftTotalHt = nonValidatedLines.reduce((s: number, l: any) => s + (l.discount_ht || 0), 0);
+          const draftTotalTtc = nonValidatedLines.reduce((s: number, l: any) => s + (l.discount_ttc || 0), 0);
+          const draftTotalVat = draftTotalTtc - draftTotalHt;
+
+          const { data: newCn, error: newCnErr } = await supabase
+            .from('credit_notes')
+            .insert({
+              organization_id: cn.organization_id,
+              invoice_id: cn.invoice_id,
+              client_id: cn.client_id,
+              credit_note_number: cnNumber,
+              credit_note_prefix: 'AV',
+              credit_note_year: currentYear,
+              credit_note_counter: nextCounter,
+              credit_note_type: 'product_return',
+              credit_note_method: 'lines',
+              subtotal_ht: draftTotalHt,
+              total_vat: draftTotalVat,
+              total_ttc: draftTotalTtc,
+              stamp_duty_amount: cn.stamp_duty_amount,
+              withholding_rate: cn.withholding_rate,
+              withholding_amount: 0,
+              original_net_payable: 0,
+              new_net_payable: 0,
+              financial_credit: 0,
+              status: 'draft',
+            } as any)
+            .select()
+            .single();
+          if (newCnErr) throw newCnErr;
+
+          // Insert non-validated lines into new CN
+          const newLines = nonValidatedLines.map((l: any, idx: number) => ({
+            credit_note_id: (newCn as any).id,
+            invoice_line_id: l.invoice_line_id,
+            product_id: l.product_id,
+            product_name: l.product_name,
+            product_reference: l.product_reference,
+            original_quantity: l.original_quantity,
+            original_unit_price_ht: l.original_unit_price_ht,
+            original_line_total_ht: l.original_line_total_ht,
+            original_line_vat: l.original_line_vat,
+            original_line_total_ttc: l.original_line_total_ttc,
+            returned_quantity: l.returned_quantity,
+            validated_quantity: 0,
+            discount_ht: l.discount_ht,
+            discount_ttc: l.discount_ttc,
+            discount_rate: l.discount_rate,
+            new_line_total_ht: l.new_line_total_ht,
+            new_line_vat: l.new_line_vat,
+            new_line_total_ttc: l.new_line_total_ttc,
+            vat_rate: l.vat_rate,
+            line_order: idx,
+          }));
+
+          await supabase
+            .from('credit_note_lines')
+            .insert(newLines as any);
+        }
+
+        toast.success(t('credit_note_split_success') || 'Avoir scindé : lignes validées conservées, lignes non validées en brouillon');
+      } else {
+        // Simple cancel for non-partial or non-product-return
+        const { error } = await supabase
+          .from('credit_notes')
+          .update({ status: 'draft' })
+          .eq('id', cn.id);
+        if (error) throw error;
+        toast.success(t('credit_note_cancelled') || 'Avoir annulé');
+      }
+
       fetchCreditNotes();
     } catch (error) {
       console.error('Error cancelling credit note:', error);
