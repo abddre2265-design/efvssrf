@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { CreditNoteTable, CreditNoteViewDialog, CreditNote } from '@/components/credit-notes';
+import { CreditNoteTable, CreditNoteViewDialog, ProductReturnValidationDialog, CreditNote } from '@/components/credit-notes';
+import { ProductReturnCreditNoteDialog } from '@/components/invoices/ProductReturnCreditNoteDialog';
+import { Invoice } from '@/components/invoices/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +27,14 @@ const CreditNotes: React.FC = () => {
   const [creditNoteToDelete, setCreditNoteToDelete] = useState<CreditNote | null>(null);
   const [validateDialogOpen, setValidateDialogOpen] = useState(false);
   const [creditNoteToValidate, setCreditNoteToValidate] = useState<CreditNote | null>(null);
+
+  // Product return validation dialog
+  const [productReturnValidationOpen, setProductReturnValidationOpen] = useState(false);
+  const [cnToValidateProductReturn, setCnToValidateProductReturn] = useState<CreditNote | null>(null);
+
+  // Edit product return credit note
+  const [editProductReturnOpen, setEditProductReturnOpen] = useState(false);
+  const [editProductReturnInvoice, setEditProductReturnInvoice] = useState<Invoice | null>(null);
 
   const fetchCreditNotes = async () => {
     try {
@@ -55,6 +65,21 @@ const CreditNotes: React.FC = () => {
     setViewDialogOpen(true);
   };
 
+  const handleEdit = async (cn: CreditNote) => {
+    if (cn.credit_note_type === 'product_return') {
+      // Fetch the invoice to pass to the edit dialog
+      const { data: invoice } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('id', cn.invoice_id)
+        .single();
+      if (invoice) {
+        setEditProductReturnInvoice(invoice as unknown as Invoice);
+        setEditProductReturnOpen(true);
+      }
+    }
+  };
+
   const handleDeleteRequest = (cn: CreditNote) => {
     setCreditNoteToDelete(cn);
     setDeleteDialogOpen(true);
@@ -63,7 +88,6 @@ const CreditNotes: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!creditNoteToDelete) return;
     try {
-      // Delete lines first
       await supabase
         .from('credit_note_lines')
         .delete()
@@ -115,21 +139,27 @@ const CreditNotes: React.FC = () => {
   };
 
   const handleValidateRequest = (cn: CreditNote) => {
-    setCreditNoteToValidate(cn);
-    setValidateDialogOpen(true);
+    if (cn.credit_note_type === 'product_return') {
+      // Open partial validation dialog for product returns
+      setCnToValidateProductReturn(cn);
+      setProductReturnValidationOpen(true);
+    } else {
+      // Commercial credit notes: direct full validation
+      setCreditNoteToValidate(cn);
+      setValidateDialogOpen(true);
+    }
   };
 
   const handleValidateConfirm = async () => {
     if (!creditNoteToValidate) return;
     try {
-      // 1. Update credit note status to validated
+      // Commercial credit note full validation
       const { error: cnError } = await supabase
         .from('credit_notes')
         .update({ status: 'validated' })
         .eq('id', creditNoteToValidate.id);
       if (cnError) throw cnError;
 
-      // 2. Update invoice: total_credited and credit_note_count
       const { data: invoice, error: invFetchError } = await supabase
         .from('invoices')
         .select('total_credited, credit_note_count, net_payable')
@@ -148,47 +178,6 @@ const CreditNotes: React.FC = () => {
         })
         .eq('id', creditNoteToValidate.invoice_id);
       if (invUpdateError) throw invUpdateError;
-
-      // 3. For product return credit notes, restore stock
-      if (creditNoteToValidate.credit_note_type === 'product_return') {
-        const { data: cnLines } = await supabase
-          .from('credit_note_lines')
-          .select('product_id, returned_quantity, product_name')
-          .eq('credit_note_id', creditNoteToValidate.id);
-
-        if (cnLines) {
-          for (const line of cnLines as any[]) {
-            if (line.returned_quantity <= 0) continue;
-            const { data: product } = await supabase
-              .from('products')
-              .select('current_stock, unlimited_stock')
-              .eq('id', line.product_id)
-              .maybeSingle();
-
-            if (!product || product.unlimited_stock) continue;
-
-            const previousStock = product.current_stock ?? 0;
-            const newStock = previousStock + line.returned_quantity;
-
-            await supabase
-              .from('products')
-              .update({ current_stock: newStock })
-              .eq('id', line.product_id);
-
-            await supabase
-              .from('stock_movements')
-              .insert([{
-                product_id: line.product_id,
-                movement_type: 'add' as const,
-                quantity: line.returned_quantity,
-                previous_stock: previousStock,
-                new_stock: newStock,
-                reason_category: 'commercial',
-                reason_detail: `${t('product_return_credit_note') || 'Avoir produit'} ${creditNoteToValidate.credit_note_number}`,
-              }]);
-          }
-        }
-      }
 
       toast.success(t('credit_note_validated') || 'Avoir validé et appliqué à la facture');
       setValidateDialogOpen(false);
@@ -221,12 +210,29 @@ const CreditNotes: React.FC = () => {
         onValidate={handleValidateRequest}
         onCancel={handleCancel}
         onRestore={handleRestore}
+        onEdit={handleEdit}
       />
 
       <CreditNoteViewDialog
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
         creditNoteId={selectedCreditNoteId}
+      />
+
+      {/* Product Return Validation Dialog */}
+      <ProductReturnValidationDialog
+        open={productReturnValidationOpen}
+        onOpenChange={setProductReturnValidationOpen}
+        creditNote={cnToValidateProductReturn}
+        onComplete={fetchCreditNotes}
+      />
+
+      {/* Edit Product Return Credit Note */}
+      <ProductReturnCreditNoteDialog
+        open={editProductReturnOpen}
+        onOpenChange={setEditProductReturnOpen}
+        invoice={editProductReturnInvoice}
+        onComplete={fetchCreditNotes}
       />
 
       {/* Delete Confirmation */}
@@ -250,7 +256,7 @@ const CreditNotes: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Validate Confirmation */}
+      {/* Validate Commercial Confirmation */}
       <AlertDialog open={validateDialogOpen} onOpenChange={setValidateDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
