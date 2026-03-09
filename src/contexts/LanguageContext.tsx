@@ -1977,10 +1977,10 @@ export const translations: Translations = {
   tracking_purchase_date: { fr: 'Date d\'achat', en: 'Purchase Date', ar: 'تاريخ الشراء' },
   loading_invoice: { fr: 'Chargement de la facture...', en: 'Loading invoice...', ar: 'جارٍ تحميل الفاتورة...' },
 
-  // Rejection reason
-  rejection_reason: { fr: 'Raison du rejet', en: 'Rejection reason', ar: 'سبب الرفض' },
-  rejection_reason_required: { fr: 'La raison du rejet est obligatoire', en: 'Rejection reason is required', ar: 'سبب الرفض إلزامي' },
-  rejection_reason_placeholder: { fr: 'Expliquez la raison du rejet...', en: 'Explain the reason for rejection...', ar: 'اشرح سبب الرفض...' },
+  // Invoice request rejection & net payable
+  rejection_reason_input: { fr: 'Raison du rejet', en: 'Rejection reason', ar: 'سبب الرفض' },
+  rejection_reason_mandatory: { fr: 'La raison du rejet est obligatoire', en: 'Rejection reason is required', ar: 'سبب الرفض إلزامي' },
+  rejection_reason_input_placeholder: { fr: 'Expliquez la raison du rejet de cette demande...', en: 'Explain the reason for rejecting this request...', ar: 'اشرح سبب رفض هذا الطلب...' },
   rejection_notice_public: { fr: 'Votre demande a été rejetée pour la raison suivante :', en: 'Your request was rejected for the following reason:', ar: 'تم رفض طلبك للسبب التالي:' },
   renew_request_hint: { fr: 'Vous pouvez soumettre une nouvelle demande en vérifiant les informations saisies. N\'hésitez pas à corriger les données et à renouveler votre demande.', en: 'You can submit a new request by verifying the entered information. Feel free to correct the data and renew your request.', ar: 'يمكنك تقديم طلب جديد بالتحقق من المعلومات المدخلة. لا تتردد في تصحيح البيانات وتجديد طلبك.' },
   
