@@ -166,6 +166,12 @@ export const ProductReturnValidationDialog: React.FC<ProductReturnValidationDial
         .update({ status: newStatus })
         .eq('id', creditNote.id);
 
+      // 4. Recalculate financial credit
+      const fcResult = await recalculateFinancialCredit(creditNote.invoice_id, t);
+      if (fcResult && fcResult.delta > 0) {
+        toast.info(`${t('financial_credit_created') || 'Avoir financier créé'}: ${fcResult.financialCredit.toFixed(3)} TND`);
+      }
+
       toast.success(
         isFullValidation
           ? (t('credit_note_validated') || 'Avoir validé totalement')
