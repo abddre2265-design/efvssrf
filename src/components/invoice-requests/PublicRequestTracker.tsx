@@ -305,6 +305,9 @@ export const PublicRequestTracker: React.FC<PublicRequestTrackerProps> = ({ orga
                         )}
                       </div>
 
+                      {/* Rejection reason */}
+                      {renderRejectionReason(request)}
+
                       {/* Download button for processed requests */}
                       {(request.status === 'processed' || request.status === 'converted') && request.generated_invoice_id && (
                         <>
