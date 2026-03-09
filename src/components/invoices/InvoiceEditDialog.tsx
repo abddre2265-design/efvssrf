@@ -444,63 +444,7 @@ export const InvoiceEditDialog: React.FC<InvoiceEditDialogProps> = ({
 
       if (linesError) throw linesError;
 
-      // Calculate stock differences and update
-      const stockDifferences = new Map<string, number>();
-      
-      // Calculate current quantities by product
-      lines.forEach(line => {
-        const current = stockDifferences.get(line.product_id) || 0;
-        stockDifferences.set(line.product_id, current + line.quantity);
-      });
-      
-      // Calculate original quantities by product
-      const originalQuantities = new Map<string, number>();
-      originalLines.forEach(ol => {
-        const current = originalQuantities.get(ol.product_id) || 0;
-        originalQuantities.set(ol.product_id, current + ol.quantity);
-      });
-
-      // Calculate differences and update stock
-      const allProductIds = new Set([...stockDifferences.keys(), ...originalQuantities.keys()]);
-      
-      for (const productId of allProductIds) {
-        const newQty = stockDifferences.get(productId) || 0;
-        const oldQty = originalQuantities.get(productId) || 0;
-        const diff = newQty - oldQty;
-
-        if (diff !== 0) {
-          // Get product info
-          const { data: product } = await supabase
-            .from('products')
-            .select('current_stock, unlimited_stock')
-            .eq('id', productId)
-            .single();
-
-          if (product && !product.unlimited_stock) {
-            const previousStock = product.current_stock || 0;
-            const newStock = previousStock - diff;
-
-            // Create stock movement
-            await supabase
-              .from('stock_movements')
-              .insert({
-                product_id: productId,
-                movement_type: diff > 0 ? 'remove' : 'add',
-                quantity: Math.abs(diff),
-                previous_stock: previousStock,
-                new_stock: newStock,
-                reason_category: 'commercial',
-                reason_detail: `Modification Facture ${invoiceNumber}`,
-              });
-
-            // Update product stock
-            await supabase
-              .from('products')
-              .update({ current_stock: newStock })
-              .eq('id', productId);
-          }
-        }
-      }
+      // Stock is NOT updated on edit — it is only deducted/restored at validation/cancellation
 
       toast.success(useMode ? t('invoice_activated') : t('invoice_updated'));
       onUpdated();
