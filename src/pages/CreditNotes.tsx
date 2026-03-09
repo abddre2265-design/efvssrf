@@ -23,6 +23,8 @@ const CreditNotes: React.FC = () => {
   const [selectedCreditNoteId, setSelectedCreditNoteId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [creditNoteToDelete, setCreditNoteToDelete] = useState<CreditNote | null>(null);
+  const [validateDialogOpen, setValidateDialogOpen] = useState(false);
+  const [creditNoteToValidate, setCreditNoteToValidate] = useState<CreditNote | null>(null);
 
   const fetchCreditNotes = async () => {
     try {
@@ -61,6 +63,12 @@ const CreditNotes: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!creditNoteToDelete) return;
     try {
+      // Delete lines first
+      await supabase
+        .from('credit_note_lines')
+        .delete()
+        .eq('credit_note_id', creditNoteToDelete.id);
+
       const { error } = await supabase
         .from('credit_notes')
         .delete()
@@ -72,6 +80,81 @@ const CreditNotes: React.FC = () => {
       fetchCreditNotes();
     } catch (error) {
       console.error('Error deleting credit note:', error);
+      toast.error(t('error_creating_credit_note'));
+    }
+  };
+
+  const handleCancel = async (cn: CreditNote) => {
+    try {
+      const { error } = await supabase
+        .from('credit_notes')
+        .update({ status: 'draft' })
+        .eq('id', cn.id);
+      if (error) throw error;
+      toast.success(t('credit_note_cancelled') || 'Avoir annulé');
+      fetchCreditNotes();
+    } catch (error) {
+      console.error('Error cancelling credit note:', error);
+      toast.error(t('error_creating_credit_note'));
+    }
+  };
+
+  const handleRestore = async (cn: CreditNote) => {
+    try {
+      const { error } = await supabase
+        .from('credit_notes')
+        .update({ status: 'created' })
+        .eq('id', cn.id);
+      if (error) throw error;
+      toast.success(t('credit_note_restored') || 'Avoir restauré');
+      fetchCreditNotes();
+    } catch (error) {
+      console.error('Error restoring credit note:', error);
+      toast.error(t('error_creating_credit_note'));
+    }
+  };
+
+  const handleValidateRequest = (cn: CreditNote) => {
+    setCreditNoteToValidate(cn);
+    setValidateDialogOpen(true);
+  };
+
+  const handleValidateConfirm = async () => {
+    if (!creditNoteToValidate) return;
+    try {
+      // 1. Update credit note status to validated
+      const { error: cnError } = await supabase
+        .from('credit_notes')
+        .update({ status: 'validated' })
+        .eq('id', creditNoteToValidate.id);
+      if (cnError) throw cnError;
+
+      // 2. Update invoice: total_credited and credit_note_count
+      const { data: invoice, error: invFetchError } = await supabase
+        .from('invoices')
+        .select('total_credited, credit_note_count, net_payable')
+        .eq('id', creditNoteToValidate.invoice_id)
+        .single();
+      if (invFetchError) throw invFetchError;
+
+      const creditAmount = creditNoteToValidate.original_net_payable - creditNoteToValidate.new_net_payable;
+      const newTotalCredited = (invoice.total_credited || 0) + creditAmount;
+
+      const { error: invUpdateError } = await supabase
+        .from('invoices')
+        .update({
+          total_credited: newTotalCredited,
+          credit_note_count: (invoice.credit_note_count || 0) + 1,
+        })
+        .eq('id', creditNoteToValidate.invoice_id);
+      if (invUpdateError) throw invUpdateError;
+
+      toast.success(t('credit_note_validated') || 'Avoir validé et appliqué à la facture');
+      setValidateDialogOpen(false);
+      setCreditNoteToValidate(null);
+      fetchCreditNotes();
+    } catch (error) {
+      console.error('Error validating credit note:', error);
       toast.error(t('error_creating_credit_note'));
     }
   };
@@ -94,6 +177,9 @@ const CreditNotes: React.FC = () => {
         isLoading={isLoading}
         onView={handleView}
         onDelete={handleDeleteRequest}
+        onValidate={handleValidateRequest}
+        onCancel={handleCancel}
+        onRestore={handleRestore}
       />
 
       <CreditNoteViewDialog
@@ -102,6 +188,7 @@ const CreditNotes: React.FC = () => {
         creditNoteId={selectedCreditNoteId}
       />
 
+      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -116,6 +203,27 @@ const CreditNotes: React.FC = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Validate Confirmation */}
+      <AlertDialog open={validateDialogOpen} onOpenChange={setValidateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('validate')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('confirm_validate_credit_note') || 'La validation de cet avoir l\'appliquera à la facture et mettra à jour ses montants. Cette action est irréversible.'}
+              {creditNoteToValidate && (
+                <span className="block font-mono font-medium mt-2">{creditNoteToValidate.credit_note_number}</span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleValidateConfirm}>
               {t('confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
