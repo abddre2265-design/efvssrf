@@ -1192,6 +1192,7 @@ const PublicInvoiceRequest: React.FC = () => {
               </div>
             )}
 
+            {paidAmountNumber > 0 && (
               <>
                 <Separator />
 
