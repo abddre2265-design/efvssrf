@@ -544,14 +544,13 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
       if (paymentError) throw paymentError;
 
-      // If using client balance (credit note or deposit), create a debit movement (always in TND)
+      // If using client balance, create a debit movement (always in TND)
       if (isClientBalancePayment && paymentData) {
         const debitAmount = isForeign ? amountInTND : parsedAmount;
         const newBalance = clientBalance - debitAmount;
         
-        // Determine the source type based on payment method
-        const debitSourceType = isClientCreditNotePayment ? 'credit_note_payment' : 'deposit_payment';
-        const notePrefix = isClientCreditNotePayment ? t('payment_method_client_credit_note') : t('payment_method_client_deposit');
+        const debitSourceType = 'client_balance_payment';
+        const notePrefix = t('payment_method_client_balance');
         
         const { error: movementError } = await supabase
           .from('client_account_movements')
