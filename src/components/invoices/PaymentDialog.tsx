@@ -392,14 +392,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   });
 
   // Validation for client balance payment (in TND)
-  const getMaxBalanceForMethod = () => {
-    if (isClientCreditNotePayment) return creditNoteBalance;
-    if (isClientDepositPayment) return depositBalance;
-    return clientBalance;
-  };
-  
   const isClientBalanceValid = isClientBalancePayment 
-    ? (amountInTND > 0 && amountInTND <= getMaxBalanceForMethod() && parsedAmount <= remainingBalance)
+    ? (amountInTND > 0 && amountInTND <= clientBalance && parsedAmount <= remainingBalance)
     : true;
 
   const canSavePayment = isMixedPayment
