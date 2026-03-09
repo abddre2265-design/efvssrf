@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PasswordConfirmDialog } from './PasswordConfirmDialog';
+import { RejectRequestDialog } from './RejectRequestDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { InvoiceRequest } from './types';
@@ -29,7 +30,6 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
   const extraAmount = Math.max(0, request.paid_amount - netPayable);
   const hasExtra = extraAmount > 0.001;
 
-  // Determine initial step
   const getInitialStep = (): WorkflowStep => {
     if (hasExtra) return 'extra_balance';
     return 'validate';
@@ -38,20 +38,55 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(getInitialStep());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isConfirmAction, setIsConfirmAction] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
 
-  // Sync open state
   React.useEffect(() => {
     if (open) {
       const step = getInitialStep();
       setCurrentStep(step);
       setIsConfirmAction(false);
+      setRejectDialogOpen(false);
       setConfirmOpen(true);
     }
   }, [open]);
 
+  // When user says "No" at any step: delete the invoice, revert request, show rejection dialog
+  const handleReject = async () => {
+    try {
+      // Delete invoice lines first
+      await supabase.from('invoice_lines').delete().eq('invoice_id', invoiceId);
+      // Delete any payments created
+      await supabase.from('payments').delete().eq('invoice_id', invoiceId);
+      // Delete the invoice
+      await supabase.from('invoices').delete().eq('id', invoiceId);
+      // Revert request status to pending (will be set to rejected by RejectRequestDialog)
+      await supabase
+        .from('invoice_requests')
+        .update({ status: 'pending', generated_invoice_id: null })
+        .eq('id', request.id);
+    } catch (error: any) {
+      console.error('Error reverting invoice:', error);
+      toast.error(error.message);
+    }
+    setConfirmOpen(false);
+    setRejectDialogOpen(true);
+  };
+
+  const handleRejected = () => {
+    setRejectDialogOpen(false);
+    onClose();
+  };
+
+  const handleRejectDialogClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      // User cancelled reject dialog — still close, request reverted to pending
+      setRejectDialogOpen(false);
+      onClose();
+    }
+  };
+
   const handleExtraBalanceYes = async () => {
     try {
-      // Get current client balance
       const { data: client } = await supabase
         .from('clients')
         .select('account_balance')
@@ -61,13 +96,11 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
       const currentBalance = client?.account_balance || 0;
       const newBalance = currentBalance + extraAmount;
 
-      // Update client balance
       await supabase
         .from('clients')
         .update({ account_balance: newBalance })
         .eq('id', clientId);
 
-      // Create account movement
       await supabase
         .from('client_account_movements')
         .insert({
@@ -90,11 +123,6 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
     setConfirmOpen(true);
   };
 
-  const handleExtraBalanceNo = () => {
-    setCurrentStep('validate');
-    setConfirmOpen(true);
-  };
-
   const handleValidateYes = async () => {
     try {
       await supabase
@@ -108,7 +136,6 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
       toast.error(error.message);
     }
 
-    // If payment data exists, show payment step
     if (request.payment_status !== 'unpaid' && request.paid_amount > 0) {
       setCurrentStep('payment');
       setConfirmOpen(true);
@@ -117,57 +144,41 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
     }
   };
 
-  const handleValidateNo = () => {
-    // Invoice stays as 'created'
-    finish();
-  };
-
   const handlePaymentYes = async () => {
     try {
-      // Determine payment methods from request
       const paymentMethods = request.payment_methods || [];
       const netPayableVal = request.net_payable || request.total_ttc;
       const effectivePaidAmount = Math.min(request.paid_amount, netPayableVal);
 
       if (paymentMethods.length > 0) {
-        // Create payments for each method
         for (const pm of paymentMethods) {
           const amount = Math.min(pm.amount, netPayableVal);
-          await supabase
-            .from('payments')
-            .insert({
-              invoice_id: invoiceId,
-              amount: amount,
-              net_amount: amount,
-              payment_method: pm.method,
-              payment_date: request.purchase_date,
-              withholding_amount: 0,
-              withholding_rate: 0,
-            });
-        }
-      } else {
-        // Single payment
-        await supabase
-          .from('payments')
-          .insert({
+          await supabase.from('payments').insert({
             invoice_id: invoiceId,
-            amount: effectivePaidAmount,
-            net_amount: effectivePaidAmount,
-            payment_method: 'cash',
+            amount: amount,
+            net_amount: amount,
+            payment_method: pm.method,
             payment_date: request.purchase_date,
             withholding_amount: 0,
             withholding_rate: 0,
           });
+        }
+      } else {
+        await supabase.from('payments').insert({
+          invoice_id: invoiceId,
+          amount: effectivePaidAmount,
+          net_amount: effectivePaidAmount,
+          payment_method: 'cash',
+          payment_date: request.purchase_date,
+          withholding_amount: 0,
+          withholding_rate: 0,
+        });
       }
 
-      // Update invoice payment status
       const paymentStatus = effectivePaidAmount >= netPayableVal ? 'paid' : 'partial';
       await supabase
         .from('invoices')
-        .update({ 
-          paid_amount: effectivePaidAmount, 
-          payment_status: paymentStatus 
-        })
+        .update({ paid_amount: effectivePaidAmount, payment_status: paymentStatus })
         .eq('id', invoiceId);
 
       toast.success(t('payment_recorded_success'));
@@ -180,19 +191,9 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
     setConfirmOpen(true);
   };
 
-  const handlePaymentNo = () => {
-    // Invoice stays validated without payment
-    finish();
-  };
-
   const handleDeliverYes = () => {
-    // Navigate to delivery note creation
     finish();
     window.location.href = `/dashboard/invoices?openDelivery=${invoiceId}`;
-  };
-
-  const handleDeliverNo = () => {
-    finish();
   };
 
   const finish = () => {
@@ -209,8 +210,7 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
           description: `${t('confirm_extra_balance_description')}\n\n${t('extra_amount_to_add')}: ${extraAmount.toFixed(3)} TND`,
           confirmText: t('add_to_balance'),
           onConfirm: handleExtraBalanceYes,
-          onSkip: handleExtraBalanceNo,
-          variant: 'default' as const,
+          onSkip: handleReject,
         };
       case 'validate':
         return {
@@ -218,8 +218,7 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
           description: t('confirm_validate_invoice_description'),
           confirmText: t('yes_continue'),
           onConfirm: handleValidateYes,
-          onSkip: handleValidateNo,
-          variant: 'default' as const,
+          onSkip: handleReject,
         };
       case 'payment':
         return {
@@ -227,8 +226,7 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
           description: `${t('confirm_pay_invoice_description')}\n\n${t('paid_amount')}: ${request.paid_amount.toFixed(3)} TND`,
           confirmText: t('yes_continue'),
           onConfirm: handlePaymentYes,
-          onSkip: handlePaymentNo,
-          variant: 'default' as const,
+          onSkip: handleReject,
         };
       case 'deliver':
         return {
@@ -236,8 +234,7 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
           description: t('confirm_deliver_invoice_description'),
           confirmText: t('yes_continue'),
           onConfirm: handleDeliverYes,
-          onSkip: handleDeliverNo,
-          variant: 'default' as const,
+          onSkip: handleReject,
         };
       default:
         return null;
@@ -246,32 +243,44 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
 
   const config = getStepConfig();
 
-  if (!config || !open) return null;
+  if (!open) return null;
+
+  // Show rejection dialog
+  if (rejectDialogOpen) {
+    return (
+      <RejectRequestDialog
+        open={rejectDialogOpen}
+        onOpenChange={handleRejectDialogClose}
+        requestId={request.id}
+        onRejected={handleRejected}
+      />
+    );
+  }
+
+  if (!config) return null;
 
   return (
-    <>
-      <PasswordConfirmDialog
-        open={confirmOpen}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            if (isConfirmAction) {
-              setIsConfirmAction(false);
-              return;
-            }
-            config.onSkip();
+    <PasswordConfirmDialog
+      open={confirmOpen}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          if (isConfirmAction) {
+            setIsConfirmAction(false);
             return;
           }
-          setConfirmOpen(true);
-        }}
-        onConfirm={async () => {
-          setIsConfirmAction(true);
-          await config.onConfirm();
-        }}
-        title={config.title}
-        description={config.description}
-        confirmText={config.confirmText}
-        variant={config.variant}
-      />
-    </>
+          config.onSkip();
+          return;
+        }
+        setConfirmOpen(true);
+      }}
+      onConfirm={async () => {
+        setIsConfirmAction(true);
+        await config.onConfirm();
+      }}
+      title={config.title}
+      description={config.description}
+      confirmText={config.confirmText}
+      variant="default"
+    />
   );
 };
