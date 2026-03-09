@@ -617,7 +617,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
       await loadClientBalance();
       
       // Reset form for potential next payment
-      setAmount((currentAdjustedNetPayable - newPaidAmount) > 0 ? (currentAdjustedNetPayable - newPaidAmount).toFixed(3) : '0');
+      setAmount((currentNetPayable - newPaidAmount) > 0 ? (currentNetPayable - newPaidAmount).toFixed(3) : '0');
       setPaymentMethod('');
       setReferenceNumber('');
       setNotes('');
