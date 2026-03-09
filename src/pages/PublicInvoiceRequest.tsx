@@ -1306,6 +1306,47 @@ const PublicInvoiceRequest: React.FC = () => {
           toast.info(t('request_loaded_for_editing'));
         }}
       />
+
+      {/* Overpayment Warning Dialog */}
+      <AlertDialog open={showOverpaymentWarning} onOpenChange={setShowOverpaymentWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-yellow-600">
+              <AlertCircle className="h-5 w-5" />
+              {t('overpayment_warning_title') || 'Montant supérieur au Net à Payer'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                {t('overpayment_warning_message') || 'Le montant payé saisi est supérieur au Net à Payer.'}
+              </p>
+              <div className="rounded-lg border border-border bg-muted/50 p-3 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span>{t('net_payable')}</span>
+                  <span className="font-medium">{netPayableAmount.toFixed(3)} {t('currency_label')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{t('paid_amount')}</span>
+                  <span className="font-medium">{paidAmountNumber.toFixed(3)} {t('currency_label')}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between text-primary font-semibold">
+                  <span>{t('client_balance_difference') || 'Différence (solde client)'}</span>
+                  <span>{(paidAmountNumber - netPayableAmount).toFixed(3)} {t('currency_label')}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t('overpayment_balance_note') || 'La différence sera enregistrée comme solde client après validation de la réception réelle de ce montant.'}
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmOverpayment}>
+              {t('confirm_submit') || 'Confirmer et soumettre'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
