@@ -1159,7 +1159,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                 )}
 
                 {/* New Payment Form */}
-                {remainingBalance > 0 ? (
+                {liveRemainingBalance > 0 ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <Plus className="h-4 w-4 text-primary" />
