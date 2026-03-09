@@ -467,6 +467,14 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
     }
   };
 
+  const handleWorkflowClose = () => {
+    setWorkflowOpen(false);
+    setCreatedInvoiceId(null);
+    setCreatedClientId(null);
+    onCreated();
+    resetForm();
+  };
+
   const resetForm = () => { 
     setStep('config'); 
     setDueDate(null); 
