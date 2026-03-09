@@ -452,7 +452,7 @@ export const PurchaseCreditNoteCreateDialog: React.FC<PurchaseCreditNoteCreateDi
                             <th className="text-end p-3 font-medium">HT</th>
                             <th className="text-end p-3 font-medium">{t('vat')}</th>
                             <th className="text-center p-3 font-medium">
-                              {creditNoteType === 'product_return' ? (t('returned_quantity') || 'Qté retournée') : (t('discount_rate') || 'Remise %')}
+                              {creditNoteType === 'product_return' ? (t('purchase_returned_quantity') || 'Qté retournée') : (t('discount_rate') || 'Remise %')}
                             </th>
                           </tr>
                         </thead>
