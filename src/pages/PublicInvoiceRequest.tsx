@@ -149,6 +149,11 @@ const PublicInvoiceRequest: React.FC = () => {
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Withholding certificate dialog
+  const [showCertificateDialog, setShowCertificateDialog] = useState(false);
+  const [withholdingCertificatePath, setWithholdingCertificatePath] = useState<string | null>(null);
+  const [organizationIdentifier, setOrganizationIdentifier] = useState<string>('');
+
   // Payment methods with i18n
   const PAYMENT_METHODS = [
     { value: 'cash', labelKey: 'cash', icon: Banknote },
