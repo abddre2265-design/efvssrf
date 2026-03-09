@@ -477,10 +477,15 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
       toast.success(t('invoice_created_from_request'));
       
-      // Show post-invoice workflow
+      // Close parent dialog first, then show post-invoice workflow
       setCreatedInvoiceId(invoice.id);
       setCreatedClientId(finalClientId!);
-      setWorkflowOpen(true);
+      onOpenChange(false);
+      
+      // Use setTimeout to ensure parent dialog is fully closed before opening workflow
+      setTimeout(() => {
+        setWorkflowOpen(true);
+      }, 300);
     } catch (error: any) {
       console.error('Error creating invoice:', error);
       toast.error(error.message || t('error_creating_invoice'));
@@ -504,8 +509,9 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
   const handleWorkflowClose = () => {
     setWorkflowOpen(false);
+    setCreatedInvoiceId(null);
+    setCreatedClientId(null);
     onCreated();
-    onOpenChange(false);
     resetForm();
   };
 
