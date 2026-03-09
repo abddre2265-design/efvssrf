@@ -240,6 +240,7 @@ const CreditNotes: React.FC = () => {
         open={editProductReturnOpen}
         onOpenChange={setEditProductReturnOpen}
         invoice={editProductReturnInvoice}
+        editCreditNoteId={editProductReturnCnId}
         onComplete={fetchCreditNotes}
       />
 
