@@ -297,7 +297,30 @@ const Invoices: React.FC = () => {
     setPaymentDialogOpen(true);
   };
 
-  const handleCreateCreditNote = (invoice: Invoice) => {
+  const handleCreateCreditNote = async (invoice: Invoice) => {
+    // Check if there's already a credit note in 'created' or 'draft' status for this invoice
+    try {
+      const { data: pendingCn, error } = await supabase
+        .from('credit_notes')
+        .select('id, credit_note_number, status')
+        .eq('invoice_id', invoice.id)
+        .in('status', ['created', 'draft'])
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (pendingCn) {
+        const statusLabel = pendingCn.status === 'created' ? t('status_created') : t('status_draft');
+        toast.error(
+          `${t('pending_credit_note_exists') || 'Un avoir en cours existe déjà'}: ${pendingCn.credit_note_number} (${statusLabel}). ${t('pending_credit_note_action') || 'Veuillez le valider ou le supprimer avant d\'en créer un nouveau.'}`
+        );
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking pending credit notes:', err);
+    }
+
     setCreditNoteInvoice(invoice);
     setCreditNoteChoiceOpen(true);
   };
