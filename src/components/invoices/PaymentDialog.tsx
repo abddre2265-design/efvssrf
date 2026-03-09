@@ -1105,7 +1105,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
               {/* Step 2: Execute Payment */}
               <TabsContent value="payment" className="mt-4 space-y-4">
                 {/* Client Balance Card */}
-                {clientBalance > 0 && remainingBalance > 0 && (
+                {clientBalance > 0 && liveRemainingBalance > 0 && (
                   <div className="space-y-3">
                     <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 space-y-3">
                       <div className="flex items-center justify-between">
