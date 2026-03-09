@@ -1748,6 +1748,200 @@ export type Database = {
           },
         ]
       }
+      purchase_credit_note_lines: {
+        Row: {
+          created_at: string
+          credit_note_id: string
+          discount_ht: number
+          discount_rate: number
+          discount_ttc: number
+          id: string
+          line_order: number
+          new_line_total_ht: number
+          new_line_total_ttc: number
+          new_line_vat: number
+          original_line_total_ht: number
+          original_line_total_ttc: number
+          original_line_vat: number
+          original_quantity: number
+          original_unit_price_ht: number
+          product_id: string | null
+          product_name: string | null
+          product_reference: string | null
+          purchase_line_id: string
+          returned_quantity: number
+          validated_quantity: number
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          credit_note_id: string
+          discount_ht?: number
+          discount_rate?: number
+          discount_ttc?: number
+          id?: string
+          line_order?: number
+          new_line_total_ht?: number
+          new_line_total_ttc?: number
+          new_line_vat?: number
+          original_line_total_ht?: number
+          original_line_total_ttc?: number
+          original_line_vat?: number
+          original_quantity?: number
+          original_unit_price_ht?: number
+          product_id?: string | null
+          product_name?: string | null
+          product_reference?: string | null
+          purchase_line_id: string
+          returned_quantity?: number
+          validated_quantity?: number
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          credit_note_id?: string
+          discount_ht?: number
+          discount_rate?: number
+          discount_ttc?: number
+          id?: string
+          line_order?: number
+          new_line_total_ht?: number
+          new_line_total_ttc?: number
+          new_line_vat?: number
+          original_line_total_ht?: number
+          original_line_total_ttc?: number
+          original_line_vat?: number
+          original_quantity?: number
+          original_unit_price_ht?: number
+          product_id?: string | null
+          product_name?: string | null
+          product_reference?: string | null
+          purchase_line_id?: string
+          returned_quantity?: number
+          validated_quantity?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_credit_note_lines_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_credit_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_credit_note_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_credit_note_lines_purchase_line_id_fkey"
+            columns: ["purchase_line_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_credit_notes: {
+        Row: {
+          created_at: string
+          credit_note_counter: number
+          credit_note_date: string
+          credit_note_method: string
+          credit_note_number: string
+          credit_note_prefix: string
+          credit_note_type: string
+          credit_note_year: number
+          id: string
+          new_net_payable: number
+          notes: string | null
+          organization_id: string
+          original_net_payable: number
+          purchase_document_id: string
+          reason: string | null
+          stamp_duty_amount: number
+          status: string
+          subtotal_ht: number
+          supplier_id: string
+          total_ttc: number
+          total_vat: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_note_counter: number
+          credit_note_date?: string
+          credit_note_method?: string
+          credit_note_number: string
+          credit_note_prefix?: string
+          credit_note_type?: string
+          credit_note_year: number
+          id?: string
+          new_net_payable?: number
+          notes?: string | null
+          organization_id: string
+          original_net_payable?: number
+          purchase_document_id: string
+          reason?: string | null
+          stamp_duty_amount?: number
+          status?: string
+          subtotal_ht?: number
+          supplier_id: string
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_note_counter?: number
+          credit_note_date?: string
+          credit_note_method?: string
+          credit_note_number?: string
+          credit_note_prefix?: string
+          credit_note_type?: string
+          credit_note_year?: number
+          id?: string
+          new_net_payable?: number
+          notes?: string | null
+          organization_id?: string
+          original_net_payable?: number
+          purchase_document_id?: string
+          reason?: string | null
+          stamp_duty_amount?: number
+          status?: string
+          subtotal_ht?: number
+          supplier_id?: string
+          total_ttc?: number
+          total_vat?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_credit_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_credit_notes_purchase_document_id_fkey"
+            columns: ["purchase_document_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_credit_notes_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_documents: {
         Row: {
           created_at: string
@@ -2884,6 +3078,10 @@ export type Database = {
       is_invoice_owner: { Args: { invoice_id: string }; Returns: boolean }
       is_organization_owner: { Args: { org_id: string }; Returns: boolean }
       is_product_owner: { Args: { product_id: string }; Returns: boolean }
+      is_purchase_credit_note_owner: {
+        Args: { pcn_id: string }
+        Returns: boolean
+      }
       is_purchase_document_owner: {
         Args: { purchase_doc_id: string }
         Returns: boolean
