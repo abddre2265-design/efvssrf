@@ -90,12 +90,11 @@ const PAYMENT_METHODS = [
   { value: 'iban_transfer', icon: Building2, requiresReference: true },
   { value: 'swift_transfer', icon: Globe, requiresReference: true },
   { value: 'bank_deposit', icon: Wallet, requiresReference: true },
-  { value: 'client_credit_note', icon: FileText, requiresReference: false },
-  { value: 'client_deposit', icon: PiggyBank, requiresReference: false },
+  { value: 'client_balance', icon: Wallet, requiresReference: false },
   { value: 'mixed', icon: Layers, requiresReference: false },
 ];
 
-const MIXED_PAYMENT_METHODS = PAYMENT_METHODS.filter(m => m.value !== 'mixed' && m.value !== 'client_credit_note' && m.value !== 'client_deposit');
+const MIXED_PAYMENT_METHODS = PAYMENT_METHODS.filter(m => m.value !== 'mixed' && m.value !== 'client_balance');
 
 // Available currencies for foreign payments (most common)
 const FOREIGN_CURRENCIES = ['EUR', 'USD', 'GBP', 'CAD', 'CHF', 'AED', 'SAR', 'QAR', 'MAD', 'TRY', 'CNY'];
