@@ -595,10 +595,10 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
         setClientBalance(newBalance);
       }
 
-      // Calculate new paid amount based on adjusted net payable
-      const currentAdjustedNetPayable = calculateAdjustedNetPayable(invoice);
+      // Calculate new paid amount based on live net payable (reflects withholding set in Step 1)
+      const currentNetPayable = calculateLiveNetPayable(invoice);
       const newPaidAmount = paidAmount + parsedAmount;
-      const newPaymentStatus = newPaidAmount >= currentAdjustedNetPayable ? 'paid' : 'partial';
+      const newPaymentStatus = newPaidAmount >= currentNetPayable ? 'paid' : newPaidAmount > 0 ? 'partial' : 'unpaid';
 
       const { error: invoiceError } = await supabase
         .from('invoices')
@@ -617,7 +617,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
       await loadClientBalance();
       
       // Reset form for potential next payment
-      setAmount((currentAdjustedNetPayable - newPaidAmount) > 0 ? (currentAdjustedNetPayable - newPaidAmount).toFixed(3) : '0');
+      setAmount((currentNetPayable - newPaidAmount) > 0 ? (currentNetPayable - newPaidAmount).toFixed(3) : '0');
       setPaymentMethod('');
       setReferenceNumber('');
       setNotes('');
@@ -649,10 +649,10 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
       if (deleteError) throw deleteError;
 
-      // Calculate new status
-      const currentAdjustedNetPayable = calculateAdjustedNetPayable(invoice);
+      // Calculate new status using live net payable
+      const currentNetPayable = calculateLiveNetPayable(invoice);
       const newPaidAmount = Math.max(0, paidAmount - payment.amount);
-      const newPaymentStatus = newPaidAmount <= 0 ? 'unpaid' : newPaidAmount >= currentAdjustedNetPayable ? 'paid' : 'partial';
+      const newPaymentStatus = newPaidAmount <= 0 ? 'unpaid' : newPaidAmount >= currentNetPayable ? 'paid' : 'partial';
 
       const { error: invoiceError } = await supabase
         .from('invoices')
