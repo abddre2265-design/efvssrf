@@ -27,6 +27,7 @@ interface ProductReturnCreditNoteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   invoice: Invoice | null;
+  editCreditNoteId?: string | null;
   onComplete?: () => void;
 }
 
