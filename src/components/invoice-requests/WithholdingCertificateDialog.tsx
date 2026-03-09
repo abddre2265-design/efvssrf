@@ -231,8 +231,8 @@ export const WithholdingCertificateDialog: React.FC<WithholdingCertificateDialog
           {step === 'success' && (
             <div className="space-y-4">
               <div className="flex flex-col items-center py-4 gap-2">
-                <CheckCircle2 className="h-12 w-12 text-green-500" />
-                <p className="font-medium text-green-700 dark:text-green-400">
+                <CheckCircle2 className="h-12 w-12 text-primary" />
+                <p className="font-medium text-primary">
                   Certificat conforme !
                 </p>
                 <p className="text-sm text-muted-foreground text-center">
