@@ -749,13 +749,17 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
         />
       )}
 
-      {/* Payment Prompt Dialog */}
-      <PaymentPromptDialog
-        open={paymentPromptOpen}
-        onClose={handlePaymentPromptClose}
-        paidAmount={request.paid_amount}
-        paymentStatus={request.payment_status}
-      />
+      {/* Post-Invoice Workflow */}
+      {createdInvoiceId && createdClientId && organizationId && (
+        <PostInvoiceWorkflowDialog
+          open={workflowOpen}
+          onClose={handleWorkflowClose}
+          request={request}
+          invoiceId={createdInvoiceId}
+          clientId={createdClientId}
+          organizationId={organizationId}
+        />
+      )}
     </>
   );
 };
