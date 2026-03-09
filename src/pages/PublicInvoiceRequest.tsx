@@ -132,6 +132,7 @@ const PublicInvoiceRequest: React.FC = () => {
   // Payment data (status is automatic)
   const [paidAmount, setPaidAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined);
   const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([]);
 
   // AI Assistant state
