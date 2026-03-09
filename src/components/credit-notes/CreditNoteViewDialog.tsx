@@ -81,9 +81,17 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
       created: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
       draft: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
       validated: 'bg-green-500/10 text-green-600 border-green-500/30',
+      validated_partial: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
       cancelled: 'bg-red-500/10 text-red-600 border-red-500/30',
     };
-    return <Badge variant="outline" className={variants[status] || ''}>{t(`status_${status}`)}</Badge>;
+    const labels: Record<string, string> = {
+      created: t('status_created') || 'Créé',
+      draft: t('status_draft') || 'Brouillon',
+      validated: t('status_validated') || 'Validé total',
+      validated_partial: t('status_validated_partial') || 'Validé partiel',
+      cancelled: t('status_cancelled') || 'Annulé',
+    };
+    return <Badge variant="outline" className={variants[status] || ''}>{labels[status] || status}</Badge>;
   };
 
   // Compute VAT breakdown from lines
