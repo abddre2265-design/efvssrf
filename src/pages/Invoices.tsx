@@ -558,6 +558,14 @@ const Invoices: React.FC = () => {
         invoice={creditNoteInvoice}
         onComplete={fetchInvoices}
       />
+
+      {/* Product Return Credit Note Dialog */}
+      <ProductReturnCreditNoteDialog
+        open={productReturnCreditOpen}
+        onOpenChange={setProductReturnCreditOpen}
+        invoice={creditNoteInvoice}
+        onComplete={fetchInvoices}
+      />
     </motion.div>
   );
 };
