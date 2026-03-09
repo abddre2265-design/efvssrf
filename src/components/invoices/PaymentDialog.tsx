@@ -1259,18 +1259,18 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                         variant="outline" 
                         size="sm"
                         className="flex-1 h-8 text-xs"
-                        onClick={() => setAmount(remainingBalance.toFixed(3))}
+                        onClick={() => setAmount(liveRemainingBalance.toFixed(3))}
                       >
-                        100% - {formatCurrency(remainingBalance, isForeign ? invoiceCurrency : 'TND')}
+                        100% - {formatCurrency(liveRemainingBalance, isForeign ? invoiceCurrency : 'TND')}
                       </Button>
                       <Button 
                         type="button" 
                         variant="outline" 
                         size="sm"
                         className="flex-1 h-8 text-xs"
-                        onClick={() => setAmount((remainingBalance / 2).toFixed(3))}
+                        onClick={() => setAmount((liveRemainingBalance / 2).toFixed(3))}
                       >
-                        50% - {formatCurrency(remainingBalance / 2, isForeign ? invoiceCurrency : 'TND')}
+                        50% - {formatCurrency(liveRemainingBalance / 2, isForeign ? invoiceCurrency : 'TND')}
                       </Button>
                     </div>
 
