@@ -31,11 +31,12 @@ import {
   FileCheck,
   FileText,
   RotateCcw,
-  Loader2,
+  TrendingUp,
 } from 'lucide-react';
 import { InvoiceRequest } from './types';
 import { ProcessRequestChoiceDialog } from './ProcessRequestChoiceDialog';
 import { PasswordConfirmDialog } from './PasswordConfirmDialog';
+import { RejectRequestDialog } from './RejectRequestDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -60,7 +61,6 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
   const [choiceDialogOpen, setChoiceDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
   const getLocale = () => {
@@ -72,6 +72,10 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
   };
 
   if (!request) return null;
+
+  const netPayable = request.net_payable || request.total_ttc;
+  const extraAmount = Math.max(0, request.paid_amount - netPayable);
+  const hasExtra = extraAmount > 0.001;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -109,13 +113,12 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
   };
 
   const getPaymentStatusBadge = (status: string) => {
-    // Normalize: if paid_amount >= total_ttc, treat as "paid"
-    const effectiveStatus = (status === 'partial' && request.paid_amount >= request.total_ttc) ? 'paid' : status;
+    const effectiveStatus = (status === 'partial' && request.paid_amount >= netPayable) ? 'paid' : status;
     switch (effectiveStatus) {
       case 'paid':
         return <Badge className="bg-green-500">{t('paid')}</Badge>;
       case 'partial':
-        return <Badge className="bg-orange-500">{t('partial')}</Badge>;
+        return <Badge className="bg-orange-500">{t('partial')} ({request.paid_amount.toFixed(3)} / {netPayable.toFixed(3)})</Badge>;
       case 'unpaid':
         return <Badge className="bg-red-500">{t('unpaid')}</Badge>;
       default:
@@ -146,33 +149,12 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
     onOpenChange(false);
   };
 
-  const handleReject = async () => {
-    setIsRejecting(true);
-    try {
-      const { error } = await supabase
-        .from('invoice_requests')
-        .update({ status: 'rejected' })
-        .eq('id', request.id);
-
-      if (error) throw error;
-
-      toast.success(t('request_rejected_success'));
-      onRefresh?.();
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error rejecting request:', error);
-      toast.error(error.message || t('error_rejecting_request'));
-    } finally {
-      setIsRejecting(false);
-    }
-  };
-
   const handleRestore = async () => {
     setIsRestoring(true);
     try {
       const { error } = await supabase
         .from('invoice_requests')
-        .update({ status: 'pending' })
+        .update({ status: 'pending', rejection_reason: null })
         .eq('id', request.id);
 
       if (error) throw error;
@@ -190,7 +172,6 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
 
   const handleViewInvoice = () => {
     if (request.generated_invoice_id) {
-      // Navigate to invoices page with the invoice to open
       navigate(`/dashboard/invoices?openInvoice=${request.generated_invoice_id}`);
       onOpenChange(false);
     }
@@ -250,6 +231,21 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
 
           <ScrollArea className="max-h-[60vh] pr-4">
             <div className="space-y-6">
+              {/* Rejection reason display */}
+              {request.status === 'rejected' && request.rejection_reason && (
+                <Card className="border-destructive/30 bg-destructive/5">
+                  <CardContent className="pt-4">
+                    <div className="flex items-start gap-2">
+                      <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-medium text-destructive text-sm">{t('rejection_reason_input')}</p>
+                        <p className="text-sm mt-1">{request.rejection_reason}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Client Info */}
               <Card>
                 <CardHeader className="pb-3">
@@ -352,11 +348,30 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
                   
                   <Separator />
                   
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold">{t('total_ttc')}</span>
-                    <span className="text-2xl font-bold text-primary">
-                      {request.total_ttc.toFixed(3)} TND
-                    </span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{t('total_ttc')}</span>
+                      <span className="font-mono font-medium">
+                        {request.total_ttc.toFixed(3)} TND
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-semibold">{t('net_payable_request')}</span>
+                      <span className="text-2xl font-bold text-primary">
+                        {netPayable.toFixed(3)} TND
+                      </span>
+                    </div>
+                    {hasExtra && (
+                      <div className="flex items-center justify-between bg-emerald-500/10 rounded-md px-3 py-2">
+                        <span className="text-sm font-medium flex items-center gap-1 text-emerald-600">
+                          <TrendingUp className="h-4 w-4" />
+                          {t('extra_balance')}
+                        </span>
+                        <span className="font-mono font-bold text-emerald-600">
+                          +{extraAmount.toFixed(3)} TND
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -417,15 +432,15 @@ export const InvoiceRequestViewDialog: React.FC<InvoiceRequestViewDialogProps> =
         onChooseAI={() => handleChooseMethod('ai')}
       />
 
-      {/* Reject Confirmation Dialog */}
-      <PasswordConfirmDialog
+      {/* Reject Dialog with mandatory reason */}
+      <RejectRequestDialog
         open={rejectDialogOpen}
         onOpenChange={setRejectDialogOpen}
-        onConfirm={handleReject}
-        title={t('confirm_reject_request')}
-        description={t('confirm_reject_request_description')}
-        confirmText={t('reject')}
-        variant="destructive"
+        requestId={request.id}
+        onRejected={() => {
+          onRefresh?.();
+          onOpenChange(false);
+        }}
       />
 
       {/* Restore Confirmation Dialog */}
