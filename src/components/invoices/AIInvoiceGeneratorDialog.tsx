@@ -234,9 +234,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
       const invoiceLines = generatedLines.map((line, index) => { const { lineHt, lineVat, lineTtc } = calculateLineTotal(line.quantity, line.unit_price_ht, line.vat_rate, line.discount_percent, isForeignClient); return { invoice_id: invoice.id, product_id: line.product_id, description: line.description || null, quantity: line.quantity, unit_price_ht: line.unit_price_ht, vat_rate: line.vat_rate, discount_percent: line.discount_percent, line_total_ht: lineHt, line_vat: lineVat, line_total_ttc: lineTtc, line_order: index }; });
       const { error: linesError } = await supabase.from('invoice_lines').insert(invoiceLines);
       if (linesError) throw linesError;
-      const stockMap = new Map<string, { quantity: number; product: InvoiceLineFormData }>();
-      for (const line of generatedLines) { const existing = stockMap.get(line.product_id); if (existing) existing.quantity += line.quantity; else stockMap.set(line.product_id, { quantity: line.quantity, product: line }); }
-      for (const [productId, { quantity, product }] of stockMap) { if (!product.unlimited_stock) { const { data: productData } = await supabase.from('products').select('current_stock').eq('id', productId).single(); const previousStock = productData?.current_stock || 0; const newStock = previousStock - quantity; await supabase.from('stock_movements').insert({ product_id: productId, movement_type: 'remove', quantity, previous_stock: previousStock, new_stock: newStock, reason_category: 'commercial', reason_detail: `${t('ai_invoice_generator')} ${invoiceNumber.number}` }); await supabase.from('products').update({ current_stock: newStock }).eq('id', productId); } }
+      // Stock is NOT deducted at creation — it will be deducted at validation
       toast.success(t('invoice_created_success'));
       onGenerated();
       onOpenChange(false);
@@ -393,13 +391,87 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
                 {stockBubbles.length > 0 && <StockBubbles bubbles={stockBubbles} />}
                 <Card>
                   <CardHeader className="pb-3"><CardTitle className="text-sm">{t('generated_lines')} ({generatedLines.length})</CardTitle></CardHeader>
-                  <CardContent className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {generatedLines.map((line, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg text-sm">
-                        <div className="flex-1"><span className="font-medium">{line.product_name}</span>{line.product_reference && <span className="text-muted-foreground ml-2">({line.product_reference})</span>}</div>
-                        <div className="flex items-center gap-4 text-right"><span>{line.quantity} x {formatCurrency(line.unit_price_ht, 'TND', language)}</span>{line.discount_percent > 0 && <Badge variant="secondary">-{line.discount_percent}%</Badge>}<Badge variant="outline">{t('vat_label')} {line.vat_rate}%</Badge></div>
-                      </div>
-                    ))}
+                  <CardContent className="space-y-0 max-h-[400px] overflow-y-auto">
+                    <div className="rounded-lg border overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="text-start p-2 font-medium">{t('product')}</th>
+                            <th className="text-center p-2 font-medium w-20">{t('quantity')}</th>
+                            <th className="text-center p-2 font-medium w-28">{t('unit_price_ht')}</th>
+                            <th className="text-center p-2 font-medium w-20">{t('discount')} %</th>
+                            <th className="text-center p-2 font-medium w-16">{t('vat')}</th>
+                            <th className="text-end p-2 font-medium w-28">{t('total_ttc')}</th>
+                            <th className="p-2 w-10"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {generatedLines.map((line, index) => {
+                            const { lineTtc } = calculateLineTotal(line.quantity, line.unit_price_ht, line.vat_rate, line.discount_percent, isForeignClient);
+                            return (
+                              <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                                <td className="p-2">
+                                  <div className="font-medium text-xs">{line.product_name}</div>
+                                  {line.product_reference && <div className="text-[10px] text-muted-foreground font-mono">{line.product_reference}</div>}
+                                </td>
+                                <td className="p-1">
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    step={1}
+                                    value={line.quantity}
+                                    onChange={(e) => {
+                                      const val = Math.max(1, parseInt(e.target.value) || 1);
+                                      setGeneratedLines(prev => prev.map((l, i) => i === index ? { ...l, quantity: val } : l));
+                                    }}
+                                    className="h-7 text-xs text-center w-full"
+                                  />
+                                </td>
+                                <td className="p-1">
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    step={0.001}
+                                    value={line.unit_price_ht}
+                                    onChange={(e) => {
+                                      const val = Math.max(0, parseFloat(e.target.value) || 0);
+                                      setGeneratedLines(prev => prev.map((l, i) => i === index ? { ...l, unit_price_ht: val } : l));
+                                    }}
+                                    className="h-7 text-xs text-center w-full"
+                                  />
+                                </td>
+                                <td className="p-1">
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={line.max_discount}
+                                    step={0.01}
+                                    value={line.discount_percent}
+                                    onChange={(e) => {
+                                      const val = Math.min(Math.max(0, parseFloat(e.target.value) || 0), line.max_discount);
+                                      setGeneratedLines(prev => prev.map((l, i) => i === index ? { ...l, discount_percent: val } : l));
+                                    }}
+                                    className="h-7 text-xs text-center w-full"
+                                  />
+                                </td>
+                                <td className="text-center p-2 text-xs">{line.vat_rate}%</td>
+                                <td className="text-end p-2 font-mono text-xs">{formatCurrency(lineTtc, 'TND', language)}</td>
+                                <td className="p-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-destructive hover:text-destructive"
+                                    onClick={() => setGeneratedLines(prev => prev.filter((_, i) => i !== index))}
+                                  >
+                                    ×
+                                  </Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </CardContent>
                 </Card>
                 <Card>
