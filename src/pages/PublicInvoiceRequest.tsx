@@ -207,6 +207,14 @@ const PublicInvoiceRequest: React.FC = () => {
             });
           }
 
+          // Get organization identifier for OCR validation
+          const { data: orgIdentifierData } = await supabase
+            .rpc('get_organization_public_identifier', { org_id: data.organization_id })
+            .maybeSingle();
+          if (orgIdentifierData?.identifier) {
+            setOrganizationIdentifier(orgIdentifierData.identifier);
+          }
+
           // Get stamp duty (fallback to 1.000 if inaccessible)
           const { data: stampData } = await supabase
             .from('stamp_duty_settings')
