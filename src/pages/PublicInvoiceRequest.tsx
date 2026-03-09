@@ -501,6 +501,7 @@ const PublicInvoiceRequest: React.FC = () => {
         payment_status: calculatedPaymentStatus,
         paid_amount: paidAmountNumber,
         payment_methods: paymentMethods,
+        payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : null,
         linked_client_id: linkedClientId,
       };
 
