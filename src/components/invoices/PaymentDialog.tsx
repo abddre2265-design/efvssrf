@@ -202,12 +202,35 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
     return inv.total_ttc + stampDuty - withholdingOnTTC;
   };
 
+  // Calculate "live" net payable that reflects the currently selected withholding rate (even before saving)
+  // This allows Step 2 amount to update in real-time when user selects a rate in Step 1
+  const calculateLiveNetPayable = (inv: Invoice | null): number => {
+    if (!inv) return 0;
+    
+    // For foreign invoices: just the subtotal HT
+    if (inv.client_type === 'foreign') {
+      return inv.subtotal_ht;
+    }
+    
+    // Use selected rate if set, otherwise fall back to saved invoice rate
+    const effectiveRate = selectedWithholdingRate !== '' 
+      ? parseFloat(selectedWithholdingRate) 
+      : (inv.withholding_applied ? inv.withholding_rate : 0);
+    
+    const withholdingOnTTC = inv.total_ttc * (effectiveRate / 100);
+    const stampDuty = inv.stamp_duty_enabled ? inv.stamp_duty_amount : 0;
+    return inv.total_ttc + stampDuty - withholdingOnTTC;
+  };
+
   const adjustedNetPayable = calculateAdjustedNetPayable(invoice);
+  const liveNetPayable = calculateLiveNetPayable(invoice);
   const paidAmount = invoice?.paid_amount || 0;
   const remainingBalance = Math.max(0, adjustedNetPayable - paidAmount);
+  const liveRemainingBalance = Math.max(0, liveNetPayable - paidAmount);
   
   // Convert amounts for foreign clients
   const remainingBalanceInTND = isForeign ? remainingBalance * invoiceExchangeRate : remainingBalance;
+  const liveRemainingBalanceInTND = isForeign ? liveRemainingBalance * invoiceExchangeRate : liveRemainingBalance;
   
   // Check if payments exist (blocks withholding modification)
   const hasPayments = payments.length > 0;
@@ -300,11 +323,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   }, [open, invoice]);
 
   // Update amount when remaining balance changes
+  // Sync Step 2 amount in real-time when withholding rate changes in Step 1
   useEffect(() => {
     if (invoice && open) {
-      setAmount(remainingBalance > 0 ? remainingBalance.toFixed(3) : '0');
+      setAmount(liveRemainingBalance > 0 ? liveRemainingBalance.toFixed(3) : '0');
     }
-  }, [remainingBalance, open]);
+  }, [liveRemainingBalance, open, selectedWithholdingRate]);
 
   // Fetch exchange rate when currency changes (for foreign)
   useEffect(() => {
@@ -393,14 +417,14 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
   // Validation for client balance payment (in TND)
   const isClientBalanceValid = isClientBalancePayment 
-    ? (amountInTND > 0 && amountInTND <= clientBalance && parsedAmount <= remainingBalance)
+    ? (amountInTND > 0 && amountInTND <= clientBalance && parsedAmount <= liveRemainingBalance)
     : true;
 
   const canSavePayment = isMixedPayment
-    ? (mixedLines.length > 0 && areMixedLinesValid && isMixedAmountValid && parsedAmount > 0 && parsedAmount <= remainingBalance && paymentDate)
+    ? (mixedLines.length > 0 && areMixedLinesValid && isMixedAmountValid && parsedAmount > 0 && parsedAmount <= liveRemainingBalance && paymentDate)
     : isClientBalancePayment
       ? (isClientBalanceValid && paymentDate)
-      : (paymentMethod && parsedAmount > 0 && parsedAmount <= remainingBalance && (!requiresReference || referenceNumber.trim()) && paymentDate);
+      : (paymentMethod && parsedAmount > 0 && parsedAmount <= liveRemainingBalance && (!requiresReference || referenceNumber.trim()) && paymentDate);
 
   // Can save withholding: rate must be selected and no payments exist (local only)
   const canSaveWithholding = !isForeign && selectedWithholdingRate !== '' && !hasPayments;
@@ -1081,7 +1105,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
               {/* Step 2: Execute Payment */}
               <TabsContent value="payment" className="mt-4 space-y-4">
                 {/* Client Balance Card */}
-                {clientBalance > 0 && remainingBalance > 0 && (
+                {clientBalance > 0 && liveRemainingBalance > 0 && (
                   <div className="space-y-3">
                     <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -1135,7 +1159,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                 )}
 
                 {/* New Payment Form */}
-                {remainingBalance > 0 ? (
+                {liveRemainingBalance > 0 ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <Plus className="h-4 w-4 text-primary" />
@@ -1212,7 +1236,7 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                           type="number"
                           step="0.001"
                           min="0.001"
-                          max={remainingBalance}
+                          max={liveRemainingBalance}
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           className="h-9 text-sm"
@@ -1235,18 +1259,18 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                         variant="outline" 
                         size="sm"
                         className="flex-1 h-8 text-xs"
-                        onClick={() => setAmount(remainingBalance.toFixed(3))}
+                        onClick={() => setAmount(liveRemainingBalance.toFixed(3))}
                       >
-                        100% - {formatCurrency(remainingBalance, isForeign ? invoiceCurrency : 'TND')}
+                        100% - {formatCurrency(liveRemainingBalance, isForeign ? invoiceCurrency : 'TND')}
                       </Button>
                       <Button 
                         type="button" 
                         variant="outline" 
                         size="sm"
                         className="flex-1 h-8 text-xs"
-                        onClick={() => setAmount((remainingBalance / 2).toFixed(3))}
+                        onClick={() => setAmount((liveRemainingBalance / 2).toFixed(3))}
                       >
-                        50% - {formatCurrency(remainingBalance / 2, isForeign ? invoiceCurrency : 'TND')}
+                        50% - {formatCurrency(liveRemainingBalance / 2, isForeign ? invoiceCurrency : 'TND')}
                       </Button>
                     </div>
 
