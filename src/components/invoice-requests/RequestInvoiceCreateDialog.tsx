@@ -112,9 +112,10 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Payment prompt
-  const [paymentPromptOpen, setPaymentPromptOpen] = useState(false);
+  // Post-invoice workflow
+  const [workflowOpen, setWorkflowOpen] = useState(false);
   const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
+  const [createdClientId, setCreatedClientId] = useState<string | null>(null);
 
   // Set default stamp duty from organization settings
   useEffect(() => {
