@@ -94,6 +94,7 @@ const PublicInvoiceRequest: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [activePublicTab, setActivePublicTab] = useState<'request' | 'track'>('request');
+  const [showOverpaymentWarning, setShowOverpaymentWarning] = useState(false);
 
   // Organization tax settings for public calculation
   const [withholdingSettings, setWithholdingSettings] = useState({
