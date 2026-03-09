@@ -647,7 +647,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
               onClick={handleSave}
               disabled={!hasReturn || exceedsInvoice || isSaving}
             >
-              {isSaving ? t('saving') || 'Enregistrement...' : t('create_credit_note') || 'Créer l\'avoir'}
+              {isSaving ? t('saving') || 'Enregistrement...' : isEditMode ? (t('update_credit_note') || 'Mettre à jour l\'avoir') : (t('create_credit_note') || 'Créer l\'avoir')}
             </Button>
           </div>
         </DialogContent>

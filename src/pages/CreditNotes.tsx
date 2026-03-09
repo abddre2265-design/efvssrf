@@ -36,6 +36,7 @@ const CreditNotes: React.FC = () => {
   // Edit product return credit note
   const [editProductReturnOpen, setEditProductReturnOpen] = useState(false);
   const [editProductReturnInvoice, setEditProductReturnInvoice] = useState<Invoice | null>(null);
+  const [editProductReturnCnId, setEditProductReturnCnId] = useState<string | null>(null);
 
   const fetchCreditNotes = async () => {
     try {
