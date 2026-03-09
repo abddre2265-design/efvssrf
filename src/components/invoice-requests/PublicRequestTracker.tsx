@@ -34,6 +34,7 @@ interface TrackedRequest {
   request_date: string;
   generated_invoice_id: string | null;
   pdf_download_count: number;
+  rejection_reason: string | null;
   store: { name: string } | null;
 }
 
@@ -161,6 +162,25 @@ export const PublicRequestTracker: React.FC<PublicRequestTrackerProps> = ({ orga
     }
   };
 
+  const renderRejectionReason = (request: TrackedRequest) => {
+    if (request.status !== 'rejected' || !request.rejection_reason) return null;
+    return (
+      <>
+        <Separator />
+        <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-3 space-y-2">
+          <div className="flex items-start gap-2">
+            <XCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-red-700 dark:text-red-400">{t('rejection_notice_public')}</p>
+              <p className="text-sm text-red-600 dark:text-red-300">{request.rejection_reason}</p>
+              <p className="text-xs text-muted-foreground mt-2 italic">{t('renew_request_hint')}</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
   const getClientName = (r: TrackedRequest) => {
     if (r.client_type === 'company' || r.client_type === 'business_local') return r.company_name || '';
     return `${r.first_name || ''} ${r.last_name || ''}`.trim();
@@ -284,6 +304,9 @@ export const PublicRequestTracker: React.FC<PublicRequestTrackerProps> = ({ orga
                           </div>
                         )}
                       </div>
+
+                      {/* Rejection reason */}
+                      {renderRejectionReason(request)}
 
                       {/* Download button for processed requests */}
                       {(request.status === 'processed' || request.status === 'converted') && request.generated_invoice_id && (

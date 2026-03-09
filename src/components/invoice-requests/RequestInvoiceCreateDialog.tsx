@@ -38,7 +38,7 @@ import {
 import { useTaxRates } from '@/hooks/useTaxRates';
 import { InvoiceRequest } from './types';
 import { RequestTTCComparisonBubble } from './RequestTTCComparisonBubble';
-import { PaymentPromptDialog } from './PaymentPromptDialog';
+import { PostInvoiceWorkflowDialog } from './PostInvoiceWorkflowDialog';
 import { useClientLookup, PendingClientData, LookedUpClient } from '@/hooks/useClientLookup';
 import { ClientLookupBanner } from './ClientLookupBanner';
 
@@ -112,9 +112,10 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Payment prompt
-  const [paymentPromptOpen, setPaymentPromptOpen] = useState(false);
+  // Post-invoice workflow
+  const [workflowOpen, setWorkflowOpen] = useState(false);
   const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
+  const [createdClientId, setCreatedClientId] = useState<string | null>(null);
 
   // Set default stamp duty from organization settings
   useEffect(() => {
@@ -476,15 +477,10 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
 
       toast.success(t('invoice_created_from_request'));
       
-      // Check if payment should be processed
-      if (request.payment_status !== 'unpaid' && request.paid_amount > 0) {
-        setCreatedInvoiceId(invoice.id);
-        setPaymentPromptOpen(true);
-      } else {
-        onCreated();
-        onOpenChange(false);
-        resetForm();
-      }
+      // Show post-invoice workflow
+      setCreatedInvoiceId(invoice.id);
+      setCreatedClientId(finalClientId!);
+      setWorkflowOpen(true);
     } catch (error: any) {
       console.error('Error creating invoice:', error);
       toast.error(error.message || t('error_creating_invoice'));
@@ -506,16 +502,11 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
     resetLookup();
   };
 
-  const handlePaymentPromptClose = (processPayment: boolean) => {
-    setPaymentPromptOpen(false);
+  const handleWorkflowClose = () => {
+    setWorkflowOpen(false);
     onCreated();
     onOpenChange(false);
     resetForm();
-    
-    if (processPayment && createdInvoiceId) {
-      // Navigate to invoices page with payment dialog open
-      window.location.href = `/dashboard/invoices?openPayment=${createdInvoiceId}`;
-    }
   };
 
   if (isLoading || isLooking) {
@@ -758,13 +749,17 @@ export const RequestInvoiceCreateDialog: React.FC<RequestInvoiceCreateDialogProp
         />
       )}
 
-      {/* Payment Prompt Dialog */}
-      <PaymentPromptDialog
-        open={paymentPromptOpen}
-        onClose={handlePaymentPromptClose}
-        paidAmount={request.paid_amount}
-        paymentStatus={request.payment_status}
-      />
+      {/* Post-Invoice Workflow */}
+      {createdInvoiceId && createdClientId && organizationId && (
+        <PostInvoiceWorkflowDialog
+          open={workflowOpen}
+          onClose={handleWorkflowClose}
+          request={request}
+          invoiceId={createdInvoiceId}
+          clientId={createdClientId}
+          organizationId={organizationId}
+        />
+      )}
     </>
   );
 };

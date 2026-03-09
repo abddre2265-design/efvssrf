@@ -62,6 +62,8 @@ const InvoiceRequests: React.FC = () => {
         status: item.status as 'pending' | 'processed' | 'rejected' | 'converted',
         payment_methods: (item.payment_methods as any[]) || [],
         ai_conversation: (item.ai_conversation as any[]) || [],
+        net_payable: item.net_payable || 0,
+        rejection_reason: item.rejection_reason || undefined,
       }));
 
       setRequests(transformedData);

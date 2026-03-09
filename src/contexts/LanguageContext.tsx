@@ -1976,6 +1976,33 @@ export const translations: Translations = {
   request_date_label: { fr: 'Date de demande', en: 'Request Date', ar: 'تاريخ الطلب' },
   tracking_purchase_date: { fr: 'Date d\'achat', en: 'Purchase Date', ar: 'تاريخ الشراء' },
   loading_invoice: { fr: 'Chargement de la facture...', en: 'Loading invoice...', ar: 'جارٍ تحميل الفاتورة...' },
+
+  // Invoice request rejection & net payable
+  rejection_reason_input: { fr: 'Raison du rejet', en: 'Rejection reason', ar: 'سبب الرفض' },
+  rejection_reason_mandatory: { fr: 'La raison du rejet est obligatoire', en: 'Rejection reason is required', ar: 'سبب الرفض إلزامي' },
+  rejection_reason_input_placeholder: { fr: 'Expliquez la raison du rejet de cette demande...', en: 'Explain the reason for rejecting this request...', ar: 'اشرح سبب رفض هذا الطلب...' },
+  rejection_notice_public: { fr: 'Votre demande a été rejetée pour la raison suivante :', en: 'Your request was rejected for the following reason:', ar: 'تم رفض طلبك للسبب التالي:' },
+  renew_request_hint: { fr: 'Vous pouvez soumettre une nouvelle demande en vérifiant les informations saisies. N\'hésitez pas à corriger les données et à renouveler votre demande.', en: 'You can submit a new request by verifying the entered information. Feel free to correct the data and renew your request.', ar: 'يمكنك تقديم طلب جديد بالتحقق من المعلومات المدخلة. لا تتردد في تصحيح البيانات وتجديد طلبك.' },
+  
+  // Net payable & extra balance
+  net_payable_request: { fr: 'Net à payer', en: 'Net payable', ar: 'صافي المستحق' },
+  extra_balance: { fr: 'Solde extra', en: 'Extra balance', ar: 'رصيد إضافي' },
+  extra_balance_badge: { fr: 'Extra', en: 'Extra', ar: 'إضافي' },
+  confirm_extra_balance_title: { fr: 'Solde extra client', en: 'Client extra balance', ar: 'رصيد إضافي للعميل' },
+  confirm_extra_balance_description: { fr: 'Le client a payé un montant supérieur au net à payer. Voulez-vous ajouter la différence au solde du client ?', en: 'The client paid more than the net payable. Do you want to add the difference to the client balance?', ar: 'دفع العميل مبلغًا أكبر من صافي المستحق. هل تريد إضافة الفرق إلى رصيد العميل؟' },
+  extra_amount_to_add: { fr: 'Montant à ajouter au solde', en: 'Amount to add to balance', ar: 'المبلغ المراد إضافته للرصيد' },
+  confirm_validate_invoice_title: { fr: 'Valider la facture ?', en: 'Validate invoice?', ar: 'تأكيد الفاتورة؟' },
+  confirm_validate_invoice_description: { fr: 'Voulez-vous valider cette facture maintenant ?', en: 'Do you want to validate this invoice now?', ar: 'هل تريد تأكيد هذه الفاتورة الآن؟' },
+  confirm_pay_invoice_title: { fr: 'Enregistrer le paiement ?', en: 'Record payment?', ar: 'تسجيل الدفع؟' },
+  confirm_pay_invoice_description: { fr: 'Voulez-vous enregistrer le paiement de cette facture ?', en: 'Do you want to record the payment for this invoice?', ar: 'هل تريد تسجيل دفع هذه الفاتورة؟' },
+  confirm_deliver_invoice_title: { fr: 'Créer un bon de livraison ?', en: 'Create delivery note?', ar: 'إنشاء إشعار تسليم؟' },
+  confirm_deliver_invoice_description: { fr: 'Voulez-vous créer un bon de livraison pour cette facture ?', en: 'Do you want to create a delivery note for this invoice?', ar: 'هل تريد إنشاء إشعار تسليم لهذه الفاتورة؟' },
+  skip_step: { fr: 'Non, passer', en: 'No, skip', ar: 'لا، تخطي' },
+  yes_continue: { fr: 'Oui, continuer', en: 'Yes, continue', ar: 'نعم، متابعة' },
+  add_to_balance: { fr: 'Ajouter au solde', en: 'Add to balance', ar: 'إضافة للرصيد' },
+  balance_added_success: { fr: 'Solde ajouté avec succès', en: 'Balance added successfully', ar: 'تمت إضافة الرصيد بنجاح' },
+  invoice_validated_success: { fr: 'Facture validée avec succès', en: 'Invoice validated successfully', ar: 'تم تأكيد الفاتورة بنجاح' },
+  payment_recorded_success: { fr: 'Paiement enregistré avec succès', en: 'Payment recorded successfully', ar: 'تم تسجيل الدفع بنجاح' },
 };
 
 

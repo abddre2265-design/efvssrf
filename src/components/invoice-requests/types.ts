@@ -36,6 +36,10 @@ export interface InvoiceRequest {
   
   // Status
   status: 'pending' | 'processed' | 'rejected' | 'converted';
+  rejection_reason?: string;
+  
+  // Net payable (stored at submission)
+  net_payable: number;
   
   // Linked client
   linked_client_id?: string;
