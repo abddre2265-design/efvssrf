@@ -78,6 +78,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
   const [isLoading, setIsLoading] = useState(false);
   const [returnLines, setReturnLines] = useState<ReturnLine[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const isEditMode = !!editCreditNoteId;
 
   // Withholding
   const [withholdingOverride, setWithholdingOverride] = useState<number | null>(null);
