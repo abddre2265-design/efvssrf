@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { recalculateFinancialCredit } from '@/utils/financialCreditUtils';
 import { CreditNote, CreditNoteLine } from './types';
 import { formatCurrency } from '@/components/invoices/types';
 import { toast } from 'sonner';
