@@ -1084,6 +1084,7 @@ export type Database = {
           updated_at: string
           whatsapp: string | null
           whatsapp_prefix: string | null
+          withholding_certificate_path: string | null
         }
         Insert: {
           address?: string | null
@@ -1122,6 +1123,7 @@ export type Database = {
           updated_at?: string
           whatsapp?: string | null
           whatsapp_prefix?: string | null
+          withholding_certificate_path?: string | null
         }
         Update: {
           address?: string | null
@@ -1160,6 +1162,7 @@ export type Database = {
           updated_at?: string
           whatsapp?: string | null
           whatsapp_prefix?: string | null
+          withholding_certificate_path?: string | null
         }
         Relationships: [
           {
@@ -2833,6 +2836,13 @@ export type Database = {
         Returns: string
       }
       get_client_balance: { Args: { p_client_id: string }; Returns: number }
+      get_organization_public_identifier: {
+        Args: { org_id: string }
+        Returns: {
+          identifier: string
+          identifier_type: string
+        }[]
+      }
       get_organization_public_info: {
         Args: { org_id: string }
         Returns: {
