@@ -165,7 +165,7 @@ const PurchaseCreditNotes: React.FC = () => {
               if (product) {
                 await supabase
                   .from('products')
-                  .update({ stock_quantity: Math.max(0, (product as any).stock_quantity - line.returned_quantity) })
+                  .update({ current_stock: Math.max(0, (product as any).current_stock - line.returned_quantity) })
                   .eq('id', line.product_id);
 
                 await supabase
