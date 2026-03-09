@@ -443,6 +443,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
                       <th className="text-start p-3 font-medium">{t('product')}</th>
                       <th className="text-center p-3 font-medium">{t('invoiced_qty') || 'Qté facturée'}</th>
                       <th className="text-center p-3 font-medium">{t('already_returned_qty') || 'Déjà retournée'}</th>
+                      {isEditMode && <th className="text-center p-3 font-medium">{t('validated_locked') || 'Validée (bloquée)'}</th>}
                       <th className="text-center p-3 font-medium">{t('returnable_qty') || 'Retournable'}</th>
                       <th className="text-center p-3 font-medium">{t('return_qty') || 'Qté à retourner'}</th>
                       <th className="text-end p-3 font-medium">{t('adjusted_unit_price') || 'PU ajusté HT'}</th>
@@ -465,13 +466,20 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
                             <Badge variant="secondary">{rl.alreadyReturnedQuantity}</Badge>
                           ) : '0'}
                         </td>
+                        {isEditMode && (
+                          <td className="text-center p-3 font-mono">
+                            {rl.validatedQuantity > 0 ? (
+                              <Badge variant="default" className="bg-green-600">{rl.validatedQuantity}</Badge>
+                            ) : '0'}
+                          </td>
+                        )}
                         <td className="text-center p-3 font-mono font-medium">
                           {rl.returnableQuantity > 0 ? rl.returnableQuantity : (
                             <Badge variant="destructive" className="text-xs">{t('fully_returned') || 'Retourné'}</Badge>
                           )}
                         </td>
                         <td className="p-2">
-                          {rl.returnableQuantity > 0 ? (
+                          {rl.returnableQuantity > 0 && !rl.isLocked ? (
                             <Input
                               type="number"
                               step="1"
