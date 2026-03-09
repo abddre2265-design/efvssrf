@@ -15,6 +15,7 @@ import { InvoiceAISearch } from '@/components/invoices/InvoiceAISearch';
 import { AIInvoiceGeneratorDialog } from '@/components/invoices/AIInvoiceGeneratorDialog';
 import { CreditNoteTypeChoiceDialog, CreditNoteType } from '@/components/invoices/CreditNoteTypeChoiceDialog';
 import { CommercialCreditNoteDialog } from '@/components/invoices/CommercialCreditNoteDialog';
+import { ProductReturnCreditNoteDialog } from '@/components/invoices/ProductReturnCreditNoteDialog';
 import {
   AlertDialog,
   AlertDialogAction,
