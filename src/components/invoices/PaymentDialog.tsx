@@ -116,10 +116,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   // Active tab state
   const [activeTab, setActiveTab] = useState<string>('config');
   
-  // Client balance state - separated by source
+  // Client balance state
   const [clientBalance, setClientBalance] = useState<number>(0);
-  const [creditNoteBalance, setCreditNoteBalance] = useState<number>(0);
-  const [depositBalance, setDepositBalance] = useState<number>(0);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   
   // Withholding configuration state (Step 1 for local clients)
