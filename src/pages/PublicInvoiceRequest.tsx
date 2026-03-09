@@ -477,7 +477,24 @@ const PublicInvoiceRequest: React.FC = () => {
 
   const handleConfirmOverpayment = async () => {
     setShowOverpaymentWarning(false);
+    // After overpayment warning, check certificate if needed
+    if (shouldApplyWithholding && appliedWithholdingRate > 0 && paymentDate && !withholdingCertificatePath) {
+      setShowCertificateDialog(true);
+      return;
+    }
     await submitRequest();
+  };
+
+  const handleCertificateValidated = async (storagePath: string) => {
+    setWithholdingCertificatePath(storagePath);
+    setShowCertificateDialog(false);
+    // Now submit the request
+    await submitRequest();
+  };
+
+  const handleCertificateCancel = () => {
+    setShowCertificateDialog(false);
+    toast.info('La demande a été annulée');
   };
 
   const submitRequest = async () => {
