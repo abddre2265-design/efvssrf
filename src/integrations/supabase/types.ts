@@ -179,6 +179,7 @@ export type Database = {
           product_name: string | null
           product_reference: string | null
           returned_quantity: number
+          validated_quantity: number
           vat_rate: number
         }
         Insert: {
@@ -202,6 +203,7 @@ export type Database = {
           product_name?: string | null
           product_reference?: string | null
           returned_quantity?: number
+          validated_quantity?: number
           vat_rate?: number
         }
         Update: {
@@ -225,6 +227,7 @@ export type Database = {
           product_name?: string | null
           product_reference?: string | null
           returned_quantity?: number
+          validated_quantity?: number
           vat_rate?: number
         }
         Relationships: [
