@@ -313,12 +313,11 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
     }
   }, [selectedCurrency, isForeign, open]);
 
-  // Load client balance - separated by source (credit notes vs deposits)
+  // Load client balance
   const loadClientBalance = async () => {
     if (!invoice?.client_id) return;
     setIsLoadingBalance(true);
     try {
-      // Get total balance from client
       const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('account_balance')
@@ -326,49 +325,10 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
         .single();
       
       if (clientError) throw clientError;
-      const totalBalance = clientData?.account_balance || 0;
-      setClientBalance(totalBalance);
-      
-      // Get movements to calculate breakdown
-      const { data: movements, error: movementsError } = await supabase
-        .from('client_account_movements')
-        .select('movement_type, amount, source_type')
-        .eq('client_id', invoice.client_id);
-      
-      if (movementsError) throw movementsError;
-      
-      // Calculate credits from each source
-      const creditNoteCredits = movements
-        ?.filter(m => m.movement_type === 'credit' && (m.source_type === 'credit_note' || m.source_type === 'credit_note_unblock'))
-        .reduce((sum, m) => sum + m.amount, 0) || 0;
-      
-      const depositCredits = movements
-        ?.filter(m => m.movement_type === 'credit' && m.source_type === 'direct_deposit')
-        .reduce((sum, m) => sum + m.amount, 0) || 0;
-      
-      // Calculate all debits
-      const totalDebits = movements
-        ?.filter(m => m.movement_type === 'debit')
-        .reduce((sum, m) => sum + m.amount, 0) || 0;
-      
-      // Distribute the current balance proportionally based on credit sources
-      // Or prioritize: first use deposits, then credit notes
-      const totalCredits = creditNoteCredits + depositCredits;
-      if (totalCredits > 0 && totalBalance > 0) {
-        // Distribute remaining balance proportionally
-        const availableCreditNotes = Math.max(0, (creditNoteCredits / totalCredits) * totalBalance);
-        const availableDeposits = Math.max(0, (depositCredits / totalCredits) * totalBalance);
-        setCreditNoteBalance(availableCreditNotes);
-        setDepositBalance(availableDeposits);
-      } else {
-        setCreditNoteBalance(0);
-        setDepositBalance(0);
-      }
+      setClientBalance(clientData?.account_balance || 0);
     } catch (error: any) {
       console.error('Error loading client balance:', error);
       setClientBalance(0);
-      setCreditNoteBalance(0);
-      setDepositBalance(0);
     } finally {
       setIsLoadingBalance(false);
     }
