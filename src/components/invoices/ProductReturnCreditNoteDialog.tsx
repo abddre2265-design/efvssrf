@@ -55,6 +55,8 @@ interface ReturnLine {
   lineHt: number;
   lineVat: number;
   lineTtc: number;
+  validatedQuantity: number; // locked validated qty in edit mode
+  isLocked: boolean; // true if fully validated (no editable remainder)
 }
 
 interface InvoiceReturnDetails {
