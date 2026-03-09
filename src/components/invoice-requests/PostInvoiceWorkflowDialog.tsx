@@ -44,6 +44,7 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
     if (open) {
       const step = getInitialStep();
       setCurrentStep(step);
+      setIsConfirmAction(false);
       setConfirmOpen(true);
     }
   }, [open]);
