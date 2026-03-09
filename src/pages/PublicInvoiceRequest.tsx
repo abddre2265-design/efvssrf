@@ -64,6 +64,7 @@ import { useLanguage, governorates } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/auth/ThemeToggle';
 import { LanguageSelector } from '@/components/auth/LanguageSelector';
 import { PublicRequestTracker } from '@/components/invoice-requests/PublicRequestTracker';
+import { WithholdingCertificateDialog } from '@/components/invoice-requests/WithholdingCertificateDialog';
 
 interface StoreData {
   id: string;
