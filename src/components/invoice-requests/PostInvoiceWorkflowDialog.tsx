@@ -37,12 +37,14 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
 
   const [currentStep, setCurrentStep] = useState<WorkflowStep>(getInitialStep());
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isConfirmAction, setIsConfirmAction] = useState(false);
 
   // Sync open state
   React.useEffect(() => {
     if (open) {
       const step = getInitialStep();
       setCurrentStep(step);
+      setIsConfirmAction(false);
       setConfirmOpen(true);
     }
   }, [open]);
@@ -252,11 +254,19 @@ export const PostInvoiceWorkflowDialog: React.FC<PostInvoiceWorkflowDialogProps>
         open={confirmOpen}
         onOpenChange={(isOpen) => {
           if (!isOpen) {
+            if (isConfirmAction) {
+              setIsConfirmAction(false);
+              return;
+            }
             config.onSkip();
+            return;
           }
-          setConfirmOpen(isOpen);
+          setConfirmOpen(true);
         }}
-        onConfirm={config.onConfirm}
+        onConfirm={async () => {
+          setIsConfirmAction(true);
+          await config.onConfirm();
+        }}
         title={config.title}
         description={config.description}
         confirmText={config.confirmText}

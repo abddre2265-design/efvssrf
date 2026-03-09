@@ -27,6 +27,7 @@ import { InvoiceRequest } from './types';
 import { RequestTTCComparisonBubble } from './RequestTTCComparisonBubble';
 import { ClientLookupBanner } from './ClientLookupBanner';
 import { useClientLookup, PendingClientData } from '@/hooks/useClientLookup';
+import { PostInvoiceWorkflowDialog } from './PostInvoiceWorkflowDialog';
 
 interface Product {
   id: string;
@@ -109,6 +110,9 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [workflowOpen, setWorkflowOpen] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
+  const [createdClientId, setCreatedClientId] = useState<string | null>(null);
 
   const isForeignClient = request.client_type === 'foreign';
 
@@ -448,15 +452,27 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
         .eq('id', request.id);
       
       toast.success(t('invoice_created_from_request'));
-      onCreated();
+      setCreatedInvoiceId(invoice.id);
+      setCreatedClientId(finalClientId);
       onOpenChange(false);
-      resetForm();
+
+      setTimeout(() => {
+        setWorkflowOpen(true);
+      }, 300);
     } catch (error: any) { 
       toast.error(error.message || t('error_creating_invoice')); 
       setStep('preview'); 
     } finally { 
       setIsSaving(false); 
     }
+  };
+
+  const handleWorkflowClose = () => {
+    setWorkflowOpen(false);
+    setCreatedInvoiceId(null);
+    setCreatedClientId(null);
+    onCreated();
+    resetForm();
   };
 
   const resetForm = () => { 
@@ -883,6 +899,18 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
       <RequestTTCComparisonBubble
         requestTTC={request.total_ttc}
         currentTTC={step === 'preview' ? totals.totalTtc + (isForeignClient ? 0 : stampDutyEnabled ? stampDutyAmount : 0) : currentTTC}
+      />
+    )}
+
+    {/* Post-Invoice Workflow */}
+    {createdInvoiceId && createdClientId && organizationId && (
+      <PostInvoiceWorkflowDialog
+        open={workflowOpen}
+        onClose={handleWorkflowClose}
+        request={request}
+        invoiceId={createdInvoiceId}
+        clientId={createdClientId}
+        organizationId={organizationId}
       />
     )}
     </>
