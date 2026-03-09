@@ -110,6 +110,9 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [workflowOpen, setWorkflowOpen] = useState(false);
+  const [createdInvoiceId, setCreatedInvoiceId] = useState<string | null>(null);
+  const [createdClientId, setCreatedClientId] = useState<string | null>(null);
 
   const isForeignClient = request.client_type === 'foreign';
 
