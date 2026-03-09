@@ -64,6 +64,7 @@ import { useLanguage, governorates } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/auth/ThemeToggle';
 import { LanguageSelector } from '@/components/auth/LanguageSelector';
 import { PublicRequestTracker } from '@/components/invoice-requests/PublicRequestTracker';
+import { WithholdingCertificateDialog } from '@/components/invoice-requests/WithholdingCertificateDialog';
 
 interface StoreData {
   id: string;
@@ -148,6 +149,11 @@ const PublicInvoiceRequest: React.FC = () => {
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Withholding certificate dialog
+  const [showCertificateDialog, setShowCertificateDialog] = useState(false);
+  const [withholdingCertificatePath, setWithholdingCertificatePath] = useState<string | null>(null);
+  const [organizationIdentifier, setOrganizationIdentifier] = useState<string>('');
+
   // Payment methods with i18n
   const PAYMENT_METHODS = [
     { value: 'cash', labelKey: 'cash', icon: Banknote },
@@ -199,6 +205,14 @@ const PublicInvoiceRequest: React.FC = () => {
               rate: Number(withholdingData.default_withholding_rate) || 0,
               minAmount: Number(withholdingData.withholding_min_amount) || 0,
             });
+          }
+
+          // Get organization identifier for OCR validation
+          const { data: orgIdentifierData } = await supabase
+            .rpc('get_organization_public_identifier', { org_id: data.organization_id })
+            .maybeSingle();
+          if (orgIdentifierData?.identifier) {
+            setOrganizationIdentifier(orgIdentifierData.identifier);
           }
 
           // Get stamp duty (fallback to 1.000 if inaccessible)
@@ -452,12 +466,35 @@ const PublicInvoiceRequest: React.FC = () => {
       return;
     }
 
+    // Check if withholding applies and no certificate yet uploaded
+    if (shouldApplyWithholding && appliedWithholdingRate > 0 && paymentDate && !withholdingCertificatePath) {
+      setShowCertificateDialog(true);
+      return;
+    }
+
     await submitRequest();
   };
 
   const handleConfirmOverpayment = async () => {
     setShowOverpaymentWarning(false);
+    // After overpayment warning, check certificate if needed
+    if (shouldApplyWithholding && appliedWithholdingRate > 0 && paymentDate && !withholdingCertificatePath) {
+      setShowCertificateDialog(true);
+      return;
+    }
     await submitRequest();
+  };
+
+  const handleCertificateValidated = async (storagePath: string) => {
+    setWithholdingCertificatePath(storagePath);
+    setShowCertificateDialog(false);
+    // Now submit the request
+    await submitRequest();
+  };
+
+  const handleCertificateCancel = () => {
+    setShowCertificateDialog(false);
+    toast.info('La demande a été annulée');
   };
 
   const submitRequest = async () => {
@@ -503,6 +540,7 @@ const PublicInvoiceRequest: React.FC = () => {
         payment_methods: paymentMethods,
         payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : null,
         linked_client_id: linkedClientId,
+        withholding_certificate_path: withholdingCertificatePath,
       };
 
       if (editingRequestId) {
@@ -1442,6 +1480,21 @@ const PublicInvoiceRequest: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Withholding Certificate Dialog */}
+      <WithholdingCertificateDialog
+        open={showCertificateDialog}
+        expectedData={{
+          payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : '',
+          client_identifier: identifierValue,
+          organization_identifier: organizationIdentifier,
+          total_ttc: totalTTCAmount,
+          withholding_rate: appliedWithholdingRate,
+        }}
+        organizationId={organizationId}
+        onValidated={handleCertificateValidated}
+        onCancel={handleCertificateCancel}
+      />
     </div>
   );
 };
