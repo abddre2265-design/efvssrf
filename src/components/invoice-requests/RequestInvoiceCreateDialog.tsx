@@ -38,7 +38,9 @@ import {
 import { useTaxRates } from '@/hooks/useTaxRates';
 import { InvoiceRequest } from './types';
 import { RequestTTCComparisonBubble } from './RequestTTCComparisonBubble';
-import { PaymentPromptDialog } from './PaymentPromptDialog';
+import { PostInvoiceWorkflowDialog } from './PostInvoiceWorkflowDialog';
+import { useClientLookup, PendingClientData, LookedUpClient } from '@/hooks/useClientLookup';
+import { ClientLookupBanner } from './ClientLookupBanner';
 import { useClientLookup, PendingClientData, LookedUpClient } from '@/hooks/useClientLookup';
 import { ClientLookupBanner } from './ClientLookupBanner';
 
