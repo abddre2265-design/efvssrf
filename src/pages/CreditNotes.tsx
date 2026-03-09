@@ -180,6 +180,12 @@ const CreditNotes: React.FC = () => {
         .eq('id', creditNoteToValidate.invoice_id);
       if (invUpdateError) throw invUpdateError;
 
+      // Recalculate financial credit
+      const fcResult = await recalculateFinancialCredit(creditNoteToValidate.invoice_id, t);
+      if (fcResult && fcResult.delta > 0) {
+        toast.info(`${t('financial_credit_created') || 'Avoir financier créé'}: ${fcResult.financialCredit.toFixed(3)} TND`);
+      }
+
       toast.success(t('credit_note_validated') || 'Avoir validé et appliqué à la facture');
       setValidateDialogOpen(false);
       setCreditNoteToValidate(null);
