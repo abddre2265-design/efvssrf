@@ -41,8 +41,6 @@ import { RequestTTCComparisonBubble } from './RequestTTCComparisonBubble';
 import { PostInvoiceWorkflowDialog } from './PostInvoiceWorkflowDialog';
 import { useClientLookup, PendingClientData, LookedUpClient } from '@/hooks/useClientLookup';
 import { ClientLookupBanner } from './ClientLookupBanner';
-import { useClientLookup, PendingClientData, LookedUpClient } from '@/hooks/useClientLookup';
-import { ClientLookupBanner } from './ClientLookupBanner';
 
 interface RequestInvoiceCreateDialogProps {
   open: boolean;
