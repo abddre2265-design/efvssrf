@@ -1393,6 +1393,7 @@ const PublicInvoiceRequest: React.FC = () => {
           setStoreId(request.store_id || '');
           setPurchaseDate(new Date(request.purchase_date));
           setPaidAmount(request.paid_amount?.toString() || '');
+          setPaymentDate(request.payment_date ? new Date(request.payment_date) : undefined);
           setLinkedClientId(request.linked_client_id || null);
           setClientValidated(true);
           setShowPendingDialog(false);
