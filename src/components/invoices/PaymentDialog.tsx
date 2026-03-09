@@ -366,15 +366,9 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const selectedMethod = PAYMENT_METHODS.find(m => m.value === paymentMethod);
   const requiresReference = selectedMethod?.requiresReference || false;
   const isMixedPayment = paymentMethod === 'mixed';
-  const isClientCreditNotePayment = paymentMethod === 'client_credit_note';
-  const isClientDepositPayment = paymentMethod === 'client_deposit';
-  const isClientBalancePayment = isClientCreditNotePayment || isClientDepositPayment;
+  const isClientBalancePayment = paymentMethod === 'client_balance';
   
-  // Maximum amount when using credit note balance
-  const maxCreditNoteAmount = Math.min(creditNoteBalance, remainingBalanceInTND);
-  // Maximum amount when using deposit balance
-  const maxDepositAmount = Math.min(depositBalance, remainingBalanceInTND);
-  // Total client balance for validation
+  // Maximum amount when using client balance
   const maxClientBalanceAmount = Math.min(clientBalance, remainingBalanceInTND);
 
   const parsedAmount = parseFloat(amount) || 0;
