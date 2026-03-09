@@ -1480,6 +1480,21 @@ const PublicInvoiceRequest: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Withholding Certificate Dialog */}
+      <WithholdingCertificateDialog
+        open={showCertificateDialog}
+        expectedData={{
+          payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : '',
+          client_identifier: identifierValue,
+          organization_identifier: organizationIdentifier,
+          total_ttc: totalTTCAmount,
+          withholding_rate: appliedWithholdingRate,
+        }}
+        organizationId={organizationId}
+        onValidated={handleCertificateValidated}
+        onCancel={handleCertificateCancel}
+      />
     </div>
   );
 };
