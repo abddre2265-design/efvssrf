@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, Trash2, FileText } from 'lucide-react';
+import { Eye, Trash2, FileText, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, arSA } from 'date-fns/locale';
 import { CreditNote } from './types';
@@ -20,6 +20,9 @@ interface CreditNoteTableProps {
   isLoading: boolean;
   onView: (cn: CreditNote) => void;
   onDelete?: (cn: CreditNote) => void;
+  onValidate?: (cn: CreditNote) => void;
+  onCancel?: (cn: CreditNote) => void;
+  onRestore?: (cn: CreditNote) => void;
 }
 
 export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
@@ -27,6 +30,9 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
   isLoading,
   onView,
   onDelete,
+  onValidate,
+  onCancel,
+  onRestore,
 }) => {
   const { t, language, isRTL } = useLanguage();
 
@@ -57,6 +63,7 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
+      created: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
       draft: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30',
       validated: 'bg-green-500/10 text-green-600 border-green-500/30',
       cancelled: 'bg-red-500/10 text-red-600 border-red-500/30',
@@ -135,7 +142,29 @@ export const CreditNoteTable: React.FC<CreditNoteTableProps> = ({
                       <Eye className="mr-2 h-4 w-4" />
                       {t('view')}
                     </DropdownMenuItem>
-                    {cn.status === 'draft' && onDelete && (
+                    {/* Validate: only for 'created' status */}
+                    {cn.status === 'created' && onValidate && (
+                      <DropdownMenuItem onClick={() => onValidate(cn)}>
+                        <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                        {t('validate')}
+                      </DropdownMenuItem>
+                    )}
+                    {/* Cancel: only for 'created' status → moves to draft */}
+                    {cn.status === 'created' && onCancel && (
+                      <DropdownMenuItem onClick={() => onCancel(cn)}>
+                        <XCircle className="mr-2 h-4 w-4 text-amber-600" />
+                        {t('cancel')}
+                      </DropdownMenuItem>
+                    )}
+                    {/* Restore: only for 'draft' status → moves back to created */}
+                    {cn.status === 'draft' && onRestore && (
+                      <DropdownMenuItem onClick={() => onRestore(cn)}>
+                        <RotateCcw className="mr-2 h-4 w-4 text-blue-600" />
+                        {t('restore')}
+                      </DropdownMenuItem>
+                    )}
+                    {/* Delete: only for 'created' or 'draft' status */}
+                    {(cn.status === 'created' || cn.status === 'draft') && onDelete && (
                       <DropdownMenuItem onClick={() => onDelete(cn)} className="text-destructive">
                         <Trash2 className="mr-2 h-4 w-4" />
                         {t('delete')}

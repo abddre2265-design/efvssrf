@@ -480,7 +480,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
           original_net_payable: currentOperationalNetPayable,
           new_net_payable: newNetPayable,
           financial_credit: financialCredit,
-          status: 'validated',
+          status: 'created',
         } as any)
         .select()
         .single();
@@ -499,17 +499,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
 
       if (linesError) throw linesError;
 
-      // Update invoice operational fields (total_credited, credit_note_count)
-      const newTotalCredited = details.previousTotalCredited + thisCreditAmount;
-      const { error: invoiceUpdateError } = await supabase
-        .from('invoices')
-        .update({
-          total_credited: newTotalCredited,
-          credit_note_count: (invoice.credit_note_count || 0) + 1,
-        })
-        .eq('id', invoice.id);
-
-      if (invoiceUpdateError) throw invoiceUpdateError;
+      // Do NOT update invoice here — invoice is only affected upon credit note validation
 
       toast.success(t('credit_note_created'));
       onOpenChange(false);
