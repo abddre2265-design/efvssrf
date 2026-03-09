@@ -362,7 +362,7 @@ export const PurchaseCreditNoteCreateDialog: React.FC<PurchaseCreditNoteCreateDi
                     onClick={() => setCreditNoteType('commercial_price')}
                   >
                     <div className="text-lg font-semibold">{t('credit_note_commercial_price')}</div>
-                    <p className="text-sm text-muted-foreground">{t('commercial_price_description') || 'Réduction de prix négociée'}</p>
+                    <p className="text-sm text-muted-foreground">{t('purchase_commercial_price_description') || 'Réduction de prix négociée'}</p>
                   </button>
                   <button
                     className={`p-6 rounded-lg border-2 text-center space-y-2 transition-all ${
