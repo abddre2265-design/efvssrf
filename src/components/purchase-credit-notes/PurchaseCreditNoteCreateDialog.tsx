@@ -353,7 +353,7 @@ export const PurchaseCreditNoteCreateDialog: React.FC<PurchaseCreditNoteCreateDi
             {/* Step 2: Select type */}
             {step === 'select_type' && (
               <div className="space-y-4">
-                <h3 className="font-semibold">{t('select_credit_note_type') || 'Type d\'avoir'}</h3>
+                <h3 className="font-semibold">{t('purchase_credit_note_type') || 'Type d\'avoir'}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     className={`p-6 rounded-lg border-2 text-center space-y-2 transition-all ${
