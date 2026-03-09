@@ -202,12 +202,35 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
     return inv.total_ttc + stampDuty - withholdingOnTTC;
   };
 
+  // Calculate "live" net payable that reflects the currently selected withholding rate (even before saving)
+  // This allows Step 2 amount to update in real-time when user selects a rate in Step 1
+  const calculateLiveNetPayable = (inv: Invoice | null): number => {
+    if (!inv) return 0;
+    
+    // For foreign invoices: just the subtotal HT
+    if (inv.client_type === 'foreign') {
+      return inv.subtotal_ht;
+    }
+    
+    // Use selected rate if set, otherwise fall back to saved invoice rate
+    const effectiveRate = selectedWithholdingRate !== '' 
+      ? parseFloat(selectedWithholdingRate) 
+      : (inv.withholding_applied ? inv.withholding_rate : 0);
+    
+    const withholdingOnTTC = inv.total_ttc * (effectiveRate / 100);
+    const stampDuty = inv.stamp_duty_enabled ? inv.stamp_duty_amount : 0;
+    return inv.total_ttc + stampDuty - withholdingOnTTC;
+  };
+
   const adjustedNetPayable = calculateAdjustedNetPayable(invoice);
+  const liveNetPayable = calculateLiveNetPayable(invoice);
   const paidAmount = invoice?.paid_amount || 0;
   const remainingBalance = Math.max(0, adjustedNetPayable - paidAmount);
+  const liveRemainingBalance = Math.max(0, liveNetPayable - paidAmount);
   
   // Convert amounts for foreign clients
   const remainingBalanceInTND = isForeign ? remainingBalance * invoiceExchangeRate : remainingBalance;
+  const liveRemainingBalanceInTND = isForeign ? liveRemainingBalance * invoiceExchangeRate : liveRemainingBalance;
   
   // Check if payments exist (blocks withholding modification)
   const hasPayments = payments.length > 0;
