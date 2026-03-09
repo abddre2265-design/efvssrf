@@ -452,9 +452,13 @@ export const RequestAIInvoiceDialog: React.FC<RequestAIInvoiceDialogProps> = ({
         .eq('id', request.id);
       
       toast.success(t('invoice_created_from_request'));
-      onCreated();
+      setCreatedInvoiceId(invoice.id);
+      setCreatedClientId(finalClientId);
       onOpenChange(false);
-      resetForm();
+
+      setTimeout(() => {
+        setWorkflowOpen(true);
+      }, 300);
     } catch (error: any) { 
       toast.error(error.message || t('error_creating_invoice')); 
       setStep('preview'); 
