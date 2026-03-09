@@ -234,9 +234,7 @@ export const AIInvoiceGeneratorDialog: React.FC<AIInvoiceGeneratorDialogProps> =
       const invoiceLines = generatedLines.map((line, index) => { const { lineHt, lineVat, lineTtc } = calculateLineTotal(line.quantity, line.unit_price_ht, line.vat_rate, line.discount_percent, isForeignClient); return { invoice_id: invoice.id, product_id: line.product_id, description: line.description || null, quantity: line.quantity, unit_price_ht: line.unit_price_ht, vat_rate: line.vat_rate, discount_percent: line.discount_percent, line_total_ht: lineHt, line_vat: lineVat, line_total_ttc: lineTtc, line_order: index }; });
       const { error: linesError } = await supabase.from('invoice_lines').insert(invoiceLines);
       if (linesError) throw linesError;
-      const stockMap = new Map<string, { quantity: number; product: InvoiceLineFormData }>();
-      for (const line of generatedLines) { const existing = stockMap.get(line.product_id); if (existing) existing.quantity += line.quantity; else stockMap.set(line.product_id, { quantity: line.quantity, product: line }); }
-      for (const [productId, { quantity, product }] of stockMap) { if (!product.unlimited_stock) { const { data: productData } = await supabase.from('products').select('current_stock').eq('id', productId).single(); const previousStock = productData?.current_stock || 0; const newStock = previousStock - quantity; await supabase.from('stock_movements').insert({ product_id: productId, movement_type: 'remove', quantity, previous_stock: previousStock, new_stock: newStock, reason_category: 'commercial', reason_detail: `${t('ai_invoice_generator')} ${invoiceNumber.number}` }); await supabase.from('products').update({ current_stock: newStock }).eq('id', productId); } }
+      // Stock is NOT deducted at creation — it will be deducted at validation
       toast.success(t('invoice_created_success'));
       onGenerated();
       onOpenChange(false);
