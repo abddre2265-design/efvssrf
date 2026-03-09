@@ -1066,6 +1066,7 @@ export type Database = {
           order_number: string | null
           organization_id: string
           paid_amount: number | null
+          payment_date: string | null
           payment_methods: Json | null
           payment_status: string
           pdf_download_count: number
@@ -1103,6 +1104,7 @@ export type Database = {
           order_number?: string | null
           organization_id: string
           paid_amount?: number | null
+          payment_date?: string | null
           payment_methods?: Json | null
           payment_status?: string
           pdf_download_count?: number
@@ -1140,6 +1142,7 @@ export type Database = {
           order_number?: string | null
           organization_id?: string
           paid_amount?: number | null
+          payment_date?: string | null
           payment_methods?: Json | null
           payment_status?: string
           pdf_download_count?: number

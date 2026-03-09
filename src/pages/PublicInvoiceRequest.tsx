@@ -132,6 +132,7 @@ const PublicInvoiceRequest: React.FC = () => {
   // Payment data (status is automatic)
   const [paidAmount, setPaidAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined);
   const [mixedLines, setMixedLines] = useState<MixedPaymentLine[]>([]);
 
   // AI Assistant state
@@ -229,6 +230,74 @@ const PublicInvoiceRequest: React.FC = () => {
 
     validateToken();
   }, [token]);
+
+  // Real-time subscription for organization data changes
+  useEffect(() => {
+    if (!organizationId) return;
+
+    // Subscribe to organization changes (name, logo, withholding settings)
+    const orgChannel = supabase
+      .channel(`public-org-${organizationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'organizations',
+          filter: `id=eq.${organizationId}`,
+        },
+        async () => {
+          // Refresh org info
+          const { data: orgInfo } = await supabase
+            .rpc('get_organization_public_info', { org_id: organizationId })
+            .maybeSingle();
+          if (orgInfo) {
+            setOrganizationName(orgInfo.name);
+            setOrganizationLogo(orgInfo.logo_url);
+          }
+          // Refresh withholding settings
+          const { data: withholdingData } = await supabase
+            .rpc('get_organization_public_withholding', { org_id: organizationId })
+            .maybeSingle();
+          if (withholdingData) {
+            setWithholdingSettings({
+              rate: Number(withholdingData.default_withholding_rate) || 0,
+              minAmount: Number(withholdingData.withholding_min_amount) || 0,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to stamp duty changes
+    const stampChannel = supabase
+      .channel(`public-stamp-${organizationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stamp_duty_settings',
+          filter: `organization_id=eq.${organizationId}`,
+        },
+        async () => {
+          const { data: stampData } = await supabase
+            .from('stamp_duty_settings')
+            .select('amount')
+            .eq('organization_id', organizationId)
+            .maybeSingle();
+          if (stampData?.amount !== undefined && stampData?.amount !== null) {
+            setStampDutyAmount(Number(stampData.amount) || 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(orgChannel);
+      supabase.removeChannel(stampChannel);
+    };
+  }, [organizationId]);
 
   // Reset identifier type when client type changes
   useEffect(() => {
@@ -432,6 +501,7 @@ const PublicInvoiceRequest: React.FC = () => {
         payment_status: calculatedPaymentStatus,
         paid_amount: paidAmountNumber,
         payment_methods: paymentMethods,
+        payment_date: paymentDate ? format(paymentDate, 'yyyy-MM-dd') : null,
         linked_client_id: linkedClientId,
       };
 
@@ -626,6 +696,7 @@ const PublicInvoiceRequest: React.FC = () => {
                   setStoreId('');
                   setPurchaseDate(new Date());
                   setPaidAmount('');
+                  setPaymentDate(undefined);
                   setPaymentMethod('');
                   setLinkedClientId(null);
                   toast.info(t('new_request_form_reset'));
@@ -1101,6 +1172,29 @@ const PublicInvoiceRequest: React.FC = () => {
             </div>
 
             {paidAmountNumber > 0 && (
+              <div className="space-y-2">
+                <Label>{t('payment_date')}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {paymentDate ? format(paymentDate, 'PPP', { locale: getDateLocale() }) : t('select_date')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={paymentDate}
+                      onSelect={(date) => setPaymentDate(date || undefined)}
+                      initialFocus
+                      locale={getDateLocale()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {paidAmountNumber > 0 && (
               <>
                 <Separator />
 
@@ -1300,6 +1394,7 @@ const PublicInvoiceRequest: React.FC = () => {
           setStoreId(request.store_id || '');
           setPurchaseDate(new Date(request.purchase_date));
           setPaidAmount(request.paid_amount?.toString() || '');
+          setPaymentDate(request.payment_date ? new Date(request.payment_date) : undefined);
           setLinkedClientId(request.linked_client_id || null);
           setClientValidated(true);
           setShowPendingDialog(false);
