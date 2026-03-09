@@ -1063,6 +1063,7 @@ export type Database = {
           identifier_value: string
           last_name: string | null
           linked_client_id: string | null
+          net_payable: number | null
           order_number: string | null
           organization_id: string
           paid_amount: number | null
@@ -1075,6 +1076,7 @@ export type Database = {
           postal_code: string | null
           purchase_date: string
           receipt_number: string | null
+          rejection_reason: string | null
           request_date: string
           request_number: string
           status: string
@@ -1102,6 +1104,7 @@ export type Database = {
           identifier_value: string
           last_name?: string | null
           linked_client_id?: string | null
+          net_payable?: number | null
           order_number?: string | null
           organization_id: string
           paid_amount?: number | null
@@ -1114,6 +1117,7 @@ export type Database = {
           postal_code?: string | null
           purchase_date: string
           receipt_number?: string | null
+          rejection_reason?: string | null
           request_date?: string
           request_number: string
           status?: string
@@ -1141,6 +1145,7 @@ export type Database = {
           identifier_value?: string
           last_name?: string | null
           linked_client_id?: string | null
+          net_payable?: number | null
           order_number?: string | null
           organization_id?: string
           paid_amount?: number | null
@@ -1153,6 +1158,7 @@ export type Database = {
           postal_code?: string | null
           purchase_date?: string
           receipt_number?: string | null
+          rejection_reason?: string | null
           request_date?: string
           request_number?: string
           status?: string
