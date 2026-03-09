@@ -15,6 +15,7 @@ import { InvoiceAISearch } from '@/components/invoices/InvoiceAISearch';
 import { AIInvoiceGeneratorDialog } from '@/components/invoices/AIInvoiceGeneratorDialog';
 import { CreditNoteTypeChoiceDialog, CreditNoteType } from '@/components/invoices/CreditNoteTypeChoiceDialog';
 import { CommercialCreditNoteDialog } from '@/components/invoices/CommercialCreditNoteDialog';
+import { ProductReturnCreditNoteDialog } from '@/components/invoices/ProductReturnCreditNoteDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,6 +66,7 @@ const Invoices: React.FC = () => {
   const [creditNoteChoiceOpen, setCreditNoteChoiceOpen] = useState(false);
   const [creditNoteInvoice, setCreditNoteInvoice] = useState<Invoice | null>(null);
   const [commercialCreditOpen, setCommercialCreditOpen] = useState(false);
+  const [productReturnCreditOpen, setProductReturnCreditOpen] = useState(false);
 
   const fetchInvoices = async () => {
     try {
@@ -330,8 +332,7 @@ const Invoices: React.FC = () => {
     if (type === 'commercial_price') {
       setCommercialCreditOpen(true);
     } else {
-      // TODO: product credit note
-      console.log('Product credit note for:', creditNoteInvoice?.invoice_number);
+      setProductReturnCreditOpen(true);
     }
   };
 
@@ -554,6 +555,14 @@ const Invoices: React.FC = () => {
       <CommercialCreditNoteDialog
         open={commercialCreditOpen}
         onOpenChange={setCommercialCreditOpen}
+        invoice={creditNoteInvoice}
+        onComplete={fetchInvoices}
+      />
+
+      {/* Product Return Credit Note Dialog */}
+      <ProductReturnCreditNoteDialog
+        open={productReturnCreditOpen}
+        onOpenChange={setProductReturnCreditOpen}
         invoice={creditNoteInvoice}
         onComplete={fetchInvoices}
       />

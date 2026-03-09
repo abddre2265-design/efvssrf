@@ -149,6 +149,47 @@ const CreditNotes: React.FC = () => {
         .eq('id', creditNoteToValidate.invoice_id);
       if (invUpdateError) throw invUpdateError;
 
+      // 3. For product return credit notes, restore stock
+      if (creditNoteToValidate.credit_note_type === 'product_return') {
+        const { data: cnLines } = await supabase
+          .from('credit_note_lines')
+          .select('product_id, returned_quantity, product_name')
+          .eq('credit_note_id', creditNoteToValidate.id);
+
+        if (cnLines) {
+          for (const line of cnLines as any[]) {
+            if (line.returned_quantity <= 0) continue;
+            const { data: product } = await supabase
+              .from('products')
+              .select('current_stock, unlimited_stock')
+              .eq('id', line.product_id)
+              .maybeSingle();
+
+            if (!product || product.unlimited_stock) continue;
+
+            const previousStock = product.current_stock ?? 0;
+            const newStock = previousStock + line.returned_quantity;
+
+            await supabase
+              .from('products')
+              .update({ current_stock: newStock })
+              .eq('id', line.product_id);
+
+            await supabase
+              .from('stock_movements')
+              .insert([{
+                product_id: line.product_id,
+                movement_type: 'add' as const,
+                quantity: line.returned_quantity,
+                previous_stock: previousStock,
+                new_stock: newStock,
+                reason_category: 'commercial',
+                reason_detail: `${t('product_return_credit_note') || 'Avoir produit'} ${creditNoteToValidate.credit_note_number}`,
+              }]);
+          }
+        }
+      }
+
       toast.success(t('credit_note_validated') || 'Avoir validé et appliqué à la facture');
       setValidateDialogOpen(false);
       setCreditNoteToValidate(null);

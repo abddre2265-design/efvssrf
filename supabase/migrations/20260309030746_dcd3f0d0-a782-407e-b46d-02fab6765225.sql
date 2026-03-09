@@ -1,0 +1,1 @@
+ALTER TABLE public.credit_note_lines ADD COLUMN returned_quantity numeric NOT NULL DEFAULT 0;
