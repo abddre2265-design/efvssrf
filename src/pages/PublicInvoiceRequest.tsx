@@ -535,6 +535,7 @@ const PublicInvoiceRequest: React.FC = () => {
         receipt_number: receiptNumber || null,
         order_number: orderNumber || null,
         total_ttc: totalTTCAmount,
+        net_payable: netPayableAmount,
         payment_status: calculatedPaymentStatus,
         paid_amount: paidAmountNumber,
         payment_methods: paymentMethods,

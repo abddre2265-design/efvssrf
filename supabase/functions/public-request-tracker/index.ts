@@ -27,7 +27,7 @@ serve(async (req) => {
     if (action === "search") {
       let query = supabase
         .from("invoice_requests")
-        .select("id, request_number, transaction_number, identifier_value, identifier_type, client_type, first_name, last_name, company_name, total_ttc, status, payment_status, purchase_date, request_date, generated_invoice_id, pdf_download_count, store:stores(name)")
+        .select("id, request_number, transaction_number, identifier_value, identifier_type, client_type, first_name, last_name, company_name, total_ttc, status, payment_status, purchase_date, request_date, generated_invoice_id, pdf_download_count, rejection_reason, store:stores(name)")
         .eq("organization_id", organizationId);
 
       if (transactionNumber) {
