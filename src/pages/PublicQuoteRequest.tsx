@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { LanguageSelector } from '@/components/auth/LanguageSelector';
+import { ThemeToggle } from '@/components/auth/ThemeToggle';
 import {
   Select,
   SelectContent,
@@ -51,6 +54,7 @@ interface LinkData {
 const PublicQuoteRequest: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   
   // Auth state
   const [isVerifying, setIsVerifying] = useState(true);
@@ -141,6 +145,15 @@ const PublicQuoteRequest: React.FC = () => {
     }
   }, [clientType]);
 
+  const getIdentifierLabel = (type: string) => {
+    switch (type) {
+      case 'cin': return 'CIN';
+      case 'tax_id': return t('pqr_tax_id');
+      case 'passport': return t('pqr_passport');
+      default: return type;
+    }
+  };
+
   const verifyAccessCode = async () => {
     if (!accessCodeInput.trim() || !linkData) return;
     
@@ -148,17 +161,20 @@ const PublicQuoteRequest: React.FC = () => {
     
     if (accessCodeInput.toUpperCase() === linkData.access_code.toUpperCase()) {
       setIsAuthorized(true);
-      toast.success('Accès autorisé');
-      // Start with AI greeting
+      toast.success(t('pqr_access_granted'));
       setTimeout(() => {
         const greeting: ChatMessage = {
           role: 'assistant',
-          content: "Bonjour ! 👋 Je suis votre assistant pour les demandes de devis.\n\nComment puis-je vous aider aujourd'hui ? Décrivez-moi les produits ou services pour lesquels vous souhaitez un devis, et je vous poserai quelques questions pour bien comprendre vos besoins.",
+          content: language === 'ar' 
+            ? "مرحباً! 👋 أنا مساعدك لطلبات عروض الأسعار.\n\nكيف يمكنني مساعدتك اليوم؟ صف لي المنتجات أو الخدمات التي تريد عرض أسعار لها."
+            : language === 'en'
+            ? "Hello! 👋 I'm your assistant for quote requests.\n\nHow can I help you today? Describe the products or services you'd like a quote for."
+            : "Bonjour ! 👋 Je suis votre assistant pour les demandes de devis.\n\nComment puis-je vous aider aujourd'hui ? Décrivez-moi les produits ou services pour lesquels vous souhaitez un devis.",
         };
         setMessages([greeting]);
       }, 500);
     } else {
-      toast.error('Code incorrect');
+      toast.error(t('pqr_incorrect_code'));
     }
     
     setIsCheckingCode(false);
@@ -173,7 +189,7 @@ const PublicQuoteRequest: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ messages: newMessages, language: 'fr' }),
+        body: JSON.stringify({ messages: newMessages, language }),
       });
 
       if (!resp.ok || !resp.body) {
@@ -186,7 +202,6 @@ const PublicQuoteRequest: React.FC = () => {
       let assistantContent = '';
       let streamDone = false;
 
-      // Add empty assistant message
       setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
       while (!streamDone) {
@@ -227,18 +242,16 @@ const PublicQuoteRequest: React.FC = () => {
         }
       }
 
-      // Check if the response contains a confirmation
       if (assistantContent.includes('CONFIRMED:')) {
         const jsonMatch = assistantContent.match(/CONFIRMED:(\{[\s\S]*\})/);
         if (jsonMatch) {
           try {
             const confirmed = JSON.parse(jsonMatch[1]) as ConfirmedRequest;
             setConfirmedRequest(confirmed);
-            // Update the message to remove the JSON part
             const cleanContent = assistantContent.replace(/CONFIRMED:\{[\s\S]*\}/, 
-              '✅ J\'ai bien compris votre demande ! Voici le résumé:\n\n' + 
-              confirmed.items.map((item, i) => `${i + 1}. ${item.description}${item.quantity ? ` (Quantité: ${item.quantity})` : ''}`).join('\n') +
-              '\n\nVeuillez vérifier vos coordonnées ci-dessus et cliquer sur "Envoyer ma demande" pour finaliser.');
+              '✅ ' + (language === 'ar' ? 'لقد فهمت طلبك!' : language === 'en' ? 'I understood your request!' : 'J\'ai bien compris votre demande !') + '\n\n' + 
+              confirmed.items.map((item, i) => `${i + 1}. ${item.description}${item.quantity ? ` (${t('quantity')}: ${item.quantity})` : ''}`).join('\n') +
+              '\n\n' + t('pqr_verify_and_send'));
             setMessages(prev => {
               const updated = [...prev];
               updated[updated.length - 1] = { role: 'assistant', content: cleanContent };
@@ -251,13 +264,12 @@ const PublicQuoteRequest: React.FC = () => {
       }
     } catch (error) {
       console.error('Stream error:', error);
-      toast.error('Erreur de connexion. Veuillez réessayer.');
-      // Remove the empty assistant message
+      toast.error(t('pqr_connection_error'));
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsStreaming(false);
     }
-  }, []);
+  }, [language, t]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isStreaming) return;
@@ -280,28 +292,25 @@ const PublicQuoteRequest: React.FC = () => {
   const handleSubmitRequest = async () => {
     if (!confirmedRequest || !linkData) return;
 
-    // Validate client info
     if (clientType === 'individual_local' && (!firstName.trim() || !lastName.trim())) {
-      toast.error('Veuillez remplir votre nom et prénom');
+      toast.error(t('pqr_fill_name'));
       return;
     }
     if (clientType === 'business_local' && !companyName.trim()) {
-      toast.error('Veuillez remplir le nom de votre entreprise');
+      toast.error(t('pqr_fill_company'));
       return;
     }
     if (clientType !== 'foreign' && !governorate) {
-      toast.error('Veuillez sélectionner votre gouvernorat');
+      toast.error(t('pqr_fill_governorate'));
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Generate request number
       const now = new Date();
       const requestNumber = `DQ-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Date.now().toString().slice(-6)}`;
 
-      // Create the quote request
       const { data: request, error: requestError } = await supabase
         .from('quote_requests')
         .insert({
@@ -330,7 +339,6 @@ const PublicQuoteRequest: React.FC = () => {
 
       if (requestError) throw requestError;
 
-      // Create items
       if (confirmedRequest.items.length > 0) {
         const items = confirmedRequest.items.map((item, index) => ({
           quote_request_id: request.id,
@@ -347,7 +355,6 @@ const PublicQuoteRequest: React.FC = () => {
         if (itemsError) throw itemsError;
       }
 
-      // Save conversation messages
       const messagesToSave = messages.map(msg => ({
         quote_request_id: request.id,
         role: msg.role,
@@ -361,10 +368,10 @@ const PublicQuoteRequest: React.FC = () => {
       if (messagesError) throw messagesError;
 
       setIsSubmitted(true);
-      toast.success('Votre demande de devis a été envoyée !');
+      toast.success(t('pqr_request_sent_success'));
     } catch (error) {
       console.error('Error submitting request:', error);
-      toast.error('Erreur lors de l\'envoi de la demande');
+      toast.error(t('pqr_error_sending'));
     } finally {
       setIsSubmitting(false);
     }
@@ -376,17 +383,26 @@ const PublicQuoteRequest: React.FC = () => {
 
   const isLocal = clientType !== 'foreign';
 
+  // Language/Theme controls for public page
+  const renderControls = () => (
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+      <LanguageSelector />
+      <ThemeToggle />
+    </div>
+  );
+
   // Loading state
   if (isVerifying) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
+        {renderControls()}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-4"
         >
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Vérification en cours...</p>
+          <p className="text-muted-foreground">{t('pqr_verifying')}</p>
         </motion.div>
       </div>
     );
@@ -396,6 +412,7 @@ const PublicQuoteRequest: React.FC = () => {
   if (!linkData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        {renderControls()}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -405,10 +422,8 @@ const PublicQuoteRequest: React.FC = () => {
               <div className="mx-auto p-3 rounded-full bg-destructive/10 w-fit mb-4">
                 <AlertCircle className="h-8 w-8 text-destructive" />
               </div>
-              <CardTitle>Lien invalide</CardTitle>
-              <CardDescription>
-                Ce lien de demande de devis n'est pas valide ou a été désactivé.
-              </CardDescription>
+              <CardTitle>{t('pqr_invalid_link')}</CardTitle>
+              <CardDescription>{t('pqr_invalid_link_desc')}</CardDescription>
             </CardHeader>
           </Card>
         </motion.div>
@@ -420,6 +435,7 @@ const PublicQuoteRequest: React.FC = () => {
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        {renderControls()}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -430,14 +446,12 @@ const PublicQuoteRequest: React.FC = () => {
               <div className="mx-auto p-3 rounded-full bg-primary/10 w-fit mb-4">
                 <Shield className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle>Demande de devis</CardTitle>
-              <CardDescription>
-                Entrez le code d'accès pour continuer
-              </CardDescription>
+              <CardTitle>{t('pqr_quote_request')}</CardTitle>
+              <CardDescription>{t('pqr_enter_access_code')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Code d'accès</Label>
+                <Label>{t('pqr_access_code')}</Label>
                 <div className="flex gap-2">
                   <Input
                     value={accessCodeInput}
@@ -467,6 +481,7 @@ const PublicQuoteRequest: React.FC = () => {
   if (isSubmitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        {renderControls()}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -477,10 +492,8 @@ const PublicQuoteRequest: React.FC = () => {
               <div className="mx-auto p-4 rounded-full bg-green-500/10 w-fit mb-4">
                 <CheckCircle2 className="h-12 w-12 text-green-500" />
               </div>
-              <CardTitle className="text-2xl">Demande envoyée !</CardTitle>
-              <CardDescription className="text-base">
-                Votre demande de devis a été envoyée avec succès. Nous vous contacterons dans les plus brefs délais.
-              </CardDescription>
+              <CardTitle className="text-2xl">{t('pqr_request_sent')}</CardTitle>
+              <CardDescription className="text-base">{t('pqr_request_sent_desc')}</CardDescription>
             </CardHeader>
           </Card>
         </motion.div>
@@ -491,6 +504,7 @@ const PublicQuoteRequest: React.FC = () => {
   // Main form and chat
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
+      {renderControls()}
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <motion.div
@@ -500,12 +514,10 @@ const PublicQuoteRequest: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <FileQuestion className="h-5 w-5" />
-            <span className="font-medium">Demande de devis</span>
+            <span className="font-medium">{t('pqr_quote_request')}</span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Demandez votre devis</h1>
-          <p className="text-muted-foreground">
-            Remplissez vos coordonnées et discutez avec notre assistant pour décrire vos besoins
-          </p>
+          <h1 className="text-3xl font-bold mb-2">{t('pqr_request_your_quote')}</h1>
+          <p className="text-muted-foreground">{t('pqr_fill_info_desc')}</p>
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-6">
@@ -519,26 +531,24 @@ const PublicQuoteRequest: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  Vos coordonnées
+                  {t('pqr_your_details')}
                 </CardTitle>
-                <CardDescription>
-                  Renseignez vos informations pour que nous puissions vous contacter
-                </CardDescription>
+                <CardDescription>{t('pqr_contact_desc')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[600px] pr-4">
                   <div className="space-y-6">
                     {/* Client Type */}
                     <div className="space-y-2">
-                      <Label>Type de client *</Label>
+                      <Label>{t('pqr_client_type')} *</Label>
                       <Select value={clientType} onValueChange={(v: ClientType) => setClientType(v)}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="individual_local">Particulier (Tunisie)</SelectItem>
-                          <SelectItem value="business_local">Entreprise (Tunisie)</SelectItem>
-                          <SelectItem value="foreign">Client étranger</SelectItem>
+                          <SelectItem value="individual_local">{t('pqr_individual_local')}</SelectItem>
+                          <SelectItem value="business_local">{t('pqr_business_local')}</SelectItem>
+                          <SelectItem value="foreign">{t('pqr_foreign')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -547,11 +557,11 @@ const PublicQuoteRequest: React.FC = () => {
                     {clientType === 'individual_local' && (
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Prénom *</Label>
+                          <Label>{t('pqr_first_name')} *</Label>
                           <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                          <Label>Nom *</Label>
+                          <Label>{t('pqr_last_name')} *</Label>
                           <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
                         </div>
                       </div>
@@ -559,7 +569,7 @@ const PublicQuoteRequest: React.FC = () => {
 
                     {clientType === 'business_local' && (
                       <div className="space-y-2">
-                        <Label>Raison sociale *</Label>
+                        <Label>{t('pqr_company_name')} *</Label>
                         <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
                       </div>
                     )}
@@ -568,16 +578,16 @@ const PublicQuoteRequest: React.FC = () => {
                       <>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Prénom</Label>
+                            <Label>{t('pqr_first_name')}</Label>
                             <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                           </div>
                           <div className="space-y-2">
-                            <Label>Nom</Label>
+                            <Label>{t('pqr_last_name')}</Label>
                             <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label>Nom de l'entreprise</Label>
+                          <Label>{t('pqr_company_name_foreign')}</Label>
                           <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
                         </div>
                       </>
@@ -586,7 +596,7 @@ const PublicQuoteRequest: React.FC = () => {
                     {/* Identifier */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Type d'identifiant</Label>
+                        <Label>{t('pqr_identifier_type')}</Label>
                         <Select value={identifierType} onValueChange={setIdentifierType}>
                           <SelectTrigger>
                             <SelectValue />
@@ -594,14 +604,14 @@ const PublicQuoteRequest: React.FC = () => {
                           <SelectContent>
                             {IDENTIFIER_TYPES[clientType].map((type) => (
                               <SelectItem key={type} value={type}>
-                                {type === 'cin' ? 'CIN' : type === 'tax_id' ? 'Matricule fiscal' : type === 'passport' ? 'Passeport' : type}
+                                {getIdentifierLabel(type)}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Numéro</Label>
+                        <Label>{t('pqr_identifier_number')}</Label>
                         <Input value={identifierValue} onChange={(e) => setIdentifierValue(e.target.value)} />
                       </div>
                     </div>
@@ -609,10 +619,10 @@ const PublicQuoteRequest: React.FC = () => {
                     {/* Country & Governorate */}
                     {isLocal ? (
                       <div className="space-y-2">
-                        <Label>Gouvernorat *</Label>
+                        <Label>{t('pqr_governorate')} *</Label>
                         <Select value={governorate} onValueChange={setGovernorate}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner" />
+                            <SelectValue placeholder={t('pqr_select')} />
                           </SelectTrigger>
                           <SelectContent>
                             {TUNISIA_GOVERNORATES.map((gov) => (
@@ -623,7 +633,7 @@ const PublicQuoteRequest: React.FC = () => {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <Label>Pays *</Label>
+                        <Label>{t('pqr_country')} *</Label>
                         <Select value={country} onValueChange={setCountry}>
                           <SelectTrigger>
                             <SelectValue />
@@ -633,7 +643,7 @@ const PublicQuoteRequest: React.FC = () => {
                               <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                  placeholder="Rechercher..."
+                                  placeholder={t('pqr_search')}
                                   value={countrySearch}
                                   onChange={(e) => setCountrySearch(e.target.value)}
                                   className="pl-8"
@@ -653,18 +663,18 @@ const PublicQuoteRequest: React.FC = () => {
                     {/* Address */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Adresse</Label>
+                        <Label>{t('pqr_address')}</Label>
                         <Input value={address} onChange={(e) => setAddress(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                        <Label>Code postal</Label>
+                        <Label>{t('pqr_postal_code')}</Label>
                         <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
                       </div>
                     </div>
 
                     {/* Phone */}
                     <div className="space-y-2">
-                      <Label>Téléphone</Label>
+                      <Label>{t('pqr_phone')}</Label>
                       <div className="flex gap-2">
                         <Select value={phonePrefix} onValueChange={setPhonePrefix}>
                           <SelectTrigger className="w-[120px]">
@@ -710,12 +720,12 @@ const PublicQuoteRequest: React.FC = () => {
 
                     {/* Email */}
                     <div className="space-y-2">
-                      <Label>Email</Label>
+                      <Label>{t('pqr_email')}</Label>
                       <Input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="votre@email.com"
+                        placeholder="email@example.com"
                       />
                     </div>
                   </div>
@@ -734,11 +744,9 @@ const PublicQuoteRequest: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
-                  Décrivez vos besoins
+                  {t('pqr_describe_needs')}
                 </CardTitle>
-                <CardDescription>
-                  Discutez avec notre assistant pour nous aider à comprendre exactement ce que vous recherchez
-                </CardDescription>
+                <CardDescription>{t('pqr_chat_desc')}</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col">
                 {/* Messages */}
@@ -768,7 +776,7 @@ const PublicQuoteRequest: React.FC = () => {
                     {isStreaming && (
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">L'assistant réfléchit...</span>
+                        <span className="text-sm">{t('pqr_assistant_thinking')}</span>
                       </div>
                     )}
                     <div ref={chatEndRef} />
@@ -783,7 +791,7 @@ const PublicQuoteRequest: React.FC = () => {
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Décrivez les produits ou services souhaités..."
+                      placeholder={t('pqr_chat_placeholder')}
                       className="min-h-[60px] resize-none"
                       disabled={isStreaming}
                     />
@@ -801,11 +809,9 @@ const PublicQuoteRequest: React.FC = () => {
                     <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
                       <div className="flex items-center gap-2 text-green-600 mb-2">
                         <Check className="h-5 w-5" />
-                        <span className="font-medium">Demande prête à être envoyée</span>
+                        <span className="font-medium">{t('pqr_ready_to_send')}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Vérifiez vos coordonnées et cliquez sur le bouton ci-dessous pour envoyer votre demande.
-                      </p>
+                      <p className="text-sm text-muted-foreground">{t('pqr_verify_and_send')}</p>
                     </div>
                     <Button
                       onClick={handleSubmitRequest}
@@ -816,12 +822,12 @@ const PublicQuoteRequest: React.FC = () => {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Envoi en cours...
+                          {t('pqr_sending')}
                         </>
                       ) : (
                         <>
                           <Send className="mr-2 h-4 w-4" />
-                          Envoyer ma demande
+                          {t('pqr_send_request')}
                         </>
                       )}
                     </Button>
