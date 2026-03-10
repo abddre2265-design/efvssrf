@@ -150,16 +150,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       labelKey: 'international_trade',
       icon: Globe,
       items: [
-        { id: 'export-folders', icon: FolderUp, labelKey: 'export_folders' },
         { id: 'import-folders', icon: FolderDown, labelKey: 'import_folders_menu' },
-      ],
-    },
-    {
-      id: 'intelligence',
-      labelKey: 'intelligence_reports',
-      icon: BrainCircuit,
-      items: [
-        { id: 'ai-reports', icon: BarChart3, labelKey: 'ai_reports' },
       ],
     },
     {
@@ -177,14 +168,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   ];
 
   // Items after groups (independent buttons)
-  const bottomItems: MenuItem[] = [
-    { id: 'mailing', icon: Mail, labelKey: 'mailing' },
-    { id: 'calendar', icon: Calendar, labelKey: 'calendar_deadlines' },
-    { id: 'notifications', icon: Bell, labelKey: 'notification_center' },
-    { id: 'users-roles', icon: UserCog, labelKey: 'users_roles' },
-    { id: 'archives', icon: Archive, labelKey: 'archives' },
-    { id: 'security-logs', icon: Shield, labelKey: 'security_logs' },
-  ];
+  const bottomItems: MenuItem[] = [];
 
   // Track which groups are open
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
