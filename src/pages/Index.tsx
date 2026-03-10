@@ -5,16 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
 import { AnimatedLogo } from '@/components/auth/AnimatedLogo';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      // Redirect to dashboard if logged in
       if (session?.user) {
         navigate('/dashboard', { replace: true });
       }
@@ -23,7 +24,6 @@ const Index = () => {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      // Redirect to dashboard if logged in
       if (session?.user) {
         navigate('/dashboard', { replace: true });
       }
@@ -45,10 +45,8 @@ const Index = () => {
     );
   }
 
-  // Landing page for non-authenticated users
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background cyber-grid p-8 relative overflow-hidden">
-      {/* Background effects */}
       <motion.div
         className="absolute w-96 h-96 rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl"
         style={{ top: '10%', left: '-10%' }}
@@ -69,13 +67,13 @@ const Index = () => {
         className="relative z-10 text-center space-y-8"
       >
         <AnimatedLogo size="lg" />
-        <p className="text-muted-foreground text-lg">Your Futuristic Finance Companion</p>
+        <p className="text-muted-foreground text-lg">{t('tagline')}</p>
         <Button
           onClick={() => navigate('/auth')}
           size="lg"
           className="glow-primary text-lg px-8 py-6"
         >
-          Get Started
+          {t('getStarted')}
         </Button>
       </motion.div>
     </div>
