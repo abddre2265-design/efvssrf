@@ -328,17 +328,6 @@ export const AuthForm: React.FC = () => {
 
               {/* Mode Switch Links */}
               <motion.div variants={itemVariants} className="mt-6 text-center space-y-2">
-                {mode === 'signin' && (
-                  <p className="text-sm text-muted-foreground">
-                    {t('noAccount')}{' '}
-                    <button
-                      onClick={() => { setMode('signup'); resetForm(); }}
-                      className="text-primary hover:text-primary/80 font-medium transition-colors hover:underline"
-                    >
-                      {t('signUp')}
-                    </button>
-                  </p>
-                )}
                 {mode === 'signup' && (
                   <p className="text-sm text-muted-foreground">
                     {t('hasAccount')}{' '}
