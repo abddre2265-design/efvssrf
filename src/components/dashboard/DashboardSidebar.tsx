@@ -155,14 +155,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       ],
     },
     {
-      id: 'intelligence',
-      labelKey: 'intelligence_reports',
-      icon: BrainCircuit,
-      items: [
-        { id: 'ai-reports', icon: BarChart3, labelKey: 'ai_reports' },
-      ],
-    },
-    {
       id: 'configuration',
       labelKey: 'configuration_group',
       icon: Settings,
