@@ -150,7 +150,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       labelKey: 'international_trade',
       icon: Globe,
       items: [
-        { id: 'export-folders', icon: FolderUp, labelKey: 'export_folders' },
         { id: 'import-folders', icon: FolderDown, labelKey: 'import_folders_menu' },
       ],
     },
