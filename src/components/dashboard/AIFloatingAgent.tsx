@@ -63,6 +63,17 @@ export const AIFloatingAgent: React.FC = () => {
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Fetch session token
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionToken(data.session?.access_token || null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionToken(session?.access_token || null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Check for speech recognition support
   useEffect(() => {
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
