@@ -655,20 +655,7 @@ export const AIFloatingAgent: React.FC = () => {
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                 >
-                  {/* Stats Bar */}
-                  {!stats.isLoading && (
-                    <div className="px-4 py-2 bg-muted/30 border-b border-border/30 flex items-center gap-3 text-xs text-muted-foreground overflow-x-auto">
-                      <span className="flex items-center gap-1 whitespace-nowrap">
-                        📊 {stats.invoicesCount} {language === 'fr' ? 'factures' : language === 'ar' ? 'فواتير' : 'invoices'}
-                      </span>
-                      <span className="flex items-center gap-1 whitespace-nowrap">
-                        👥 {stats.clientsCount} {language === 'fr' ? 'clients' : language === 'ar' ? 'عملاء' : 'clients'}
-                      </span>
-                      <span className="flex items-center gap-1 whitespace-nowrap">
-                        💰 {stats.unpaidAmount.toFixed(2)} TND
-                      </span>
-                    </div>
-                  )}
+                  {/* Stats bar removed - data now fetched server-side */}
 
                   {/* History Panel */}
                   {showHistory && (
