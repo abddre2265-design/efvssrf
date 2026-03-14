@@ -38,7 +38,7 @@ const ANON_KEY = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 export const AIFloatingAgent: React.FC = () => {
   const { language, isRTL } = useLanguage();
   const navigate = useNavigate();
-  const stats = useDashboardStats();
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
   
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
