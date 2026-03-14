@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -38,7 +38,7 @@ const ANON_KEY = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 export const AIFloatingAgent: React.FC = () => {
   const { language, isRTL } = useLanguage();
   const navigate = useNavigate();
-  const stats = useDashboardStats();
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
   
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -62,6 +62,17 @@ export const AIFloatingAgent: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Fetch session token
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionToken(data.session?.access_token || null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionToken(session?.access_token || null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Check for speech recognition support
   useEffect(() => {
@@ -257,20 +268,11 @@ export const AIFloatingAgent: React.FC = () => {
     const assistantId = (Date.now() + 1).toString();
     
     try {
-      const context = {
-        invoicesCount: stats.invoicesCount,
-        clientsCount: stats.clientsCount,
-        productsCount: stats.productsCount,
-        suppliersCount: stats.suppliersCount,
-        unpaidAmount: stats.unpaidAmount,
-        pendingPurchases: stats.pendingPurchases,
-      };
-
       const response = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${ANON_KEY}`,
+          'Authorization': `Bearer ${sessionToken || ANON_KEY}`,
         },
         body: JSON.stringify({
           messages: messages.filter(m => m.id !== 'welcome').map(m => ({
@@ -278,7 +280,6 @@ export const AIFloatingAgent: React.FC = () => {
             content: m.content
           })).concat([{ role: 'user', content: userMessage }]),
           language,
-          context
         }),
       });
 
@@ -654,20 +655,7 @@ export const AIFloatingAgent: React.FC = () => {
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                 >
-                  {/* Stats Bar */}
-                  {!stats.isLoading && (
-                    <div className="px-4 py-2 bg-muted/30 border-b border-border/30 flex items-center gap-3 text-xs text-muted-foreground overflow-x-auto">
-                      <span className="flex items-center gap-1 whitespace-nowrap">
-                        📊 {stats.invoicesCount} {language === 'fr' ? 'factures' : language === 'ar' ? 'فواتير' : 'invoices'}
-                      </span>
-                      <span className="flex items-center gap-1 whitespace-nowrap">
-                        👥 {stats.clientsCount} {language === 'fr' ? 'clients' : language === 'ar' ? 'عملاء' : 'clients'}
-                      </span>
-                      <span className="flex items-center gap-1 whitespace-nowrap">
-                        💰 {stats.unpaidAmount.toFixed(2)} TND
-                      </span>
-                    </div>
-                  )}
+                  {/* Stats bar removed - data now fetched server-side */}
 
                   {/* History Panel */}
                   {showHistory && (
