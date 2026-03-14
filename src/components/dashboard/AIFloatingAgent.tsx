@@ -268,20 +268,11 @@ export const AIFloatingAgent: React.FC = () => {
     const assistantId = (Date.now() + 1).toString();
     
     try {
-      const context = {
-        invoicesCount: stats.invoicesCount,
-        clientsCount: stats.clientsCount,
-        productsCount: stats.productsCount,
-        suppliersCount: stats.suppliersCount,
-        unpaidAmount: stats.unpaidAmount,
-        pendingPurchases: stats.pendingPurchases,
-      };
-
       const response = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${ANON_KEY}`,
+          'Authorization': `Bearer ${sessionToken || ANON_KEY}`,
         },
         body: JSON.stringify({
           messages: messages.filter(m => m.id !== 'welcome').map(m => ({
@@ -289,7 +280,6 @@ export const AIFloatingAgent: React.FC = () => {
             content: m.content
           })).concat([{ role: 'user', content: userMessage }]),
           language,
-          context
         }),
       });
 
