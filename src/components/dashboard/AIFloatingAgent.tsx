@@ -424,13 +424,20 @@ export const AIFloatingAgent: React.FC = () => {
     }
   };
 
-  const clearHistory = () => {
-    setMessages([{
+  const clearHistory = async () => {
+    const welcomeMessages = [{
       id: 'welcome',
-      role: 'assistant',
+      role: 'assistant' as const,
       content: getWelcomeMessage(),
       timestamp: new Date()
-    }]);
+    }];
+    setMessages(welcomeMessages);
+    if (organizationId) {
+      await supabase
+        .from('ai_chat_histories')
+        .update({ messages: welcomeMessages as any, updated_at: new Date().toISOString() })
+        .eq('organization_id', organizationId);
+    }
     localStorage.removeItem('ai-agent-history');
   };
 
