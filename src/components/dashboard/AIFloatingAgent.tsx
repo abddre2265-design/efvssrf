@@ -92,25 +92,59 @@ export const AIFloatingAgent: React.FC = () => {
     }
   }, [isOpen, isMinimized]);
 
-  // Load conversation history from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('ai-agent-history');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setMessages(parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
-      } catch (e) {
-        console.error('Failed to load AI history');
-      }
-    }
-  }, []);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
 
-  // Save conversation history
+  // Fetch organization ID
   useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem('ai-agent-history', JSON.stringify(messages.slice(-50)));
-    }
-  }, [messages]);
+    const fetchOrg = async () => {
+      const { data } = await supabase.from('organizations').select('id').limit(1).single();
+      if (data) setOrganizationId(data.id);
+    };
+    fetchOrg();
+  }, [sessionToken]);
+
+  // Load conversation history from Supabase
+  useEffect(() => {
+    if (!organizationId) return;
+    const loadHistory = async () => {
+      const { data } = await supabase
+        .from('ai_chat_histories')
+        .select('messages')
+        .eq('organization_id', organizationId)
+        .single();
+      
+      if (data && Array.isArray(data.messages) && (data.messages as any[]).length > 0) {
+        setMessages((data.messages as any[]).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+      }
+    };
+    loadHistory();
+  }, [organizationId]);
+
+  // Save conversation history to Supabase
+  useEffect(() => {
+    if (!organizationId || messages.length === 0) return;
+    const saveHistory = async () => {
+      const messagesToSave = messages.slice(-100);
+      const { data: existing } = await supabase
+        .from('ai_chat_histories')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('ai_chat_histories')
+          .update({ messages: messagesToSave as any, updated_at: new Date().toISOString() })
+          .eq('organization_id', organizationId);
+      } else {
+        await supabase
+          .from('ai_chat_histories')
+          .insert({ organization_id: organizationId, messages: messagesToSave as any });
+      }
+    };
+    const timer = setTimeout(saveHistory, 500);
+    return () => clearTimeout(timer);
+  }, [messages, organizationId]);
 
   const getWelcomeMessage = useCallback(() => {
     const messages = {
@@ -390,13 +424,20 @@ export const AIFloatingAgent: React.FC = () => {
     }
   };
 
-  const clearHistory = () => {
-    setMessages([{
+  const clearHistory = async () => {
+    const welcomeMessages = [{
       id: 'welcome',
-      role: 'assistant',
+      role: 'assistant' as const,
       content: getWelcomeMessage(),
       timestamp: new Date()
-    }]);
+    }];
+    setMessages(welcomeMessages);
+    if (organizationId) {
+      await supabase
+        .from('ai_chat_histories')
+        .update({ messages: welcomeMessages as any, updated_at: new Date().toISOString() })
+        .eq('organization_id', organizationId);
+    }
     localStorage.removeItem('ai-agent-history');
   };
 
