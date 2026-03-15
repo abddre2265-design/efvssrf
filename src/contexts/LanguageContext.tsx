@@ -939,6 +939,7 @@ export const translations: Translations = {
   blocked_credit_until_reception: { fr: 'Crédit bloqué jusqu\'à réception', en: 'Credit blocked until reception', ar: 'الرصيد محظور حتى الاستلام' },
   credit_note_date: { fr: 'Date de l\'avoir', en: 'Credit note date', ar: 'تاريخ الإشعار الدائن' },
   credit_note_reason_placeholder: { fr: 'Motif de l\'avoir...', en: 'Credit note reason...', ar: 'سبب الإشعار الدائن...' },
+  already_returned: { fr: 'déjà retourné', en: 'already returned', ar: 'مرجع بالفعل' },
   financial_credit_details: { fr: 'Détails de l\'avoir financier', en: 'Financial credit details', ar: 'تفاصيل الإشعار المالي' },
   financial_credit_description_placeholder: { fr: 'Ex: Remise commerciale, ajustement...', en: 'Ex: Commercial discount, adjustment...', ar: 'مثال: خصم تجاري، تعديل...' },
   amount_ht: { fr: 'Montant HT', en: 'Amount excl. tax', ar: 'المبلغ بدون ضريبة' },
@@ -1079,7 +1080,6 @@ export const translations: Translations = {
   stock_will_increase: { fr: 'Le stock sera augmenté', en: 'Stock will be increased', ar: 'سيتم زيادة المخزون' },
   client_credit_if_overpaid: { fr: 'Si trop-perçu, un crédit client sera créé', en: 'If overpaid, client credit will be created', ar: 'في حالة الدفع الزائد، سيتم إنشاء رصيد للعميل' },
   credit_note_deleted: { fr: 'Avoir supprimé', en: 'Credit note deleted', ar: 'تم حذف الإشعار الدائن' },
-  method: { fr: 'Méthode', en: 'Method', ar: 'الطريقة' },
   // Purchases
   purchases: { fr: 'Achats', en: 'Purchases', ar: 'المشتريات' },
   purchases_description: { fr: 'Gérez vos achats et approvisionnements', en: 'Manage your purchases and supplies', ar: 'إدارة المشتريات والتوريدات' },
