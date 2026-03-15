@@ -810,12 +810,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{t('payment_progress')}</span>
-                  <span>{adjustedNetPayable > 0 ? ((paidAmount / adjustedNetPayable) * 100).toFixed(0) : 0}%</span>
+                  <span>{liveNetPayable > 0 ? ((paidAmount / liveNetPayable) * 100).toFixed(0) : 0}%</span>
                 </div>
                 <div className="h-2 rounded-full bg-muted overflow-hidden">
                   <div 
                     className="h-full bg-primary transition-all duration-300"
-                    style={{ width: `${Math.min(100, adjustedNetPayable > 0 ? (paidAmount / adjustedNetPayable) * 100 : 0)}%` }}
+                    style={{ width: `${Math.min(100, liveNetPayable > 0 ? (paidAmount / liveNetPayable) * 100 : 0)}%` }}
                   />
                 </div>
               </div>
