@@ -416,14 +416,14 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
   // Validation for client balance payment (in TND)
   const isClientBalanceValid = isClientBalancePayment 
-    ? (amountInTND > 0 && amountInTND <= clientBalance && parsedAmount <= liveRemainingBalance)
+    ? (amountInTND > 0 && amountInTND <= clientBalance && parsedAmount <= remainingBalance)
     : true;
 
   const canSavePayment = isMixedPayment
-    ? (mixedLines.length > 0 && areMixedLinesValid && isMixedAmountValid && parsedAmount > 0 && parsedAmount <= liveRemainingBalance && paymentDate)
+    ? (mixedLines.length > 0 && areMixedLinesValid && isMixedAmountValid && parsedAmount > 0 && parsedAmount <= remainingBalance && paymentDate)
     : isClientBalancePayment
       ? (isClientBalanceValid && paymentDate)
-      : (paymentMethod && parsedAmount > 0 && parsedAmount <= liveRemainingBalance && (!requiresReference || referenceNumber.trim()) && paymentDate);
+      : (paymentMethod && parsedAmount > 0 && parsedAmount <= remainingBalance && (!requiresReference || referenceNumber.trim()) && paymentDate);
 
   // Can save withholding: rate must be selected and no payments exist (local only)
   const canSaveWithholding = !isForeign && selectedWithholdingRate !== '' && !hasPayments;
