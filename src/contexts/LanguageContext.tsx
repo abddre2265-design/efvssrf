@@ -614,6 +614,7 @@ export const translations: Translations = {
   pdf_payment_paid: { fr: 'PAYÉ', en: 'PAID', ar: 'مدفوع' },
   pdf_payment_partial: { fr: 'PARTIEL', en: 'PARTIAL', ar: 'جزئي' },
   pdf_payment_unpaid: { fr: 'IMPAYÉ', en: 'UNPAID', ar: 'غير مدفوع' },
+  status_validated_partial: { fr: 'Validé partiel', en: 'Partially validated', ar: 'مؤكد جزئياً' },
 
   // Credit notes in PDF
   pdf_associated_credits: { fr: 'AVOIRS ASSOCIÉS', en: 'ASSOCIATED CREDIT NOTES', ar: 'الإشعارات الدائنة المرتبطة' },
