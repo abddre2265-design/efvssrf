@@ -210,6 +210,7 @@ export const translations: Translations = {
   status: { fr: 'Statut', en: 'Status', ar: 'الحالة' },
   view: { fr: 'Consulter', en: 'View', ar: 'عرض' },
   edit: { fr: 'Modifier', en: 'Edit', ar: 'تعديل' },
+  validate: { fr: 'Valider', en: 'Validate', ar: 'تأكيد' },
   product_returns: { fr: 'Retours produit', en: 'Product returns', ar: 'إرجاعات المنتج' },
   duplicate: { fr: 'Dupliquer', en: 'Duplicate', ar: 'تكرار' },
   archive: { fr: 'Archiver', en: 'Archive', ar: 'أرشفة' },
@@ -899,7 +900,6 @@ export const translations: Translations = {
   credit_note_validated: { fr: 'Avoir validé totalement', en: 'Credit Note Fully Validated', ar: 'تم تأكيد الإشعار كلياً' },
   credit_note_partially_validated: { fr: 'Avoir validé partiellement', en: 'Credit Note Partially Validated', ar: 'تم تأكيد الإشعار جزئياً' },
   update_credit_note: { fr: 'Mettre à jour l\'avoir', en: 'Update Credit Note', ar: 'تحديث الإشعار الدائن' },
-  saving: { fr: 'Enregistrement...', en: 'Saving...', ar: 'جاري الحفظ...' },
   remove_withholding: { fr: 'Annuler la retenue', en: 'Remove Withholding', ar: 'إلغاء الاستقطاع' },
 
   // Commercial credit note dialog
