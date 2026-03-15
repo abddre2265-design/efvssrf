@@ -327,27 +327,38 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
     setIsSaving(true);
     try {
       // Build credit note lines data
-      const buildCnLineData = (rl: ReturnLine, idx: number) => ({
-        invoice_line_id: rl.lineId,
-        product_id: rl.productId,
-        product_name: rl.productName,
-        product_reference: rl.productReference,
-        original_quantity: rl.invoicedQuantity,
-        original_unit_price_ht: rl.originalUnitPriceHt,
-        original_line_total_ht: rl.adjustedUnitPriceHt * rl.invoicedQuantity,
-        original_line_vat: 0,
-        original_line_total_ttc: 0,
-        returned_quantity: rl.returnQuantity + rl.validatedQuantity, // total = editable + validated
-        validated_quantity: rl.validatedQuantity, // preserve validated
-        discount_ht: rl.lineHt,
-        discount_ttc: rl.lineTtc,
-        discount_rate: 0,
-        new_line_total_ht: 0,
-        new_line_vat: 0,
-        new_line_total_ttc: 0,
-        vat_rate: rl.vatRate,
-        line_order: idx,
-      });
+      const buildCnLineData = (rl: ReturnLine, idx: number) => {
+        const originalTotalHt = rl.invoicedQuantity * rl.adjustedUnitPriceHt;
+        const originalVat = originalTotalHt * (rl.vatRate / 100);
+        const originalTotalTtc = originalTotalHt + originalVat;
+
+        const remainingQty = rl.invoicedQuantity - (rl.alreadyReturnedQuantity + rl.returnQuantity);
+        const newTotalHt = Math.max(0, remainingQty * rl.adjustedUnitPriceHt);
+        const newVat = newTotalHt * (rl.vatRate / 100);
+        const newTotalTtc = newTotalHt + newVat;
+
+        return {
+          invoice_line_id: rl.lineId,
+          product_id: rl.productId,
+          product_name: rl.productName,
+          product_reference: rl.productReference,
+          original_quantity: rl.invoicedQuantity,
+          original_unit_price_ht: rl.originalUnitPriceHt,
+          original_line_total_ht: originalTotalHt,
+          original_line_vat: originalVat,
+          original_line_total_ttc: originalTotalTtc,
+          returned_quantity: rl.returnQuantity, // In create mode, this is just the current return
+          validated_quantity: rl.validatedQuantity, // preserve validated
+          discount_ht: rl.lineHt,
+          discount_ttc: rl.lineTtc,
+          discount_rate: 0,
+          new_line_total_ht: newTotalHt,
+          new_line_vat: newVat,
+          new_line_total_ttc: newTotalTtc,
+          vat_rate: rl.vatRate,
+          line_order: idx,
+        };
+      };
 
       if (isEditMode && editCreditNoteId) {
         // UPDATE existing credit note
@@ -502,7 +513,10 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
                       const originalVat = originalTotalHt * (rl.vatRate / 100);
                       const originalTotalTtc = originalTotalHt + originalVat;
 
-                      const remainingQty = rl.invoicedQuantity - rl.returnQuantity;
+                      // Calculation must subtract BOTH already returned and currently being returned
+                      const totalReturnedQty = rl.alreadyReturnedQuantity + rl.returnQuantity;
+                      const remainingQty = Math.max(0, rl.invoicedQuantity - totalReturnedQty);
+
                       const newTotalHt = remainingQty * rl.adjustedUnitPriceHt;
                       const newVat = newTotalHt * (rl.vatRate / 100);
                       const newTotalTtc = newTotalHt + newVat;
