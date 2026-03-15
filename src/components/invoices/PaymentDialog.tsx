@@ -322,13 +322,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
     }
   }, [open, invoice]);
 
-  // Update amount when remaining balance changes
-  // Sync Step 2 amount in real-time when withholding rate changes in Step 1
+  // Update amount when remaining balance changes (only after saved config)
   useEffect(() => {
     if (invoice && open) {
-      setAmount(liveRemainingBalance > 0 ? liveRemainingBalance.toFixed(3) : '0');
+      setAmount(remainingBalance > 0 ? remainingBalance.toFixed(3) : '0');
     }
-  }, [liveRemainingBalance, open, selectedWithholdingRate]);
+  }, [remainingBalance, open]);
 
   // Fetch exchange rate when currency changes (for foreign)
   useEffect(() => {
