@@ -210,6 +210,7 @@ export const translations: Translations = {
   status: { fr: 'Statut', en: 'Status', ar: 'الحالة' },
   view: { fr: 'Consulter', en: 'View', ar: 'عرض' },
   edit: { fr: 'Modifier', en: 'Edit', ar: 'تعديل' },
+  product_returns: { fr: 'Retours produit', en: 'Product returns', ar: 'إرجاعات المنتج' },
   duplicate: { fr: 'Dupliquer', en: 'Duplicate', ar: 'تكرار' },
   archive: { fr: 'Archiver', en: 'Archive', ar: 'أرشفة' },
   restore: { fr: 'Restaurer', en: 'Restore', ar: 'استعادة' },
