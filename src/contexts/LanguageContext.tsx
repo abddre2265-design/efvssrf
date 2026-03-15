@@ -32,7 +32,7 @@ export const translations: Translations = {
   createAccount: { fr: 'Créer votre compte', en: 'Create Your Account', ar: 'إنشاء حسابك' },
   resetYourPassword: { fr: 'Réinitialiser votre mot de passe', en: 'Reset Your Password', ar: 'إعادة تعيين كلمة المرور' },
   enterEmailReset: { fr: 'Entrez votre email pour recevoir un lien de réinitialisation', en: 'Enter your email to receive a reset link', ar: 'أدخل بريدك الإلكتروني لتلقي رابط إعادة التعيين' },
-  
+
   // Errors
   invalidEmail: { fr: 'Email invalide', en: 'Invalid email', ar: 'البريد الإلكتروني غير صالح' },
   passwordTooShort: { fr: 'Le mot de passe doit contenir au moins 6 caractères', en: 'Password must be at least 6 characters', ar: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل' },
@@ -40,7 +40,7 @@ export const translations: Translations = {
   userAlreadyExists: { fr: 'Un utilisateur avec cet email existe déjà', en: 'A user with this email already exists', ar: 'يوجد مستخدم بهذا البريد الإلكتروني بالفعل' },
   invalidCredentials: { fr: 'Email ou mot de passe incorrect', en: 'Invalid email or password', ar: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' },
   genericError: { fr: 'Une erreur est survenue', en: 'An error occurred', ar: 'حدث خطأ' },
-  
+
   // Excel Import
   importFromExcel: { fr: 'Importer depuis Excel', en: 'Import from Excel', ar: 'استيراد من Excel' },
   manualCreation: { fr: 'Création manuelle', en: 'Manual creation', ar: 'إنشاء يدوي' },
@@ -78,16 +78,16 @@ export const translations: Translations = {
   invalidPrice: { fr: 'Prix invalide', en: 'Invalid price', ar: 'سعر غير صالح' },
   stockRequired: { fr: 'Stock requis pour produit physique', en: 'Stock required for physical product', ar: 'المخزون مطلوب للمنتج المادي' },
   invalidMaxDiscount: { fr: 'Remise max invalide (0-100)', en: 'Invalid max discount (0-100)', ar: 'خصم أقصى غير صالح (0-100)' },
-  
+
   // Language names
   french: { fr: 'Français', en: 'French', ar: 'الفرنسية' },
   english: { fr: 'Anglais', en: 'English', ar: 'الإنجليزية' },
   arabic: { fr: 'Arabe', en: 'Arabic', ar: 'العربية' },
-  
+
   // Theme
   lightMode: { fr: 'Mode clair', en: 'Light Mode', ar: 'الوضع الفاتح' },
   darkMode: { fr: 'Mode sombre', en: 'Dark Mode', ar: 'الوضع الداكن' },
-  
+
   // App name
   appName: { fr: 'Gaara Ledger', en: 'Gaara Ledger', ar: 'غارا ليدجر' },
   tagline: { fr: 'Votre compagnon financier futuriste', en: 'Your Futuristic Finance Companion', ar: 'رفيقك المالي المستقبلي' },
@@ -100,7 +100,7 @@ export const translations: Translations = {
   signOut: { fr: 'Déconnexion', en: 'Sign Out', ar: 'تسجيل الخروج' },
   viewEmail: { fr: 'Consulter l\'email', en: 'View Email', ar: 'عرض البريد الإلكتروني' },
   changePassword: { fr: 'Modifier le mot de passe', en: 'Change Password', ar: 'تغيير كلمة المرور' },
-  
+
   // Organization Settings
   organizationDetails: { fr: 'Détails de l\'organisation', en: 'Organization Details', ar: 'تفاصيل المنظمة' },
   organizationType: { fr: 'Type d\'organisation', en: 'Organization Type', ar: 'نوع المنظمة' },
@@ -113,7 +113,7 @@ export const translations: Translations = {
   cin: { fr: 'CIN', en: 'National ID', ar: 'بطاقة التعريف' },
   passport: { fr: 'Numéro de passeport', en: 'Passport Number', ar: 'رقم جواز السفر' },
   identifierLocked: { fr: 'L\'identifiant n\'est pas modifiable après enregistrement', en: 'Identifier cannot be modified after saving', ar: 'لا يمكن تعديل المعرف بعد الحفظ' },
-  
+
   // Contact Info
   contactInfo: { fr: 'Coordonnées', en: 'Contact Information', ar: 'معلومات الاتصال' },
   phone: { fr: 'Téléphone', en: 'Phone', ar: 'الهاتف' },
@@ -123,7 +123,7 @@ export const translations: Translations = {
   postalCode: { fr: 'Code postal', en: 'Postal Code', ar: 'الرمز البريدي' },
   country: { fr: 'Pays', en: 'Country', ar: 'البلد' },
   tunisia: { fr: 'Tunisie', en: 'Tunisia', ar: 'تونس' },
-  
+
   // Withholding Settings
   withholdingSettings: { fr: 'Paramètres de retenue à la source', en: 'Withholding Tax Settings', ar: 'إعدادات الاقتطاع من المنبع' },
   defaultWithholdingRate: { fr: 'Taux de retenue par défaut', en: 'Default Withholding Rate', ar: 'معدل الاقتطاع الافتراضي' },
@@ -136,7 +136,7 @@ export const translations: Translations = {
   bankName: { fr: 'Nom de la banque', en: 'Bank Name', ar: 'اسم البنك' },
   iban: { fr: 'IBAN', en: 'IBAN', ar: 'رقم الحساب الدولي' },
   addBank: { fr: 'Ajouter une banque', en: 'Add Bank', ar: 'إضافة بنك' },
-  
+
   // Logo
   organizationLogo: { fr: 'Logo de l\'organisation', en: 'Organization Logo', ar: 'شعار المنظمة' },
   uploadLogo: { fr: 'Téléverser', en: 'Upload', ar: 'رفع' },
@@ -152,7 +152,7 @@ export const translations: Translations = {
   fileTooLarge: { fr: 'Le fichier est trop volumineux (max 5 Mo)', en: 'File is too large (max 5 MB)', ar: 'الملف كبير جداً (الحد الأقصى 5 ميجابايت)' },
   imageLoadError: { fr: 'Impossible de charger l\'image', en: 'Unable to load image', ar: 'تعذر تحميل الصورة' },
   preview: { fr: 'Aperçu', en: 'Preview', ar: 'معاينة' },
-  
+
   // Actions
   save: { fr: 'Enregistrer', en: 'Save', ar: 'حفظ' },
   cancel: { fr: 'Annuler', en: 'Cancel', ar: 'إلغاء' },
@@ -160,7 +160,7 @@ export const translations: Translations = {
   optional: { fr: 'optionnel', en: 'optional', ar: 'اختياري' },
   required: { fr: 'obligatoire', en: 'required', ar: 'مطلوب' },
   selectOperation: { fr: 'Sélectionner une opération', en: 'Select an operation', ar: 'اختر عملية' },
-  
+
   // Validation
   invalidTaxId: { fr: 'Format du matricule fiscal invalide', en: 'Invalid tax ID format', ar: 'صيغة الرقم الجبائي غير صالحة' },
   invalidCin: { fr: 'Le CIN doit contenir 8 chiffres', en: 'CIN must be 8 digits', ar: 'يجب أن تحتوي بطاقة التعريف على 8 أرقام' },
@@ -168,17 +168,17 @@ export const translations: Translations = {
   invalidPostalCode: { fr: 'Le code postal doit contenir 4 chiffres', en: 'Postal code must be 4 digits', ar: 'يجب أن يحتوي الرمز البريدي على 4 أرقام' },
   invalidIban: { fr: 'Format IBAN invalide', en: 'Invalid IBAN format', ar: 'صيغة رقم الحساب الدولي غير صالحة' },
   selectGovernorate: { fr: 'Sélectionner un gouvernorat', en: 'Select a governorate', ar: 'اختر الولاية' },
-  
+
   // Success messages
   settingsSaved: { fr: 'Paramètres enregistrés avec succès', en: 'Settings saved successfully', ar: 'تم حفظ الإعدادات بنجاح' },
   passwordChanged: { fr: 'Mot de passe modifié avec succès', en: 'Password changed successfully', ar: 'تم تغيير كلمة المرور بنجاح' },
-  
+
   // Welcome
   welcomeDashboard: { fr: 'Bienvenue sur votre tableau de bord', en: 'Welcome to your dashboard', ar: 'مرحباً بك في لوحة التحكم' },
   getStarted: { fr: 'Commencer', en: 'Get Started', ar: 'ابدأ' },
   newPassword: { fr: 'Nouveau mot de passe', en: 'New Password', ar: 'كلمة المرور الجديدة' },
   currentPassword: { fr: 'Mot de passe actuel', en: 'Current Password', ar: 'كلمة المرور الحالية' },
-  
+
   // Products
   products: { fr: 'Produits', en: 'Products', ar: 'المنتجات' },
   productsDescription: { fr: 'Gérer vos produits et services', en: 'Manage your products and services', ar: 'إدارة منتجاتك وخدماتك' },
@@ -385,7 +385,7 @@ export const translations: Translations = {
   accountingAdjustment: { fr: 'Ajustement comptable', en: 'Accounting adjustment', ar: 'تعديل محاسبي' },
   wrongImport: { fr: 'Import erroné', en: 'Wrong import', ar: 'استيراد خاطئ' },
   migration: { fr: 'Migration', en: 'Migration', ar: 'ترحيل' },
-  
+
   // Clients
   clients: { fr: 'Clients', en: 'Clients', ar: 'العملاء' },
   manage_clients: { fr: 'Gérer vos clients', en: 'Manage your clients', ar: 'إدارة عملائك' },
@@ -432,7 +432,7 @@ export const translations: Translations = {
   organization_not_found: { fr: 'Organisation non trouvée', en: 'Organization not found', ar: 'لم يتم العثور على المنظمة' },
   save_changes: { fr: 'Enregistrer les modifications', en: 'Save Changes', ar: 'حفظ التغييرات' },
   invalid_email: { fr: 'Email invalide', en: 'Invalid email', ar: 'بريد إلكتروني غير صالح' },
-  
+
   // Client Excel Import
   import_clients_excel: { fr: 'Importer des clients depuis Excel', en: 'Import Clients from Excel', ar: 'استيراد العملاء من Excel' },
   import_client_step1: { fr: '1. Téléchargez le modèle Excel ci-dessous avec exemples', en: '1. Download the Excel template below with examples', ar: '1. قم بتحميل نموذج Excel أدناه مع الأمثلة' },
@@ -450,7 +450,7 @@ export const translations: Translations = {
   identifier_required: { fr: 'Identifiant obligatoire', en: 'Identifier required', ar: 'المعرف مطلوب' },
   governorate_required: { fr: 'Gouvernorat obligatoire pour les clients locaux', en: 'Governorate required for local clients', ar: 'الولاية مطلوبة للعملاء المحليين' },
   invalid_governorate: { fr: 'Gouvernorat invalide', en: 'Invalid governorate', ar: 'ولاية غير صالحة' },
-  
+
   // Suppliers
   suppliers: { fr: 'Fournisseurs', en: 'Suppliers', ar: 'الموردون' },
   manage_suppliers: { fr: 'Gérer vos fournisseurs', en: 'Manage your suppliers', ar: 'إدارة مورديك' },
@@ -467,7 +467,7 @@ export const translations: Translations = {
   error_creating_supplier: { fr: 'Erreur lors de la création du fournisseur', en: 'Error creating supplier', ar: 'خطأ في إنشاء المورد' },
   error_updating_supplier: { fr: 'Erreur lors de la mise à jour du fournisseur', en: 'Error updating supplier', ar: 'خطأ في تحديث المورد' },
   select_identifier_type: { fr: 'Sélectionner un type', en: 'Select type', ar: 'اختر النوع' },
-  
+
   // Supplier Excel Import
   import_suppliers_excel: { fr: 'Importer des fournisseurs depuis Excel', en: 'Import Suppliers from Excel', ar: 'استيراد الموردين من Excel' },
   import_instructions: { fr: 'Instructions d\'importation', en: 'Import Instructions', ar: 'تعليمات الاستيراد' },
@@ -490,7 +490,7 @@ export const translations: Translations = {
   invalid_identifier_type_for_supplier: { fr: 'Type d\'identifiant invalide pour ce type de fournisseur', en: 'Invalid identifier type for this supplier type', ar: 'نوع المعرف غير صالح لهذا النوع من الموردين' },
   identifier_required_local: { fr: 'Identifiant obligatoire pour les fournisseurs locaux', en: 'Identifier required for local suppliers', ar: 'المعرف مطلوب للموردين المحليين' },
   foreign: { fr: 'Étranger', en: 'Foreign', ar: 'أجنبي' },
-  
+
   // Invoices
   invoices: { fr: 'Factures', en: 'Invoices', ar: 'الفواتير' },
   manage_invoices: { fr: 'Gérer vos factures de vente', en: 'Manage your sales invoices', ar: 'إدارة فواتير المبيعات' },
@@ -668,7 +668,7 @@ export const translations: Translations = {
   error_deleting_invoice: { fr: 'Erreur lors de la suppression', en: 'Error deleting invoice', ar: 'خطأ في حذف الفاتورة' },
   use_invoice: { fr: 'Utiliser la facture', en: 'Use Invoice', ar: 'استخدام الفاتورة' },
   invoice_activated: { fr: 'Facture activée avec succès', en: 'Invoice activated successfully', ar: 'تم تفعيل الفاتورة بنجاح' },
-  
+
   // Payment Dialog
   payment_for_invoice: { fr: 'Paiement de la facture', en: 'Payment for Invoice', ar: 'دفع الفاتورة' },
   manage_invoice_payments: { fr: 'Gérer les paiements de cette facture', en: 'Manage payments for this invoice', ar: 'إدارة مدفوعات هذه الفاتورة' },
@@ -698,7 +698,7 @@ export const translations: Translations = {
   error_loading_payments: { fr: 'Erreur lors du chargement des paiements', en: 'Error loading payments', ar: 'خطأ في تحميل المدفوعات' },
   payment_deleted: { fr: 'Paiement supprimé', en: 'Payment deleted', ar: 'تم حذف الدفع' },
   error_deleting_payment: { fr: 'Erreur lors de la suppression du paiement', en: 'Error deleting payment', ar: 'خطأ في حذف الدفع' },
-  
+
   // Payment Methods
   payment_method_cash: { fr: 'Espèces', en: 'Cash', ar: 'نقدًا' },
   payment_method_card: { fr: 'Carte bancaire', en: 'Card', ar: 'بطاقة' },
@@ -708,7 +708,7 @@ export const translations: Translations = {
   payment_method_swift_transfer: { fr: 'Virement SWIFT', en: 'SWIFT Transfer', ar: 'تحويل SWIFT' },
   payment_method_bank_deposit: { fr: 'Versement bancaire', en: 'Bank Deposit', ar: 'إيداع بنكي' },
   payment_method_mixed: { fr: 'Mixte', en: 'Mixed', ar: 'مختلط' },
-  
+
   // Mixed payment
   mixed_payment_details: { fr: 'Détails du paiement mixte', en: 'Mixed Payment Details', ar: 'تفاصيل الدفع المختلط' },
   add_payment_line: { fr: 'Ajouter une ligne', en: 'Add Line', ar: 'إضافة سطر' },
@@ -721,7 +721,7 @@ export const translations: Translations = {
   withholding_on_total: { fr: 'Retenue sur le total facture', en: 'Withholding on invoice total', ar: 'الاستقطاع على إجمالي الفاتورة' },
   withholding_once_info: { fr: 'La retenue à la source est calculée sur le total de la facture et appliquée une seule fois.', en: 'Withholding tax is calculated on the invoice total and applied only once.', ar: 'يُحسب الاستقطاع على إجمالي الفاتورة ويُطبق مرة واحدة فقط.' },
   after_withholding: { fr: 'Après retenue à la source', en: 'After withholding', ar: 'بعد الاستقطاع' },
-  
+
   // Two-step payment flow
   step: { fr: 'Étape', en: 'Step', ar: 'الخطوة' },
   withholding_config: { fr: 'Retenue', en: 'Withholding', ar: 'الاستقطاع' },
@@ -743,7 +743,7 @@ export const translations: Translations = {
   original_invoice: { fr: 'Facture originale', en: 'Original invoice', ar: 'الفاتورة الأصلية' },
   after_withholding_adjustment: { fr: 'Après ajustement retenue', en: 'After withholding adjustment', ar: 'بعد تعديل الاستقطاع' },
   rate: { fr: 'Taux', en: 'Rate', ar: 'النسبة' },
-  
+
   // Foreign payment - Currency configuration
   currency_config: { fr: 'Devise', en: 'Currency', ar: 'العملة' },
   configure_currency: { fr: 'Configurer la devise et le taux', en: 'Configure currency and rate', ar: 'تكوين العملة والسعر' },
@@ -767,8 +767,8 @@ export const translations: Translations = {
   payment_exchange_rate_note: { fr: 'Le taux peut varier selon le moment du paiement.', en: 'Rate may vary depending on payment timing.', ar: 'قد يختلف السعر حسب وقت الدفع.' },
   to_debit: { fr: 'À débiter', en: 'To debit', ar: 'للخصم' },
   mixed_amounts_in_tnd: { fr: 'Les montants des lignes mixtes sont en TND.', en: 'Mixed line amounts are in TND.', ar: 'مبالغ السطور المختلطة بالدينار.' },
-  
-  
+
+
   // Payments Page
   sales_payments: { fr: 'Paiements Vente', en: 'Sales Payments', ar: 'مدفوعات المبيعات' },
   manage_sales_payments: { fr: 'Gérer tous les paiements de vente', en: 'Manage all sales payments', ar: 'إدارة جميع مدفوعات المبيعات' },
@@ -799,7 +799,7 @@ export const translations: Translations = {
   filtered: { fr: 'filtré', en: 'filtered', ar: 'تم تصفية' },
   delete: { fr: 'Supprimer', en: 'Delete', ar: 'حذف' },
   created_at: { fr: 'Créé le', en: 'Created at', ar: 'تم الإنشاء في' },
-  
+
   // Client Account System
   add_deposit: { fr: 'Ajouter un dépôt', en: 'Add Deposit', ar: 'إضافة إيداع' },
   add_client_deposit: { fr: 'Dépôt client', en: 'Client Deposit', ar: 'إيداع العميل' },
@@ -863,6 +863,29 @@ export const translations: Translations = {
   immediate_credit: { fr: 'Crédit immédiat', en: 'Immediate credit', ar: 'رصيد فوري' },
   product_return: { fr: 'Retour produit', en: 'Product return', ar: 'إرجاع المنتج' },
   stock_restoration: { fr: 'Restauration du stock', en: 'Stock restoration', ar: 'استعادة المخزون' },
+
+  // Product return credit note dialog
+  product_return_credit_note_title: { fr: 'Avoir Produit (Retour)', en: 'Product Return Credit Note', ar: 'إشعار دائن منتج (إرجاع)' },
+  invoiced_qty: { fr: 'Qté facturée', en: 'Invoiced Qty', ar: 'الكمية المفوترة' },
+  already_returned_validated: { fr: 'Retournée / Validée', en: 'Returned / Validated', ar: 'مرجعة / مؤكدة' },
+  returnable_qty: { fr: 'Retournable', en: 'Returnable', ar: 'قابل للإرجاع' },
+  return_qty: { fr: 'Qté à retourner', en: 'Return Qty', ar: 'الكمية للإرجاع' },
+  adjusted_unit_price: { fr: 'PU ajusté HT', en: 'Adj. UP Excl. Tax', ar: 'السعر المعدل بدون ض.' },
+  line_total: { fr: 'Total ligne', en: 'Line Total', ar: 'إجمالي السطر' },
+  fully_returned: { fr: 'Retourné', en: 'Returned', ar: 'تم إرجاعه' },
+  return_totals: { fr: 'Montant du retour', en: 'Return Amount', ar: 'مبلغ الإرجاع' },
+  return_credit_amount: { fr: 'Montant à créditer', en: 'Amount to credit', ar: 'المبلغ المسترد' },
+  invoice_impact: { fr: 'Impact sur la facture', en: 'Invoice Impact', ar: 'تأثير على الفاتورة' },
+  original_net_payable: { fr: 'Net à payer original', en: 'Original Net Payable', ar: 'المستحق الأصلي' },
+  previous_credits: { fr: 'Avoirs précédents', en: 'Previous Credits', ar: 'الإشعارات السابقة' },
+  current_remaining: { fr: 'Restant actuel', en: 'Current Remaining', ar: 'المتبقي الحالي' },
+  credit_note_exceeds_invoice: { fr: 'Le total de l\'avoir dépasse le restant de la facture.', en: 'Credit note exceeds the remaining invoice amount.', ar: 'قيمة الإشعار تتجاوز المبلغ المتبقي للفاتورة.' },
+  update_credit_note: { fr: 'Mettre à jour l\'avoir', en: 'Update Credit Note', ar: 'تحديث الإشعار الدائن' },
+  saving: { fr: 'Enregistrement...', en: 'Saving...', ar: 'جاري الحفظ...' },
+  cancel: { fr: 'Annuler', en: 'Cancel', ar: 'إلغاء' },
+  vat: { fr: 'TVA', en: 'VAT', ar: 'ض.ق.م' },
+  remove_withholding: { fr: 'Annuler la retenue', en: 'Remove Withholding', ar: 'إلغاء الاستقطاع' },
+
   // Commercial credit note dialog
   commercial_credit_note_title: { fr: 'Avoir commercial – prix', en: 'Commercial credit note – price', ar: 'إشعار دائن تجاري – سعر' },
   mode_line_discount: { fr: 'Remise par ligne', en: 'Line discount', ar: 'خصم بالسطر' },
@@ -1109,7 +1132,7 @@ export const translations: Translations = {
   document_saved: { fr: 'Document enregistré', en: 'Document saved', ar: 'تم حفظ المستند' },
   save_error: { fr: 'Erreur lors de l\'enregistrement', en: 'Save error', ar: 'خطأ في الحفظ' },
   purchase_saving: { fr: 'Enregistrement...', en: 'Saving...', ar: 'جاري الحفظ...' },
-  
+
   // Supply workflow - Totals step
   totals_summary: { fr: 'Récapitulatif des totaux', en: 'Totals summary', ar: 'ملخص الإجماليات' },
   totals_description: { fr: 'Vérifiez les montants avant confirmation finale', en: 'Review amounts before final confirmation', ar: 'راجع المبالغ قبل التأكيد النهائي' },
@@ -1122,7 +1145,7 @@ export const translations: Translations = {
   importation: { fr: 'Importation', en: 'Importation', ar: 'استيراد' },
   purchase_confirmed: { fr: 'Approvisionnement confirmé', en: 'Supply confirmed', ar: 'تم تأكيد التوريد' },
   confirmation_error: { fr: 'Erreur lors de la confirmation', en: 'Confirmation error', ar: 'خطأ في التأكيد' },
-  
+
   // Supply workflow - Confirmation step
   confirmation_description: { fr: 'Le document a été enregistré avec succès', en: 'Document saved successfully', ar: 'تم حفظ المستند بنجاح' },
   print_receipt: { fr: 'Imprimer le bon', en: 'Print receipt', ar: 'طباعة الإيصال' },
@@ -1139,11 +1162,11 @@ export const translations: Translations = {
   receiver_signature: { fr: 'Signature Réceptionnaire', en: 'Receiver signature', ar: 'توقيع المستلم' },
   popup_blocked: { fr: 'Veuillez autoriser les popups pour imprimer', en: 'Please allow popups to print', ar: 'يرجى السماح بالنوافذ المنبثقة للطباعة' },
   new_supply: { fr: 'Nouvel approvisionnement', en: 'New supply', ar: 'توريد جديد' },
-  
+
   // Supply workflow - Confirmed purchases list
   confirmed_supplies: { fr: 'Approvisionnements confirmés', en: 'Confirmed supplies', ar: 'التوريدات المؤكدة' },
   view_details: { fr: 'Voir les détails', en: 'View details', ar: 'عرض التفاصيل' },
-  
+
   // Supply workflow - Summary cards
   purchase_info: { fr: 'Informations d\'achat', en: 'Purchase information', ar: 'معلومات الشراء' },
   product_summary: { fr: 'Résumé des produits', en: 'Product summary', ar: 'ملخص المنتجات' },
@@ -1151,7 +1174,7 @@ export const translations: Translations = {
   products_created: { fr: 'Produits créés', en: 'Products created', ar: 'المنتجات المنشأة' },
   date_received: { fr: 'Date de réception', en: 'Date received', ar: 'تاريخ الاستلام' },
   purchase_document: { fr: 'Document d\'achat', en: 'Purchase document', ar: 'مستند الشراء' },
-  
+
   // Credit note - Detailed calculation
   calculation_breakdown: { fr: 'Détail du calcul', en: 'Calculation breakdown', ar: 'تفاصيل الحساب' },
   original_invoice_total: { fr: 'Total facture original', en: 'Original invoice total', ar: 'إجمالي الفاتورة الأصلي' },
@@ -1163,7 +1186,7 @@ export const translations: Translations = {
   no_client_credit: { fr: 'Aucun crédit client généré', en: 'No client credit generated', ar: 'لم يتم توليد رصيد للعميل' },
   client_credit_explanation: { fr: 'Le montant payé dépasse le nouveau total, l\'excédent devient crédit client.', en: 'The paid amount exceeds the new total, the excess becomes client credit.', ar: 'المبلغ المدفوع يتجاوز الإجمالي الجديد، الفائض يصبح رصيد للعميل.' },
   paid_exceeds_new_total: { fr: 'Payé > Nouveau total', en: 'Paid > New total', ar: 'المدفوع > الإجمالي الجديد' },
-  
+
   // Payment - Client credit usage
   use_client_credit: { fr: 'Utiliser le crédit client', en: 'Use client credit', ar: 'استخدام رصيد العميل' },
   client_credit_available: { fr: 'Crédit client disponible', en: 'Client credit available', ar: 'الرصيد المتاح للعميل' },
@@ -1177,7 +1200,7 @@ export const translations: Translations = {
   credit_exceeds_remaining: { fr: 'Le crédit dépasse le solde restant', en: 'Credit exceeds remaining balance', ar: 'الرصيد يتجاوز المتبقي' },
   payment_method_credit_note: { fr: 'Crédit client (Avoir)', en: 'Client credit (Credit note)', ar: 'رصيد العميل (إشعار دائن)' },
   credit_will_be_debited: { fr: 'Ce montant sera débité du solde client', en: 'This amount will be debited from client balance', ar: 'سيتم خصم هذا المبلغ من رصيد العميل' },
-  
+
   // New translations for separated credit sources
   credit_from_avoirs: { fr: 'Crédit avoirs', en: 'Credit notes balance', ar: 'رصيد الإشعارات الدائنة' },
   credit_from_deposits: { fr: 'Crédit dépôts', en: 'Deposits balance', ar: 'رصيد الإيداعات' },
@@ -1193,7 +1216,7 @@ export const translations: Translations = {
   payment_from_deposit: { fr: 'Paiement par dépôt', en: 'Payment from deposit', ar: 'الدفع من الإيداع' },
   insufficient_credit_note_balance: { fr: 'Solde avoir insuffisant', en: 'Insufficient credit note balance', ar: 'رصيد الإشعار الدائن غير كافٍ' },
   insufficient_deposit_balance: { fr: 'Solde dépôt insuffisant', en: 'Insufficient deposit balance', ar: 'رصيد الإيداع غير كافٍ' },
-  
+
   // Public Upload Link
   public_upload_link: { fr: 'Lien public d\'upload', en: 'Public Upload Link', ar: 'رابط التحميل العام' },
   public_upload_link_description: { fr: 'Partagez ce lien pour permettre l\'upload de documents', en: 'Share this link to allow document uploads', ar: 'شارك هذا الرابط للسماح بتحميل المستندات' },
@@ -1216,7 +1239,7 @@ export const translations: Translations = {
   link_active_description: { fr: 'Désactivez pour bloquer temporairement l\'accès', en: 'Disable to temporarily block access', ar: 'قم بالتعطيل لحظر الوصول مؤقتاً' },
   regenerate_link: { fr: 'Régénérer le lien', en: 'Regenerate link', ar: 'إعادة إنشاء الرابط' },
   inactive: { fr: 'Inactif', en: 'Inactive', ar: 'غير نشط' },
-  
+
   // Quote Requests
   quote_requests: { fr: 'Demandes de devis', en: 'Quote Requests', ar: 'طلبات عروض الأسعار' },
   quote_requests_description: { fr: 'Gérez les demandes de devis de vos clients', en: 'Manage quote requests from your clients', ar: 'إدارة طلبات عروض الأسعار من العملاء' },
@@ -1245,7 +1268,7 @@ export const translations: Translations = {
   mark_as_cancelled: { fr: 'Annuler', en: 'Cancel', ar: 'إلغاء' },
   request_number: { fr: 'N° demande', en: 'Request #', ar: 'رقم الطلب' },
   request_date: { fr: 'Date de demande', en: 'Request date', ar: 'تاريخ الطلب' },
-  
+
   // Sidebar Groups
   commercial_management: { fr: 'Gestion Commerciale', en: 'Commercial Management', ar: 'الإدارة التجارية' },
   sales_group: { fr: 'Vente', en: 'Sales', ar: 'المبيعات' },
@@ -1253,7 +1276,7 @@ export const translations: Translations = {
   international_trade: { fr: 'Commerce international', en: 'International Trade', ar: 'التجارة الدولية' },
   intelligence_reports: { fr: 'Intelligence & rapports', en: 'Intelligence & Reports', ar: 'الذكاء والتقارير' },
   configuration_group: { fr: 'Configuration', en: 'Configuration', ar: 'الإعدادات' },
-  
+
   // Sidebar Items
   sales_invoice_requests: { fr: 'Demandes de factures', en: 'Invoice Requests', ar: 'طلبات الفواتير' },
   delivery_notes: { fr: 'Bons de livraison', en: 'Delivery Notes', ar: 'سندات التسليم' },
@@ -1293,7 +1316,7 @@ export const translations: Translations = {
   expand_sidebar: { fr: 'Agrandir', en: 'Expand', ar: 'توسيع' },
   sound_on: { fr: 'Son activé', en: 'Sound On', ar: 'الصوت مفعل' },
   sound_off: { fr: 'Son désactivé', en: 'Sound Off', ar: 'الصوت معطل' },
-  
+
   // Keyboard shortcuts
   keyboard_shortcuts: { fr: 'Raccourcis clavier', en: 'Keyboard Shortcuts', ar: 'اختصارات لوحة المفاتيح' },
   toggle_sidebar: { fr: 'Basculer la sidebar', en: 'Toggle Sidebar', ar: 'تبديل الشريط الجانبي' },
@@ -1308,7 +1331,7 @@ export const translations: Translations = {
   go_suppliers: { fr: 'Aller aux fournisseurs', en: 'Go to Suppliers', ar: 'الذهاب للموردين' },
   exit_keyboard_nav: { fr: 'Quitter la navigation clavier', en: 'Exit Keyboard Navigation', ar: 'الخروج من التنقل بلوحة المفاتيح' },
   show_shortcuts: { fr: 'Afficher les raccourcis', en: 'Show Shortcuts', ar: 'عرض الاختصارات' },
-  
+
   // Reservations
   reservation_cancelled: { fr: 'Réservation annulée', en: 'Reservation cancelled', ar: 'تم إلغاء الحجز' },
   cancel_reservation: { fr: 'Annuler la réservation', en: 'Cancel reservation', ar: 'إلغاء الحجز' },
@@ -1342,14 +1365,14 @@ export const translations: Translations = {
   add_other_reserved_products_desc: { fr: 'Voir les autres réservations du même client', en: 'View other reservations from the same client', ar: 'عرض الحجوزات الأخرى لنفس العميل' },
   other_reservations_of: { fr: 'Autres réservations de', en: 'Other reservations of', ar: 'حجوزات أخرى لـ' },
   no_other_reservations: { fr: 'Aucune autre réservation disponible', en: 'No other reservations available', ar: 'لا توجد حجوزات أخرى متاحة' },
-  
+
   // Invoice creation from client
   for_client: { fr: 'Pour le client', en: 'For client', ar: 'للعميل' },
   standard_creation: { fr: 'Création standard', en: 'Standard creation', ar: 'إنشاء قياسي' },
   standard_creation_description: { fr: 'Créer une facture manuellement avec le formulaire classique. Détection automatique des réservations.', en: 'Create an invoice manually with the classic form. Automatic reservation detection.', ar: 'إنشاء فاتورة يدويًا باستخدام النموذج الكلاسيكي. الكشف التلقائي عن الحجوزات.' },
   ai_generation: { fr: 'Génération par IA', en: 'AI generation', ar: 'الإنشاء بالذكاء الاصطناعي' },
   ai_generation_description: { fr: 'Générer automatiquement une facture avec l\'aide de l\'intelligence artificielle.', en: 'Automatically generate an invoice with the help of artificial intelligence.', ar: 'إنشاء فاتورة تلقائيًا بمساعدة الذكاء الاصطناعي.' },
-  
+
   // Points of Sale / Stores
   pointsOfSaleDescription: { fr: 'Gérer vos magasins et leurs adresses', en: 'Manage your stores and their addresses', ar: 'إدارة متاجرك وعناوينها' },
   storeName: { fr: 'Nom du magasin', en: 'Store Name', ar: 'اسم المتجر' },
@@ -1451,7 +1474,7 @@ export const translations: Translations = {
   pdf_ai_agent_description: { fr: 'Modifiez le template avec l\'aide de l\'IA', en: 'Modify the template with AI assistance', ar: 'تعديل القالب بمساعدة الذكاء الاصطناعي' },
   open: { fr: 'Ouvrir', en: 'Open', ar: 'فتح' },
   reset_to_default: { fr: 'Réinitialiser', en: 'Reset to Default', ar: 'إعادة تعيين الافتراضي' },
-  
+
   // PDF Components
   pdf_category_header: { fr: 'En-tête', en: 'Header', ar: 'الترويسة' },
   pdf_category_content: { fr: 'Contenu', en: 'Content', ar: 'المحتوى' },
@@ -1496,7 +1519,7 @@ export const translations: Translations = {
   pdf_ai_suggestion_layout: { fr: 'Changer la mise en page', en: 'Change layout', ar: 'تغيير التخطيط' },
   pdf_ai_suggestion_colors: { fr: 'Modifier les couleurs', en: 'Change colors', ar: 'تغيير الألوان' },
   pdf_ai_suggestion_code: { fr: 'Voir le code source', en: 'View source code', ar: 'عرض الكود المصدري' },
-  
+
   // PDF Component sub-items
   pdf_component_company_name: { fr: '↳ Nom de l\'entreprise', en: '↳ Company Name', ar: '↳ اسم الشركة' },
   pdf_component_company_address: { fr: '↳ Adresse entreprise', en: '↳ Company Address', ar: '↳ عنوان الشركة' },
@@ -1513,7 +1536,7 @@ export const translations: Translations = {
   apply_changes: { fr: 'Appliquer les modifications', en: 'Apply changes', ar: 'تطبيق التغييرات' },
   rate_limit_exceeded: { fr: 'Limite de requêtes dépassée', en: 'Rate limit exceeded', ar: 'تم تجاوز حد الطلبات' },
   payment_required: { fr: 'Paiement requis', en: 'Payment required', ar: 'الدفع مطلوب' },
-  
+
   // Delivery Notes (additional entries)
   delivery_notes_description: { fr: 'Gérer les bons de livraison liés aux factures validées', en: 'Manage delivery notes linked to validated invoices', ar: 'إدارة سندات التسليم المرتبطة بالفواتير المصادق عليها' },
   delivery_note_number: { fr: 'N° Bon de livraison', en: 'Delivery Note No.', ar: 'رقم سند التسليم' },
@@ -1540,7 +1563,7 @@ export const translations: Translations = {
   max_qty: { fr: 'Qté max', en: 'Max qty', ar: 'الكمية القصوى' },
   max_discount_label: { fr: 'Remise max', en: 'Max discount', ar: 'الخصم الأقصى' },
   max_qty_per_line: { fr: 'Qté max par ligne', en: 'Max qty per line', ar: 'الكمية القصوى لكل سطر' },
-  
+
   // AI Invoice Generator
   configuration: { fr: 'Configuration', en: 'Configuration', ar: 'الإعدادات' },
   client_and_date: { fr: 'Client & Date', en: 'Client & Date', ar: 'العميل والتاريخ' },
@@ -1565,7 +1588,7 @@ export const translations: Translations = {
   pdf_component_delivery_note_number: { fr: 'Numéro de bon', en: 'Delivery Note Number', ar: 'رقم السند' },
   pdf_component_delivery_note_date: { fr: 'Date de livraison', en: 'Delivery Date', ar: 'تاريخ التسليم' },
   delivery_note_template: { fr: 'Bon de livraison', en: 'Delivery Note', ar: 'سند التسليم' },
-  
+
   // Taxes Page (new entries only - taxes, stamp_duty, payment, amount already defined above)
   taxes_page_description: { fr: 'Gérer les taux de TVA, retenue à la source, timbre fiscal et taxes personnalisées', en: 'Manage VAT rates, withholding tax, stamp duty and custom taxes', ar: 'إدارة معدلات ضريبة القيمة المضافة والاستقطاع والطوابع والضرائب المخصصة' },
   vat_rates: { fr: 'Taux de TVA', en: 'VAT Rates', ar: 'معدلات ضريبة القيمة المضافة' },
@@ -1634,7 +1657,7 @@ export const translations: Translations = {
   confirm_delete_tax_value: { fr: 'Êtes-vous sûr de vouloir supprimer cette valeur ?', en: 'Are you sure you want to delete this value?', ar: 'هل أنت متأكد أنك تريد حذف هذه القيمة؟' },
   fixed: { fr: 'Fixe', en: 'Fixed', ar: 'ثابت' },
   no_organization: { fr: 'Aucune organisation trouvée', en: 'No organization found', ar: 'لم يتم العثور على منظمة' },
-  
+
   // Invoice Request Processing
   choose_creation_method: { fr: 'Choisir le mode de création', en: 'Choose creation method', ar: 'اختر طريقة الإنشاء' },
   choose_creation_method_description: { fr: 'Comment souhaitez-vous créer la facture à partir de cette demande ?', en: 'How would you like to create the invoice from this request?', ar: 'كيف تريد إنشاء الفاتورة من هذا الطلب؟' },
@@ -1658,7 +1681,7 @@ export const translations: Translations = {
   error_rejecting_request: { fr: 'Erreur lors du rejet de la demande', en: 'Error rejecting request', ar: 'خطأ في رفض الطلب' },
   request_restored_success: { fr: 'Demande restaurée avec succès', en: 'Request restored successfully', ar: 'تم استعادة الطلب بنجاح' },
   error_restoring_request: { fr: 'Erreur lors de la restauration', en: 'Error restoring request', ar: 'خطأ في استعادة الطلب' },
-  
+
   // TTC Comparison Bubble
   ttc_comparison: { fr: 'Comparaison TTC', en: 'TTC Comparison', ar: 'مقارنة الإجمالي' },
   request_ttc: { fr: 'TTC demande', en: 'Request TTC', ar: 'إجمالي الطلب' },
@@ -1667,7 +1690,7 @@ export const translations: Translations = {
   amounts_match_validation_enabled: { fr: 'Montants correspondants - Validation autorisée', en: 'Amounts match - Validation enabled', ar: 'المبالغ متطابقة - التحقق مفعّل' },
   invoice_exceeds_request: { fr: 'La facture dépasse le montant de la demande', en: 'Invoice exceeds request amount', ar: 'الفاتورة تتجاوز مبلغ الطلب' },
   invoice_below_request: { fr: 'La facture est inférieure au montant de la demande', en: 'Invoice is below request amount', ar: 'الفاتورة أقل من مبلغ الطلب' },
-  
+
   // Invoice from Request
   create_invoice_from_request: { fr: 'Créer une facture depuis la demande', en: 'Create invoice from request', ar: 'إنشاء فاتورة من الطلب' },
   client_locked_from_request: { fr: 'Client verrouillé depuis la demande', en: 'Client locked from request', ar: 'العميل مقفل من الطلب' },
@@ -1678,7 +1701,7 @@ export const translations: Translations = {
   process_now: { fr: 'Traiter maintenant', en: 'Process now', ar: 'معالجة الآن' },
   later: { fr: 'Plus tard', en: 'Later', ar: 'لاحقاً' },
   from_request: { fr: 'Depuis demande', en: 'From request', ar: 'من الطلب' },
-  
+
   // Public form improvements
   invalid_link: { fr: 'Lien invalide', en: 'Invalid link', ar: 'رابط غير صالح' },
   link_expired_or_invalid: { fr: 'Ce lien de demande de facture n\'est plus valide ou a expiré.', en: 'This invoice request link is no longer valid or has expired.', ar: 'رابط طلب الفاتورة هذا لم يعد صالحاً أو انتهت صلاحيته.' },
@@ -1692,7 +1715,7 @@ export const translations: Translations = {
   transaction_already_exists: { fr: 'Ce numéro de transaction existe déjà', en: 'This transaction number already exists', ar: 'رقم المعاملة هذا موجود بالفعل' },
   your_requests: { fr: 'Vos demandes', en: 'Your requests', ar: 'طلباتك' },
   all_request_statuses: { fr: 'Tous les statuts', en: 'All statuses', ar: 'جميع الحالات' },
-  
+
   // Client Lookup for Invoice Creation
   client_lookup_in_progress: { fr: 'Recherche du client...', en: 'Searching for client...', ar: 'جارٍ البحث عن العميل...' },
   client_lookup_description: { fr: 'Vérification de l\'existence du client dans la base de données', en: 'Checking if client exists in database', ar: 'التحقق من وجود العميل في قاعدة البيانات' },
@@ -1709,7 +1732,7 @@ export const translations: Translations = {
   select_existing_client: { fr: 'Sélectionner un client existant', en: 'Select existing client', ar: 'اختر عميل موجود' },
   search_client_placeholder: { fr: 'Rechercher par nom, raison sociale ou identifiant...', en: 'Search by name, company or identifier...', ar: 'البحث بالاسم أو الشركة أو المعرف...' },
   no_clients_found: { fr: 'Aucun client trouvé', en: 'No clients found', ar: 'لم يتم العثور على عملاء' },
-  
+
   // Product Return Restoration - Invoice Update
   restore_products_and_update_invoice: { fr: 'Restaurer les produits et mettre à jour la facture', en: 'Restore products and update invoice', ar: 'استعادة المنتجات وتحديث الفاتورة' },
   quantity_to_restore: { fr: 'Quantité à restaurer', en: 'Quantity to restore', ar: 'الكمية للاستعادة' },
@@ -1737,14 +1760,14 @@ export const translations: Translations = {
   step_restore_lines: { fr: 'Sélection', en: 'Selection', ar: 'اختيار' },
   step_restore_preview: { fr: 'Aperçu', en: 'Preview', ar: 'معاينة' },
   step_restore_withholding: { fr: 'Retenue', en: 'Withholding', ar: 'الحجز' },
-  
+
   // Invoice credited badges (for table display)
   invoice_fully_credited_badge: { fr: 'Totalement avoirée', en: 'Fully credited', ar: 'مسترد بالكامل' },
   invoice_partially_credited_badge: { fr: 'Partiellement avoirée', en: 'Partially credited', ar: 'مسترد جزئياً' },
-  
+
   // Exchange rate at payment
   exchange_rate_at_payment: { fr: 'Le taux de change sera défini lors du paiement', en: 'Exchange rate will be set at payment time', ar: 'سيتم تحديد سعر الصرف عند الدفع' },
-  
+
   // Convert product return to financial credit
   convert_to_financial_credit: { fr: 'Convertir en avoir financier', en: 'Convert to financial credit', ar: 'تحويل إلى رصيد مالي' },
   product_return_source: { fr: 'Avoir produit source', en: 'Source product return', ar: 'مذكرة إرجاع المنتج المصدر' },
@@ -1769,19 +1792,19 @@ export const translations: Translations = {
   convert_action: { fr: 'Convertir', en: 'Convert', ar: 'تحويل' },
   product_return_type: { fr: 'Avoir produit', en: 'Product return', ar: 'إرجاع المنتج' },
   client_credit_balance: { fr: 'Crédit client', en: 'Client credit', ar: 'رصيد العميل' },
-  
+
   // Convert to financial description
   convert_to_financial_description: { fr: 'Convertir le trop-perçu en crédit client utilisable', en: 'Convert overpayment to usable client credit', ar: 'تحويل المبلغ الزائد إلى رصيد عميل قابل للاستخدام' },
-  
+
   // Refund currency handling
   refund_currency: { fr: 'Devise du remboursement', en: 'Refund currency', ar: 'عملة الاسترداد' },
   refund_currency_note: { fr: 'Le taux de change original sera conservé. Choisissez uniquement la devise de sortie.', en: 'The original exchange rate will be preserved. Only choose the output currency.', ar: 'سيتم الحفاظ على سعر الصرف الأصلي. اختر فقط عملة الإخراج.' },
-  
+
   // Credit display in multiple currencies
   credit_value_tnd: { fr: 'Valeur en TND', en: 'Value in TND', ar: 'القيمة بالدينار التونسي' },
   credit_value_foreign: { fr: 'Valeur en devise', en: 'Value in currency', ar: 'القيمة بالعملة الأجنبية' },
   original_exchange_rate: { fr: 'Taux de change original', en: 'Original exchange rate', ar: 'سعر الصرف الأصلي' },
-  
+
   // Additional Quote Request translations (unique keys only)
   requests_received: { fr: 'Demandes reçues', en: 'Requests received', ar: 'الطلبات المستلمة' },
   all_requests: { fr: 'Toutes', en: 'All', ar: 'الكل' },
@@ -1797,7 +1820,7 @@ export const translations: Translations = {
   mark_processing: { fr: 'Marquer en cours', en: 'Mark as processing', ar: 'تحديد قيد المعالجة' },
   mark_completed: { fr: 'Marquer terminé', en: 'Mark as completed', ar: 'تحديد مكتمل' },
   reject_quote_request: { fr: 'Rejeter', en: 'Reject', ar: 'رفض' },
-  
+
   // Public Quote Request Link (unique keys only)
   public_quote_request_link: { fr: 'Lien public de demande de devis', en: 'Public quote request link', ar: 'رابط طلب عرض الأسعار العام' },
   create_quote_link: { fr: 'Créer le lien public', en: 'Create public link', ar: 'إنشاء الرابط العام' },
@@ -1817,7 +1840,7 @@ export const translations: Translations = {
   error_toggling_link: { fr: 'Erreur lors de la modification du lien', en: 'Error toggling link', ar: 'خطأ في تعديل الرابط' },
   copied_to_clipboard: { fr: 'Copié dans le presse-papier', en: 'Copied to clipboard', ar: 'تم النسخ إلى الحافظة' },
   error_copying: { fr: 'Erreur lors de la copie', en: 'Error copying', ar: 'خطأ في النسخ' },
-  
+
   // Payment Requests
   payment_request: { fr: 'Demande de paiement', en: 'Payment request', ar: 'طلب الدفع' },
   payment_requests: { fr: 'Demandes de paiement', en: 'Payment requests', ar: 'طلبات الدفع' },
@@ -1833,7 +1856,7 @@ export const translations: Translations = {
   request_sent_to_public: { fr: 'La demande sera envoyée vers le lien public où le paiement pourra être traité.', en: 'The request will be sent to the public link where payment can be processed.', ar: 'سيتم إرسال الطلب إلى الرابط العام حيث يمكن معالجة الدفع.' },
   request_payment: { fr: 'Demander', en: 'Request', ar: 'طلب' },
   sending: { fr: 'Envoi...', en: 'Sending...', ar: 'جارٍ الإرسال...' },
-  
+
   // Analyze Payment Request
   analyze_payment: { fr: 'Analyser le paiement', en: 'Analyze payment', ar: 'تحليل الدفع' },
   analyze_payment_description: { fr: 'Vérifiez et validez ou refusez cette demande de paiement', en: 'Check and approve or reject this payment request', ar: 'تحقق ووافق أو ارفض طلب الدفع هذا' },
@@ -1851,7 +1874,7 @@ export const translations: Translations = {
   error_rejecting_payment: { fr: 'Erreur lors du refus', en: 'Error rejecting payment', ar: 'خطأ في رفض الدفع' },
   approve_button: { fr: 'Valider', en: 'Approve', ar: 'موافقة' },
   reject_button: { fr: 'Refuser', en: 'Reject', ar: 'رفض' },
-  
+
   // Public Payment Requests Block (unique keys only)
   process_payment: { fr: 'Traiter', en: 'Process', ar: 'معالجة' },
   process_payment_title: { fr: 'Traiter le paiement', en: 'Process payment', ar: 'معالجة الدفع' },
@@ -1868,10 +1891,10 @@ export const translations: Translations = {
   additional_info: { fr: 'Informations complémentaires...', en: 'Additional information...', ar: 'معلومات إضافية...' },
   submit_button: { fr: 'Soumettre', en: 'Submit', ar: 'إرسال' },
   rejection_reason_short: { fr: 'Motif', en: 'Reason', ar: 'السبب' },
-  
+
   // Purchase Payments page (unique keys only)
   no_payments_found: { fr: 'Aucun paiement trouvé', en: 'No payments found', ar: 'لم يتم العثور على مدفوعات' },
-  
+
   // Public Import Folders Block (unique keys only)
   no_family: { fr: 'Aucune famille', en: 'No family', ar: 'لا توجد فئة' },
   no_document_families_created: { fr: 'Aucune famille de document créée', en: 'No document families created', ar: 'لم يتم إنشاء فئات مستندات' },
@@ -1999,7 +2022,7 @@ export const translations: Translations = {
   rejection_reason_input_placeholder: { fr: 'Expliquez la raison du rejet de cette demande...', en: 'Explain the reason for rejecting this request...', ar: 'اشرح سبب رفض هذا الطلب...' },
   rejection_notice_public: { fr: 'Votre demande a été rejetée pour la raison suivante :', en: 'Your request was rejected for the following reason:', ar: 'تم رفض طلبك للسبب التالي:' },
   renew_request_hint: { fr: 'Vous pouvez soumettre une nouvelle demande en vérifiant les informations saisies. N\'hésitez pas à corriger les données et à renouveler votre demande.', en: 'You can submit a new request by verifying the entered information. Feel free to correct the data and renew your request.', ar: 'يمكنك تقديم طلب جديد بالتحقق من المعلومات المدخلة. لا تتردد في تصحيح البيانات وتجديد طلبك.' },
-  
+
   // Net payable & extra balance
   net_payable_request: { fr: 'Net à payer', en: 'Net payable', ar: 'صافي المستحق' },
   extra_balance: { fr: 'Solde extra', en: 'Extra balance', ar: 'رصيد إضافي' },
