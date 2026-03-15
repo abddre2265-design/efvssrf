@@ -760,16 +760,16 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                   </div>
                 </div>
 
-                {/* Adjusted Values */}
+                {/* Adjusted Values (live-synced with withholding rate selection) */}
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">
                     {isForeign ? t('currency_conversion') : t('after_withholding_adjustment')}
                   </p>
                   <div className="space-y-1 text-sm">
-                    {!isForeign && isWithholdingConfigured && (
+                    {!isForeign && previewWithholdingRate > 0 && (
                       <div className="flex justify-between text-amber-600 dark:text-amber-400">
-                        <span>{t('withholding')} ({invoiceWithholdingRate}%):</span>
-                        <span className="font-mono">-{formatCurrency(invoiceWithholdingAmount, 'TND')}</span>
+                        <span>{t('withholding')} ({previewWithholdingRate}%):</span>
+                        <span className="font-mono">-{formatCurrency(previewWithholdingAmount, 'TND')}</span>
                       </div>
                     )}
                     {isForeign && isCurrencyConfigured && (
@@ -780,12 +780,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                     )}
                     <div className="flex justify-between pt-1 border-t font-medium">
                       <span>{t('net_payable')}:</span>
-                      <span className="font-mono text-primary">{formatCurrency(adjustedNetPayable, isForeign ? invoiceCurrency : 'TND')}</span>
+                      <span className="font-mono text-primary">{formatCurrency(liveNetPayable, isForeign ? invoiceCurrency : 'TND')}</span>
                     </div>
                     {isForeign && isCurrencyConfigured && (
                       <div className="flex justify-between text-muted-foreground">
                         <span>≈ {t('in_tnd')}:</span>
-                        <span className="font-mono">{formatCurrency(adjustedNetPayable * invoiceExchangeRate, 'TND')}</span>
+                        <span className="font-mono">{formatCurrency(liveNetPayable * invoiceExchangeRate, 'TND')}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-green-600">
@@ -794,12 +794,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                     </div>
                     <div className="flex justify-between text-orange-600 font-medium">
                       <span>{t('remaining_balance')}:</span>
-                      <span className="font-mono">{formatCurrency(remainingBalance, isForeign ? invoiceCurrency : 'TND')}</span>
+                      <span className="font-mono">{formatCurrency(liveRemainingBalance, isForeign ? invoiceCurrency : 'TND')}</span>
                     </div>
-                    {isForeign && isCurrencyConfigured && remainingBalance > 0 && (
+                    {isForeign && isCurrencyConfigured && liveRemainingBalance > 0 && (
                       <div className="flex justify-between text-muted-foreground">
                         <span>≈ {t('in_tnd')}:</span>
-                        <span className="font-mono">{formatCurrency(remainingBalanceInTND, 'TND')}</span>
+                        <span className="font-mono">{formatCurrency(liveRemainingBalanceInTND, 'TND')}</span>
                       </div>
                     )}
                   </div>
