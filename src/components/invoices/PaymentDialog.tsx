@@ -322,12 +322,13 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
     }
   }, [open, invoice]);
 
-  // Update amount when remaining balance changes (only after saved config)
+  // Update amount when remaining balance changes
+  // Sync Step 2 amount in real-time when withholding rate changes in Step 1
   useEffect(() => {
     if (invoice && open) {
-      setAmount(remainingBalance > 0 ? remainingBalance.toFixed(3) : '0');
+      setAmount(liveRemainingBalance > 0 ? liveRemainingBalance.toFixed(3) : '0');
     }
-  }, [remainingBalance, open]);
+  }, [liveRemainingBalance, open, selectedWithholdingRate]);
 
   // Fetch exchange rate when currency changes (for foreign)
   useEffect(() => {
@@ -416,14 +417,14 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
   // Validation for client balance payment (in TND)
   const isClientBalanceValid = isClientBalancePayment 
-    ? (amountInTND > 0 && amountInTND <= clientBalance && parsedAmount <= remainingBalance)
+    ? (amountInTND > 0 && amountInTND <= clientBalance && parsedAmount <= liveRemainingBalance)
     : true;
 
   const canSavePayment = isMixedPayment
-    ? (mixedLines.length > 0 && areMixedLinesValid && isMixedAmountValid && parsedAmount > 0 && parsedAmount <= remainingBalance && paymentDate)
+    ? (mixedLines.length > 0 && areMixedLinesValid && isMixedAmountValid && parsedAmount > 0 && parsedAmount <= liveRemainingBalance && paymentDate)
     : isClientBalancePayment
       ? (isClientBalanceValid && paymentDate)
-      : (paymentMethod && parsedAmount > 0 && parsedAmount <= remainingBalance && (!requiresReference || referenceNumber.trim()) && paymentDate);
+      : (paymentMethod && parsedAmount > 0 && parsedAmount <= liveRemainingBalance && (!requiresReference || referenceNumber.trim()) && paymentDate);
 
   // Can save withholding: rate must be selected and no payments exist (local only)
   const canSaveWithholding = !isForeign && selectedWithholdingRate !== '' && !hasPayments;
@@ -594,8 +595,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
         setClientBalance(newBalance);
       }
 
-      // Calculate new paid amount based on saved net payable
-      const currentNetPayable = calculateAdjustedNetPayable(invoice);
+      // Calculate new paid amount based on live net payable (reflects withholding set in Step 1)
+      const currentNetPayable = calculateLiveNetPayable(invoice);
       const newPaidAmount = paidAmount + parsedAmount;
       const newPaymentStatus = newPaidAmount >= currentNetPayable ? 'paid' : newPaidAmount > 0 ? 'partial' : 'unpaid';
 
@@ -648,8 +649,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
       if (deleteError) throw deleteError;
 
-      // Calculate new status using saved net payable
-      const currentNetPayable = calculateAdjustedNetPayable(invoice);
+      // Calculate new status using live net payable
+      const currentNetPayable = calculateLiveNetPayable(invoice);
       const newPaidAmount = Math.max(0, paidAmount - payment.amount);
       const newPaymentStatus = newPaidAmount <= 0 ? 'unpaid' : newPaidAmount >= currentNetPayable ? 'paid' : 'partial';
 
@@ -765,10 +766,10 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                     {isForeign ? t('currency_conversion') : t('after_withholding_adjustment')}
                   </p>
                   <div className="space-y-1 text-sm">
-                    {!isForeign && isWithholdingConfigured && (
+                    {!isForeign && previewWithholdingRate > 0 && (
                       <div className="flex justify-between text-amber-600 dark:text-amber-400">
-                        <span>{t('withholding')} ({invoiceWithholdingRate}%):</span>
-                        <span className="font-mono">-{formatCurrency(invoiceWithholdingAmount, 'TND')}</span>
+                        <span>{t('withholding')} ({previewWithholdingRate}%):</span>
+                        <span className="font-mono">-{formatCurrency(previewWithholdingAmount, 'TND')}</span>
                       </div>
                     )}
                     {isForeign && isCurrencyConfigured && (
@@ -779,12 +780,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                     )}
                     <div className="flex justify-between pt-1 border-t font-medium">
                       <span>{t('net_payable')}:</span>
-                      <span className="font-mono text-primary">{formatCurrency(adjustedNetPayable, isForeign ? invoiceCurrency : 'TND')}</span>
+                      <span className="font-mono text-primary">{formatCurrency(liveNetPayable, isForeign ? invoiceCurrency : 'TND')}</span>
                     </div>
                     {isForeign && isCurrencyConfigured && (
                       <div className="flex justify-between text-muted-foreground">
                         <span>≈ {t('in_tnd')}:</span>
-                        <span className="font-mono">{formatCurrency(adjustedNetPayable * invoiceExchangeRate, 'TND')}</span>
+                        <span className="font-mono">{formatCurrency(liveNetPayable * invoiceExchangeRate, 'TND')}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-green-600">
@@ -793,12 +794,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                     </div>
                     <div className="flex justify-between text-orange-600 font-medium">
                       <span>{t('remaining_balance')}:</span>
-                      <span className="font-mono">{formatCurrency(remainingBalance, isForeign ? invoiceCurrency : 'TND')}</span>
+                      <span className="font-mono">{formatCurrency(liveRemainingBalance, isForeign ? invoiceCurrency : 'TND')}</span>
                     </div>
-                    {isForeign && isCurrencyConfigured && remainingBalance > 0 && (
+                    {isForeign && isCurrencyConfigured && liveRemainingBalance > 0 && (
                       <div className="flex justify-between text-muted-foreground">
                         <span>≈ {t('in_tnd')}:</span>
-                        <span className="font-mono">{formatCurrency(remainingBalanceInTND, 'TND')}</span>
+                        <span className="font-mono">{formatCurrency(liveRemainingBalanceInTND, 'TND')}</span>
                       </div>
                     )}
                   </div>
@@ -809,12 +810,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{t('payment_progress')}</span>
-                  <span>{adjustedNetPayable > 0 ? ((paidAmount / adjustedNetPayable) * 100).toFixed(0) : 0}%</span>
+                  <span>{liveNetPayable > 0 ? ((paidAmount / liveNetPayable) * 100).toFixed(0) : 0}%</span>
                 </div>
                 <div className="h-2 rounded-full bg-muted overflow-hidden">
                   <div 
                     className="h-full bg-primary transition-all duration-300"
-                    style={{ width: `${Math.min(100, adjustedNetPayable > 0 ? (paidAmount / adjustedNetPayable) * 100 : 0)}%` }}
+                    style={{ width: `${Math.min(100, liveNetPayable > 0 ? (paidAmount / liveNetPayable) * 100 : 0)}%` }}
                   />
                 </div>
               </div>
