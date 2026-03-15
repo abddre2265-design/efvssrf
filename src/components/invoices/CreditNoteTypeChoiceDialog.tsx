@@ -23,11 +23,11 @@ export const CreditNoteTypeChoiceDialog: React.FC<CreditNoteTypeChoiceDialogProp
   onOpenChange,
   onSelect,
 }) => {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle>{t('select_credit_note_type')}</DialogTitle>
           <DialogDescription>{t('credit_note_type_description')}</DialogDescription>
