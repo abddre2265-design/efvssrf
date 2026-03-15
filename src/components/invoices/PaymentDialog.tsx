@@ -1009,8 +1009,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                       </div>
                     )}
 
-                    {/* Current withholding status */}
-                    {isWithholdingConfigured && (
+                    {/* Current withholding status - live synced with selected rate */}
+                    {(isWithholdingConfigured || previewWithholdingRate > 0) && (
                       <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                         <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                           <CheckCircle2 className="h-4 w-4" />
@@ -1019,11 +1019,17 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                         <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                           <div>
                             <span className="text-muted-foreground">{t('rate')}:</span>
-                            <span className="ml-2 font-medium">{invoiceWithholdingRate}%</span>
+                            <span className="ml-2 font-medium">{previewWithholdingRate}%</span>
                           </div>
                           <div>
                             <span className="text-muted-foreground">{t('amount')}:</span>
-                            <span className="ml-2 font-mono font-medium">{formatCurrency(invoiceWithholdingAmount, 'TND')}</span>
+                            <span className="ml-2 font-mono font-medium">{formatCurrency(previewWithholdingAmount, 'TND')}</span>
+                          </div>
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-green-500/20 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">{t('net_payable')}:</span>
+                            <span className="font-mono font-medium text-primary">{formatCurrency(previewNetPayable, 'TND')}</span>
                           </div>
                         </div>
                       </div>
