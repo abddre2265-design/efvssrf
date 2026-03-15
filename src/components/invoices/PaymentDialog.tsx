@@ -765,10 +765,10 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                     {isForeign ? t('currency_conversion') : t('after_withholding_adjustment')}
                   </p>
                   <div className="space-y-1 text-sm">
-                    {!isForeign && previewWithholdingRate > 0 && (
+                    {!isForeign && isWithholdingConfigured && (
                       <div className="flex justify-between text-amber-600 dark:text-amber-400">
-                        <span>{t('withholding')} ({previewWithholdingRate}%):</span>
-                        <span className="font-mono">-{formatCurrency(previewWithholdingAmount, 'TND')}</span>
+                        <span>{t('withholding')} ({invoiceWithholdingRate}%):</span>
+                        <span className="font-mono">-{formatCurrency(invoiceWithholdingAmount, 'TND')}</span>
                       </div>
                     )}
                     {isForeign && isCurrencyConfigured && (
@@ -779,12 +779,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                     )}
                     <div className="flex justify-between pt-1 border-t font-medium">
                       <span>{t('net_payable')}:</span>
-                      <span className="font-mono text-primary">{formatCurrency(liveNetPayable, isForeign ? invoiceCurrency : 'TND')}</span>
+                      <span className="font-mono text-primary">{formatCurrency(adjustedNetPayable, isForeign ? invoiceCurrency : 'TND')}</span>
                     </div>
                     {isForeign && isCurrencyConfigured && (
                       <div className="flex justify-between text-muted-foreground">
                         <span>≈ {t('in_tnd')}:</span>
-                        <span className="font-mono">{formatCurrency(liveNetPayable * invoiceExchangeRate, 'TND')}</span>
+                        <span className="font-mono">{formatCurrency(adjustedNetPayable * invoiceExchangeRate, 'TND')}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-green-600">
@@ -793,12 +793,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
                     </div>
                     <div className="flex justify-between text-orange-600 font-medium">
                       <span>{t('remaining_balance')}:</span>
-                      <span className="font-mono">{formatCurrency(liveRemainingBalance, isForeign ? invoiceCurrency : 'TND')}</span>
+                      <span className="font-mono">{formatCurrency(remainingBalance, isForeign ? invoiceCurrency : 'TND')}</span>
                     </div>
-                    {isForeign && isCurrencyConfigured && liveRemainingBalance > 0 && (
+                    {isForeign && isCurrencyConfigured && remainingBalance > 0 && (
                       <div className="flex justify-between text-muted-foreground">
                         <span>≈ {t('in_tnd')}:</span>
-                        <span className="font-mono">{formatCurrency(liveRemainingBalanceInTND, 'TND')}</span>
+                        <span className="font-mono">{formatCurrency(remainingBalanceInTND, 'TND')}</span>
                       </div>
                     )}
                   </div>
@@ -809,12 +809,12 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{t('payment_progress')}</span>
-                  <span>{liveNetPayable > 0 ? ((paidAmount / liveNetPayable) * 100).toFixed(0) : 0}%</span>
+                  <span>{adjustedNetPayable > 0 ? ((paidAmount / adjustedNetPayable) * 100).toFixed(0) : 0}%</span>
                 </div>
                 <div className="h-2 rounded-full bg-muted overflow-hidden">
                   <div 
                     className="h-full bg-primary transition-all duration-300"
-                    style={{ width: `${Math.min(100, liveNetPayable > 0 ? (paidAmount / liveNetPayable) * 100 : 0)}%` }}
+                    style={{ width: `${Math.min(100, adjustedNetPayable > 0 ? (paidAmount / adjustedNetPayable) * 100 : 0)}%` }}
                   />
                 </div>
               </div>
