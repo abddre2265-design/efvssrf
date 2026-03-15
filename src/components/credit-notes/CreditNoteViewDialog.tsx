@@ -203,11 +203,13 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
                     <tr>
                       <th className="text-start p-3 font-medium">{t('product')}</th>
                       <th className="text-end p-3 font-medium">{t('original_totals')} HT</th>
-                      <th className="text-center p-3 font-medium">{t('vat')}</th>
+                      <th className="text-center p-3 font-medium">{t('vat')} %</th>
                       <th className="text-end p-3 font-medium">{t('original_totals')} TTC</th>
-                      <th className="text-end p-3 font-medium">{t('discount_ht')}</th>
-                      <th className="text-end p-3 font-medium">{t('discount_rate')}</th>
+                      <th className="text-center p-3 font-medium">{t('returned_quantity')}</th>
+                      <th className="text-end p-3 font-medium">{t('returned_value_ht')}</th>
+                      <th className="text-end p-3 font-medium">{t('returned_vat')}</th>
                       <th className="text-end p-3 font-medium">{t('new_total_ht')}</th>
+                      <th className="text-end p-3 font-medium">{t('new_vat')}</th>
                       <th className="text-end p-3 font-medium">{t('new_total_ttc')}</th>
                     </tr>
                   </thead>
@@ -221,9 +223,11 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
                         <td className="text-end p-3 font-mono">{formatCurrency(line.original_line_total_ht, 'TND')}</td>
                         <td className="text-center p-3">{line.vat_rate}%</td>
                         <td className="text-end p-3 font-mono">{formatCurrency(line.original_line_total_ttc, 'TND')}</td>
+                        <td className="text-center p-3 font-medium">{line.returned_quantity}</td>
                         <td className="text-end p-3 font-mono text-destructive">-{formatCurrency(line.discount_ht, 'TND')}</td>
-                        <td className="text-end p-3">{line.discount_rate.toFixed(2)}%</td>
+                        <td className="text-end p-3 font-mono text-destructive">-{formatCurrency(line.discount_ttc - line.discount_ht, 'TND')}</td>
                         <td className="text-end p-3 font-mono font-medium">{formatCurrency(line.new_line_total_ht, 'TND')}</td>
+                        <td className="text-end p-3 font-mono">{formatCurrency(line.new_line_total_ttc - line.new_line_total_ht, 'TND')}</td>
                         <td className="text-end p-3 font-mono font-medium">{formatCurrency(line.new_line_total_ttc, 'TND')}</td>
                       </tr>
                     ))}
