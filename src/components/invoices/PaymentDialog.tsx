@@ -648,8 +648,8 @@ export const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
       if (deleteError) throw deleteError;
 
-      // Calculate new status using live net payable
-      const currentNetPayable = calculateLiveNetPayable(invoice);
+      // Calculate new status using saved net payable
+      const currentNetPayable = calculateAdjustedNetPayable(invoice);
       const newPaidAmount = Math.max(0, paidAmount - payment.amount);
       const newPaymentStatus = newPaidAmount <= 0 ? 'unpaid' : newPaidAmount >= currentNetPayable ? 'paid' : 'partial';
 
