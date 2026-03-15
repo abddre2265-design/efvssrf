@@ -328,13 +328,20 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
     try {
       // Build credit note lines data
       const buildCnLineData = (rl: ReturnLine, idx: number) => {
-        const originalTotalHt = rl.invoicedQuantity * rl.adjustedUnitPriceHt;
-        const originalVat = originalTotalHt * (rl.vatRate / 100);
+        const invoicedQty = Number(rl.invoicedQuantity) || 0;
+        const unitPriceHt = Number(rl.adjustedUnitPriceHt) || 0;
+        const vatRate = Number(rl.vatRate) || 0;
+        const alreadyRet = Number(rl.alreadyReturnedQuantity) || 0;
+        const currRet = Number(rl.returnQuantity) || 0;
+        const validatedQty = Number(rl.validatedQuantity) || 0;
+
+        const originalTotalHt = invoicedQty * unitPriceHt;
+        const originalVat = originalTotalHt * (vatRate / 100);
         const originalTotalTtc = originalTotalHt + originalVat;
 
-        const remainingQty = rl.invoicedQuantity - (rl.alreadyReturnedQuantity + rl.returnQuantity);
-        const newTotalHt = Math.max(0, remainingQty * rl.adjustedUnitPriceHt);
-        const newVat = newTotalHt * (rl.vatRate / 100);
+        const remainingQty = Math.max(0, invoicedQty - (alreadyRet + currRet));
+        const newTotalHt = remainingQty * unitPriceHt;
+        const newVat = newTotalHt * (vatRate / 100);
         const newTotalTtc = newTotalHt + newVat;
 
         return {
@@ -342,20 +349,20 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
           product_id: rl.productId,
           product_name: rl.productName,
           product_reference: rl.productReference,
-          original_quantity: rl.invoicedQuantity,
-          original_unit_price_ht: rl.originalUnitPriceHt,
+          original_quantity: invoicedQty,
+          original_unit_price_ht: Number(rl.originalUnitPriceHt) || unitPriceHt,
           original_line_total_ht: originalTotalHt,
           original_line_vat: originalVat,
           original_line_total_ttc: originalTotalTtc,
-          returned_quantity: rl.returnQuantity, // In create mode, this is just the current return
-          validated_quantity: rl.validatedQuantity, // preserve validated
-          discount_ht: rl.lineHt,
-          discount_ttc: rl.lineTtc,
+          returned_quantity: currRet,
+          validated_quantity: validatedQty,
+          discount_ht: Number(rl.lineHt) || 0,
+          discount_ttc: Number(rl.lineTtc) || 0,
           discount_rate: 0,
           new_line_total_ht: newTotalHt,
           new_line_vat: newVat,
           new_line_total_ttc: newTotalTtc,
-          vat_rate: rl.vatRate,
+          vat_rate: vatRate,
           line_order: idx,
         };
       };
@@ -509,16 +516,21 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
                   </thead>
                   <tbody>
                     {returnLines.map((rl, idx) => {
-                      const originalTotalHt = rl.invoicedQuantity * rl.adjustedUnitPriceHt;
-                      const originalVat = originalTotalHt * (rl.vatRate / 100);
+                      const invoicedQty = Number(rl.invoicedQuantity) || 0;
+                      const unitPriceHt = Number(rl.adjustedUnitPriceHt) || 0;
+                      const vatRate = Number(rl.vatRate) || 0;
+                      const alreadyRet = Number(rl.alreadyReturnedQuantity) || 0;
+                      const currRet = Number(rl.returnQuantity) || 0;
+
+                      const originalTotalHt = invoicedQty * unitPriceHt;
+                      const originalVat = originalTotalHt * (vatRate / 100);
                       const originalTotalTtc = originalTotalHt + originalVat;
 
-                      // Calculation must subtract BOTH already returned and currently being returned
-                      const totalReturnedQty = rl.alreadyReturnedQuantity + rl.returnQuantity;
-                      const remainingQty = Math.max(0, rl.invoicedQuantity - totalReturnedQty);
+                      const totalReturnedQty = alreadyRet + currRet;
+                      const remainingQty = Math.max(0, invoicedQty - totalReturnedQty);
 
-                      const newTotalHt = remainingQty * rl.adjustedUnitPriceHt;
-                      const newVat = newTotalHt * (rl.vatRate / 100);
+                      const newTotalHt = remainingQty * unitPriceHt;
+                      const newVat = newTotalHt * (vatRate / 100);
                       const newTotalTtc = newTotalHt + newVat;
 
                       return (

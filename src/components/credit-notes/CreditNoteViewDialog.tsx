@@ -214,23 +214,42 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {lines.map((line, idx) => (
-                      <tr key={line.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                        <td className="p-3">
-                          <div className="font-medium">{line.product_name || '-'}</div>
-                          {line.product_reference && <div className="text-xs text-muted-foreground font-mono">{line.product_reference}</div>}
-                        </td>
-                        <td className="text-end p-3 font-mono">{formatCurrency(line.original_line_total_ht, 'TND')}</td>
-                        <td className="text-center p-3">{line.vat_rate}%</td>
-                        <td className="text-end p-3 font-mono">{formatCurrency(line.original_line_total_ttc, 'TND')}</td>
-                        <td className="text-center p-3 font-medium">{line.returned_quantity}</td>
-                        <td className="text-end p-3 font-mono text-destructive">-{formatCurrency(line.discount_ht, 'TND')}</td>
-                        <td className="text-end p-3 font-mono text-destructive">-{formatCurrency(line.discount_ttc - line.discount_ht, 'TND')}</td>
-                        <td className="text-end p-3 font-mono font-medium">{formatCurrency(line.new_line_total_ht, 'TND')}</td>
-                        <td className="text-end p-3 font-mono">{formatCurrency(line.new_line_total_ttc - line.new_line_total_ht, 'TND')}</td>
-                        <td className="text-end p-3 font-mono font-medium">{formatCurrency(line.new_line_total_ttc, 'TND')}</td>
-                      </tr>
-                    ))}
+                    {lines.map((line, idx) => {
+                      const vatRate = Number(line.vat_rate) || 0;
+                      const originalQty = Number(line.original_quantity) || 0;
+                      const originalPrice = Number(line.original_unit_price_ht) || 0;
+
+                      // Use stored totals or fallback to calculation if zero
+                      const originalHt = Number(line.original_line_total_ht) || (originalQty * originalPrice);
+                      const originalVat = Number(line.original_line_vat) || (originalHt * (vatRate / 100));
+                      const originalTtc = Number(line.original_line_total_ttc) || (originalHt + originalVat);
+
+                      const retQty = Number(line.returned_quantity) || 0;
+                      const retHt = Number(line.discount_ht) || 0;
+                      const retVat = (Number(line.discount_ttc) || 0) - retHt;
+
+                      const newHt = Number(line.new_line_total_ht);
+                      const newVat = Number(line.new_line_vat) || (newHt * (vatRate / 100));
+                      const newTtc = Number(line.new_line_total_ttc) || (newHt + newVat);
+
+                      return (
+                        <tr key={line.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                          <td className="p-3">
+                            <div className="font-medium text-xs truncate max-w-[200px]" title={line.product_name || ''}>{line.product_name || '-'}</div>
+                            {line.product_reference && <div className="text-[10px] text-muted-foreground font-mono">{line.product_reference}</div>}
+                          </td>
+                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalHt, 'TND')}</td>
+                          <td className="text-center p-3 text-xs">{vatRate}%</td>
+                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalTtc, 'TND')}</td>
+                          <td className="text-center p-3 font-medium text-xs">{retQty}</td>
+                          <td className="text-end p-3 font-mono text-xs text-destructive">-{formatCurrency(retHt, 'TND')}</td>
+                          <td className="text-end p-3 font-mono text-xs text-destructive">-{formatCurrency(retVat, 'TND')}</td>
+                          <td className="text-end p-3 font-mono text-xs font-medium">{formatCurrency(newHt, 'TND')}</td>
+                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(newVat, 'TND')}</td>
+                          <td className="text-end p-3 font-mono text-xs font-medium">{formatCurrency(newTtc, 'TND')}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
