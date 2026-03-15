@@ -882,8 +882,6 @@ export const translations: Translations = {
   credit_note_exceeds_invoice: { fr: 'Le total de l\'avoir dépasse le restant de la facture.', en: 'Credit note exceeds the remaining invoice amount.', ar: 'قيمة الإشعار تتجاوز المبلغ المتبقي للفاتورة.' },
   update_credit_note: { fr: 'Mettre à jour l\'avoir', en: 'Update Credit Note', ar: 'تحديث الإشعار الدائن' },
   saving: { fr: 'Enregistrement...', en: 'Saving...', ar: 'جاري الحفظ...' },
-  cancel: { fr: 'Annuler', en: 'Cancel', ar: 'إلغاء' },
-  vat: { fr: 'TVA', en: 'VAT', ar: 'ض.ق.م' },
   remove_withholding: { fr: 'Annuler la retenue', en: 'Remove Withholding', ar: 'إلغاء الاستقطاع' },
 
   // Commercial credit note dialog
@@ -931,6 +929,8 @@ export const translations: Translations = {
   validate_credit_note: { fr: 'Valider l\'avoir', en: 'Validate credit note', ar: 'تأكيد الإشعار الدائن' },
   credit_note_created: { fr: 'Avoir créé avec succès', en: 'Credit note created successfully', ar: 'تم إنشاء الإشعار الدائن بنجاح' },
   error_creating_credit_note: { fr: 'Erreur lors de la création de l\'avoir', en: 'Error creating credit note', ar: 'خطأ في إنشاء الإشعار الدائن' },
+  pending_credit_note_exists: { fr: 'Un avoir en cours existe déjà', en: 'A pending credit note already exists', ar: 'يوجد إشعار دائن قيد الانتظار بالفعل' },
+  pending_credit_note_action: { fr: 'Veuillez le valider ou le supprimer avant d\'en créer un nouveau.', en: 'Please validate or delete it before creating a new one.', ar: 'يرجى تأكيده أو حذفه قبل إنشاء واحد جديد.' },
   for_invoice: { fr: 'Pour la facture', en: 'For invoice', ar: 'للفاتورة' },
   step_type: { fr: 'Type', en: 'Type', ar: 'النوع' },
   step_lines: { fr: 'Lignes', en: 'Lines', ar: 'الخطوط' },
