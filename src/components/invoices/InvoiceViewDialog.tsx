@@ -580,7 +580,7 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
 
                         {/* Line-by-line details */}
                         {(cn as any).lines && (cn as any).lines.length > 0 && (
-                          <div className="rounded-lg border overflow-hidden mt-2">
+                          <div className="rounded-lg border overflow-x-auto mt-2">
                             <table className="w-full text-[10px]">
                               <thead className="bg-muted/50">
                                 <tr className="divide-x divide-muted-foreground/10">
