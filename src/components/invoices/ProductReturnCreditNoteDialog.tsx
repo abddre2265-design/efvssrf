@@ -496,9 +496,9 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
           </DialogHeader>
 
           <ScrollArea className="min-h-0">
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 max-w-full overflow-hidden">
               {/* Product lines table */}
-              <div className="w-full max-w-full rounded-lg border overflow-x-auto">
+              <div className="w-full max-w-full rounded-lg border overflow-x-auto custom-scrollbar">
                 <table className="w-full min-w-[1200px] text-sm">
                   <thead className="bg-muted/50">
                     <tr>

@@ -192,12 +192,12 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
             <Separator />
 
             {/* Line details */}
-            <div className="space-y-3">
+            <div className="space-y-3 max-w-full overflow-hidden">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <Package className="h-4 w-4" />
                 {t('invoice_lines')} ({lines.length})
               </div>
-              <div className="w-full max-w-full rounded-lg border overflow-x-auto">
+              <div className="w-full max-w-full rounded-lg border overflow-x-auto custom-scrollbar">
                 <table className="w-full min-w-[1200px] text-sm">
                   <thead className="bg-muted/50">
                     <tr>

@@ -556,7 +556,7 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
                       {t('credit_notes')} ({creditNotes.length})
                     </div>
                     {creditNotes.map(cn => (
-                      <div key={cn.id} className="p-4 rounded-lg bg-muted/30 border space-y-2">
+                      <div key={cn.id} className="p-4 rounded-lg bg-muted/30 border space-y-2 max-w-full overflow-hidden">
                         <div className="flex items-center justify-between">
                           <span className="font-mono font-semibold">{cn.credit_note_number}</span>
                           <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
@@ -580,7 +580,7 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
 
                         {/* Line-by-line details */}
                         {(cn as any).lines && (cn as any).lines.length > 0 && (
-                          <div className="w-full max-w-full rounded-lg border overflow-x-auto mt-2">
+                          <div className="w-full max-w-full rounded-lg border overflow-x-auto mt-2 custom-scrollbar">
                             <table className="w-full min-w-[1200px] text-[10px]">
                               <thead className="bg-muted/50">
                                 <tr className="divide-x divide-muted-foreground/10">
