@@ -197,7 +197,7 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
                 <Package className="h-4 w-4" />
                 {t('invoice_lines')} ({lines.length})
               </div>
-              <div className="w-full rounded-lg border overflow-x-auto">
+              <div className="w-full max-w-full rounded-lg border overflow-x-auto">
                 <table className="w-full min-w-[1200px] text-sm">
                   <thead className="bg-muted/50">
                     <tr>
