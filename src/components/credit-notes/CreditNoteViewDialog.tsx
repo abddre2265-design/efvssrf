@@ -192,170 +192,172 @@ export const CreditNoteViewDialog: React.FC<CreditNoteViewDialogProps> = ({
             <Separator />
 
             {/* Line details */}
-            <div className="space-y-3 max-w-full overflow-hidden">
+            <div className="space-y-3 min-w-0 max-w-full overflow-hidden">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <Package className="h-4 w-4" />
                 {t('invoice_lines')} ({lines.length})
               </div>
-              <div className="w-full max-w-full rounded-lg border overflow-x-auto custom-scrollbar">
-                <table className="w-full min-w-[1200px] text-sm">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="text-start p-3 font-medium">{t('product')}</th>
-                      <th className="text-end p-3 font-medium">{t('original_totals')} HT</th>
-                      <th className="text-center p-3 font-medium">{t('vat')} %</th>
-                      <th className="text-end p-3 font-medium">{t('original_totals')} TTC</th>
-                      <th className="text-center p-3 font-medium">{t('returned_quantity')}</th>
-                      <th className="text-end p-3 font-medium">{t('returned_value_ht')}</th>
-                      <th className="text-end p-3 font-medium">{t('returned_vat')}</th>
-                      <th className="text-end p-3 font-medium">{t('new_total_ht')}</th>
-                      <th className="text-end p-3 font-medium">{t('new_vat')}</th>
-                      <th className="text-end p-3 font-medium">{t('new_total_ttc')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lines.map((line, idx) => {
-                      const vatRate = Number(line.vat_rate) || 0;
-                      const originalQty = Number(line.original_quantity) || 0;
-                      const originalPrice = Number(line.original_unit_price_ht) || 0;
+              <div className="w-full" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)' }}>
+                <div className="rounded-lg border overflow-x-auto custom-scrollbar bg-muted/20">
+                  <table className="w-full min-w-[1200px] text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-start p-3 font-medium">{t('product')}</th>
+                        <th className="text-end p-3 font-medium">{t('original_totals')} HT</th>
+                        <th className="text-center p-3 font-medium">{t('vat')} %</th>
+                        <th className="text-end p-3 font-medium">{t('original_totals')} TTC</th>
+                        <th className="text-center p-3 font-medium">{t('returned_quantity')}</th>
+                        <th className="text-end p-3 font-medium">{t('returned_value_ht')}</th>
+                        <th className="text-end p-3 font-medium">{t('returned_vat')}</th>
+                        <th className="text-end p-3 font-medium">{t('new_total_ht')}</th>
+                        <th className="text-end p-3 font-medium">{t('new_vat')}</th>
+                        <th className="text-end p-3 font-medium">{t('new_total_ttc')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lines.map((line, idx) => {
+                        const vatRate = Number(line.vat_rate) || 0;
+                        const originalQty = Number(line.original_quantity) || 0;
+                        const originalPrice = Number(line.original_unit_price_ht) || 0;
 
-                      // Use stored totals or fallback to calculation if zero
-                      const originalHt = Number(line.original_line_total_ht) || (originalQty * originalPrice);
-                      const originalVat = Number(line.original_line_vat) || (originalHt * (vatRate / 100));
-                      const originalTtc = Number(line.original_line_total_ttc) || (originalHt + originalVat);
+                        // Use stored totals or fallback to calculation if zero
+                        const originalHt = Number(line.original_line_total_ht) || (originalQty * originalPrice);
+                        const originalVat = Number(line.original_line_vat) || (originalHt * (vatRate / 100));
+                        const originalTtc = Number(line.original_line_total_ttc) || (originalHt + originalVat);
 
-                      const retQty = Number(line.returned_quantity) || 0;
-                      const retHt = Number(line.discount_ht) || 0;
-                      const retVat = (Number(line.discount_ttc) || 0) - retHt;
+                        const retQty = Number(line.returned_quantity) || 0;
+                        const retHt = Number(line.discount_ht) || 0;
+                        const retVat = (Number(line.discount_ttc) || 0) - retHt;
 
-                      const newHt = Number(line.new_line_total_ht);
-                      const newVat = Number(line.new_line_vat) || (newHt * (vatRate / 100));
-                      const newTtc = Number(line.new_line_total_ttc) || (newHt + newVat);
+                        const newHt = Number(line.new_line_total_ht);
+                        const newVat = Number(line.new_line_vat) || (newHt * (vatRate / 100));
+                        const newTtc = Number(line.new_line_total_ttc) || (newHt + newVat);
 
-                      return (
-                        <tr key={line.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                          <td className="p-3">
-                            <div className="font-medium text-xs truncate max-w-[200px]" title={line.product_name || ''}>{line.product_name || '-'}</div>
-                            {line.product_reference && <div className="text-[10px] text-muted-foreground font-mono">{line.product_reference}</div>}
-                          </td>
-                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalHt, 'TND')}</td>
-                          <td className="text-center p-3 text-xs">{vatRate}%</td>
-                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalTtc, 'TND')}</td>
-                          <td className="text-center p-3 font-medium text-xs">{retQty}</td>
-                          <td className="text-end p-3 font-mono text-xs text-destructive">-{formatCurrency(retHt, 'TND')}</td>
-                          <td className="text-end p-3 font-mono text-xs text-destructive">-{formatCurrency(retVat, 'TND')}</td>
-                          <td className="text-end p-3 font-mono text-xs font-medium">{formatCurrency(newHt, 'TND')}</td>
-                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(newVat, 'TND')}</td>
-                          <td className="text-end p-3 font-mono text-xs font-medium">{formatCurrency(newTtc, 'TND')}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                        return (
+                          <tr key={line.id} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                            <td className="p-3">
+                              <div className="font-medium text-xs truncate max-w-[200px]" title={line.product_name || ''}>{line.product_name || '-'}</div>
+                              {line.product_reference && <div className="text-[10px] text-muted-foreground font-mono">{line.product_reference}</div>}
+                            </td>
+                            <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalHt, 'TND')}</td>
+                            <td className="text-center p-3 text-xs">{vatRate}%</td>
+                            <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalTtc, 'TND')}</td>
+                            <td className="text-center p-3 font-medium text-xs">{retQty}</td>
+                            <td className="text-end p-3 font-mono text-xs text-destructive">-{formatCurrency(retHt, 'TND')}</td>
+                            <td className="text-end p-3 font-mono text-xs text-destructive">-{formatCurrency(retVat, 'TND')}</td>
+                            <td className="text-end p-3 font-mono text-xs font-medium">{formatCurrency(newHt, 'TND')}</td>
+                            <td className="text-end p-3 font-mono text-xs">{formatCurrency(newVat, 'TND')}</td>
+                            <td className="text-end p-3 font-mono text-xs font-medium">{formatCurrency(newTtc, 'TND')}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
+              <Separator />
+
+              {/* Totals before/after */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Before */}
+                <div className="border rounded-lg p-4 space-y-2 bg-muted/20">
+                  <h4 className="font-semibold text-sm">{t('original_totals')}</h4>
+                  <Separator />
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{t('subtotal_ht')}</span>
+                      <span className="font-mono">{formatCurrency(originalTotalHt, 'TND')}</span>
+                    </div>
+                    {originalVatBreakdown.map(v => (
+                      <div key={v.rate} className="flex justify-between text-muted-foreground">
+                        <span>{t('vat')} {v.rate}%</span>
+                        <span className="font-mono">{formatCurrency(v.vatAmount, 'TND')}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between font-medium">
+                      <span>{t('total_ttc')}</span>
+                      <span className="font-mono">{formatCurrency(originalTotalTtc, 'TND')}</span>
+                    </div>
+                    {isPaidOrPartial && invoice?.withholding_applied && invoice.withholding_rate > 0 && (
+                      <div className="flex justify-between text-amber-600">
+                        <span>{t('withholding_tax')} ({invoice.withholding_rate}%)</span>
+                        <span className="font-mono">-{formatCurrency(invoice.withholding_amount, 'TND')}</span>
+                      </div>
+                    )}
+                    {isPaidOrPartial && (
+                      <>
+                        <div className="flex justify-between font-semibold">
+                          <span>{t('net_payable')}</span>
+                          <span className="font-mono text-primary">{formatCurrency(creditNote.original_net_payable, 'TND')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">{t('amount_paid')}</span>
+                          <span className="font-mono">{formatCurrency(invoice?.paid_amount || 0, 'TND')}</span>
+                        </div>
+                      </>
+                    )}
+                    {!isPaidOrPartial && (
+                      <div className="text-center py-2">
+                        <Badge variant="outline" className="text-destructive border-destructive/30">{t('invoice_unpaid')}</Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* After */}
+                <div className="border rounded-lg p-4 space-y-2 bg-primary/5 border-primary/20">
+                  <h4 className="font-semibold text-sm">{t('new_totals')}</h4>
+                  <Separator />
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">{t('new_total_ht')}</span>
+                      <span className="font-mono">{formatCurrency(creditNote.subtotal_ht, 'TND')}</span>
+                    </div>
+                    {newVatBreakdown.map(v => (
+                      <div key={v.rate} className="flex justify-between text-muted-foreground">
+                        <span>{t('vat')} {v.rate}%</span>
+                        <span className="font-mono">{formatCurrency(v.vatAmount, 'TND')}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between font-medium">
+                      <span>{t('new_total_ttc')}</span>
+                      <span className="font-mono">{formatCurrency(creditNote.total_ttc, 'TND')}</span>
+                    </div>
+                    {creditNote.withholding_rate > 0 && (
+                      <div className="flex justify-between text-amber-600">
+                        <span>{t('withholding_tax')} ({creditNote.withholding_rate}%)</span>
+                        <span className="font-mono">-{formatCurrency(creditNote.withholding_amount, 'TND')}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-semibold text-base">
+                      <span>{t('new_net_payable')}</span>
+                      <span className="font-mono text-primary">{formatCurrency(creditNote.new_net_payable, 'TND')}</span>
+                    </div>
+                    {creditNote.financial_credit > 0 && (
+                      <>
+                        <Separator />
+                        <div className="flex justify-between font-semibold">
+                          <span>{t('financial_credit')}</span>
+                          <span className="font-mono text-green-600">{formatCurrency(creditNote.financial_credit, 'TND')}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {creditNote.notes && (
+                <>
+                  <Separator />
+                  <div className="p-4 rounded-lg bg-muted/30 border">
+                    <div className="font-medium mb-1">{t('notes')}:</div>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{creditNote.notes}</p>
+                  </div>
+                </>
+              )}
             </div>
-
-            <Separator />
-
-            {/* Totals before/after */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Before */}
-              <div className="border rounded-lg p-4 space-y-2 bg-muted/20">
-                <h4 className="font-semibold text-sm">{t('original_totals')}</h4>
-                <Separator />
-                <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('subtotal_ht')}</span>
-                    <span className="font-mono">{formatCurrency(originalTotalHt, 'TND')}</span>
-                  </div>
-                  {originalVatBreakdown.map(v => (
-                    <div key={v.rate} className="flex justify-between text-muted-foreground">
-                      <span>{t('vat')} {v.rate}%</span>
-                      <span className="font-mono">{formatCurrency(v.vatAmount, 'TND')}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between font-medium">
-                    <span>{t('total_ttc')}</span>
-                    <span className="font-mono">{formatCurrency(originalTotalTtc, 'TND')}</span>
-                  </div>
-                  {isPaidOrPartial && invoice?.withholding_applied && invoice.withholding_rate > 0 && (
-                    <div className="flex justify-between text-amber-600">
-                      <span>{t('withholding_tax')} ({invoice.withholding_rate}%)</span>
-                      <span className="font-mono">-{formatCurrency(invoice.withholding_amount, 'TND')}</span>
-                    </div>
-                  )}
-                  {isPaidOrPartial && (
-                    <>
-                      <div className="flex justify-between font-semibold">
-                        <span>{t('net_payable')}</span>
-                        <span className="font-mono text-primary">{formatCurrency(creditNote.original_net_payable, 'TND')}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{t('amount_paid')}</span>
-                        <span className="font-mono">{formatCurrency(invoice?.paid_amount || 0, 'TND')}</span>
-                      </div>
-                    </>
-                  )}
-                  {!isPaidOrPartial && (
-                    <div className="text-center py-2">
-                      <Badge variant="outline" className="text-destructive border-destructive/30">{t('invoice_unpaid')}</Badge>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* After */}
-              <div className="border rounded-lg p-4 space-y-2 bg-primary/5 border-primary/20">
-                <h4 className="font-semibold text-sm">{t('new_totals')}</h4>
-                <Separator />
-                <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('new_total_ht')}</span>
-                    <span className="font-mono">{formatCurrency(creditNote.subtotal_ht, 'TND')}</span>
-                  </div>
-                  {newVatBreakdown.map(v => (
-                    <div key={v.rate} className="flex justify-between text-muted-foreground">
-                      <span>{t('vat')} {v.rate}%</span>
-                      <span className="font-mono">{formatCurrency(v.vatAmount, 'TND')}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between font-medium">
-                    <span>{t('new_total_ttc')}</span>
-                    <span className="font-mono">{formatCurrency(creditNote.total_ttc, 'TND')}</span>
-                  </div>
-                  {creditNote.withholding_rate > 0 && (
-                    <div className="flex justify-between text-amber-600">
-                      <span>{t('withholding_tax')} ({creditNote.withholding_rate}%)</span>
-                      <span className="font-mono">-{formatCurrency(creditNote.withholding_amount, 'TND')}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-semibold text-base">
-                    <span>{t('new_net_payable')}</span>
-                    <span className="font-mono text-primary">{formatCurrency(creditNote.new_net_payable, 'TND')}</span>
-                  </div>
-                  {creditNote.financial_credit > 0 && (
-                    <>
-                      <Separator />
-                      <div className="flex justify-between font-semibold">
-                        <span>{t('financial_credit')}</span>
-                        <span className="font-mono text-green-600">{formatCurrency(creditNote.financial_credit, 'TND')}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Notes */}
-            {creditNote.notes && (
-              <>
-                <Separator />
-                <div className="p-4 rounded-lg bg-muted/30 border">
-                  <div className="font-medium mb-1">{t('notes')}:</div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{creditNote.notes}</p>
-                </div>
-              </>
-            )}
           </div>
         </ScrollArea>
       </DialogContent>

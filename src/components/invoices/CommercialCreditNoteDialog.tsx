@@ -76,12 +76,12 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<'lines' | 'total'>('lines');
   const [lineDiscounts, setLineDiscounts] = useState<LineDiscount[]>([]);
-  
+
   // For total mode
   const [totalNewHt, setTotalNewHt] = useState(0);
   const [totalLastEdited, setTotalLastEdited] = useState<'ht' | 'ttc' | 'vat'>('ht');
   const [totalNewTtc, setTotalNewTtc] = useState(0);
-  
+
   // Withholding override
   const [withholdingOverride, setWithholdingOverride] = useState<number | null>(null);
   const [withholdingDialogOpen, setWithholdingDialogOpen] = useState(false);
@@ -162,7 +162,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
         const operationalTotalTtc = Object.values(remainingLineAmounts).reduce((sum, v) => sum + v.remainingTtc, 0);
 
         setDetails({ invoice, lines, customTaxes, stampDuty, remainingLineAmounts, previousTotalCredited });
-        
+
         // Init line discounts
         setLineDiscounts(lines.map(l => ({
           lineId: l.id,
@@ -222,7 +222,7 @@ export const CommercialCreditNoteDialog: React.FC<CommercialCreditNoteDialogProp
   // Compute new totals from line discounts (Mode 1) - based on remaining amounts
   const computeLineTotals = useCallback(() => {
     if (!details) return null;
-    
+
     let newSubtotalHt = 0;
     let totalDiscountHt = 0;
     const vatMap: Record<number, { base: number; vat: number }> = {};

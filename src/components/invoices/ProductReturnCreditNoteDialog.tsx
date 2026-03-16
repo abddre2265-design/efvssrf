@@ -496,92 +496,94 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
           </DialogHeader>
 
           <ScrollArea className="min-h-0">
-            <div className="p-6 space-y-6 max-w-full overflow-hidden">
+            <div className="p-6 space-y-6 min-w-0 max-w-full overflow-hidden">
               {/* Product lines table */}
-              <div className="w-full max-w-full rounded-lg border overflow-x-auto custom-scrollbar">
-                <table className="w-full min-w-[1200px] text-sm">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="text-start p-3 font-medium min-w-[150px]">{t('product')}</th>
-                      <th className="text-end p-3 font-medium whitespace-nowrap">{t('original_totals')} HT</th>
-                      <th className="text-center p-3 font-medium whitespace-nowrap">{t('vat')} %</th>
-                      <th className="text-end p-3 font-medium whitespace-nowrap">{t('original_totals')} TTC</th>
-                      <th className="text-center p-3 font-medium min-w-[100px]">{t('return_qty')}</th>
-                      <th className="text-end p-3 font-medium whitespace-nowrap">{t('returned_value_ht')}</th>
-                      <th className="text-end p-3 font-medium whitespace-nowrap">{t('returned_vat')}</th>
-                      <th className="text-end p-3 font-medium whitespace-nowrap">{t('new_total_ht')}</th>
-                      <th className="text-end p-3 font-medium whitespace-nowrap">{t('new_vat')}</th>
-                      <th className="text-end p-3 font-medium whitespace-nowrap">{t('new_total_ttc')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {returnLines.map((rl, idx) => {
-                      const invoicedQty = Number(rl.invoicedQuantity) || 0;
-                      const unitPriceHt = Number(rl.adjustedUnitPriceHt) || 0;
-                      const vatRate = Number(rl.vatRate) || 0;
-                      const alreadyRet = Number(rl.alreadyReturnedQuantity) || 0;
-                      const currRet = Number(rl.returnQuantity) || 0;
+              <div className="w-full" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)' }}>
+                <div className="rounded-lg border overflow-x-auto custom-scrollbar bg-muted/30">
+                  <table className="w-full min-w-[1200px] text-sm table-auto">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-start p-3 font-medium min-w-[150px]">{t('product')}</th>
+                        <th className="text-end p-3 font-medium whitespace-nowrap">{t('original_totals')} HT</th>
+                        <th className="text-center p-3 font-medium whitespace-nowrap">{t('vat')} %</th>
+                        <th className="text-end p-3 font-medium whitespace-nowrap">{t('original_totals')} TTC</th>
+                        <th className="text-center p-3 font-medium min-w-[100px]">{t('return_qty')}</th>
+                        <th className="text-end p-3 font-medium whitespace-nowrap">{t('returned_value_ht')}</th>
+                        <th className="text-end p-3 font-medium whitespace-nowrap">{t('returned_vat')}</th>
+                        <th className="text-end p-3 font-medium whitespace-nowrap">{t('new_total_ht')}</th>
+                        <th className="text-end p-3 font-medium whitespace-nowrap">{t('new_vat')}</th>
+                        <th className="text-end p-3 font-medium whitespace-nowrap">{t('new_total_ttc')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {returnLines.map((rl, idx) => {
+                        const invoicedQty = Number(rl.invoicedQuantity) || 0;
+                        const unitPriceHt = Number(rl.adjustedUnitPriceHt) || 0;
+                        const vatRate = Number(rl.vatRate) || 0;
+                        const alreadyRet = Number(rl.alreadyReturnedQuantity) || 0;
+                        const currRet = Number(rl.returnQuantity) || 0;
 
-                      const originalTotalHt = invoicedQty * unitPriceHt;
-                      const originalVat = originalTotalHt * (vatRate / 100);
-                      const originalTotalTtc = originalTotalHt + originalVat;
+                        const originalTotalHt = invoicedQty * unitPriceHt;
+                        const originalVat = originalTotalHt * (vatRate / 100);
+                        const originalTotalTtc = originalTotalHt + originalVat;
 
-                      const totalReturnedQty = alreadyRet + currRet;
-                      const remainingQty = Math.max(0, invoicedQty - totalReturnedQty);
+                        const totalReturnedQty = alreadyRet + currRet;
+                        const remainingQty = Math.max(0, invoicedQty - totalReturnedQty);
 
-                      const newTotalHt = remainingQty * unitPriceHt;
-                      const newVat = newTotalHt * (vatRate / 100);
-                      const newTotalTtc = newTotalHt + newVat;
+                        const newTotalHt = remainingQty * unitPriceHt;
+                        const newVat = newTotalHt * (vatRate / 100);
+                        const newTotalTtc = newTotalHt + newVat;
 
-                      return (
-                        <tr key={rl.lineId} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                          <td className="p-3">
-                            <div className="font-medium text-xs truncate max-w-[200px]" title={rl.productName}>{rl.productName}</div>
-                            {rl.productReference && (
-                              <div className="text-[10px] text-muted-foreground font-mono">{rl.productReference}</div>
-                            )}
-                          </td>
-                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalTotalHt, 'TND')}</td>
-                          <td className="text-center p-3 text-xs">{rl.vatRate}%</td>
-                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalTotalTtc, 'TND')}</td>
-                          <td className="p-2">
-                            {rl.returnableQuantity > 0 && !rl.isLocked ? (
-                              <div className="flex flex-col items-center gap-1">
-                                <Input
-                                  type="number"
-                                  step="1"
-                                  min={0}
-                                  max={rl.returnableQuantity}
-                                  value={rl.returnQuantity || ''}
-                                  onChange={(e) => updateReturnQuantity(rl.lineId, parseFloat(e.target.value) || 0)}
-                                  className="w-16 h-7 text-xs text-center p-1"
-                                  placeholder="0"
-                                />
-                                <div className="text-[9px] text-muted-foreground">
-                                  {rl.alreadyReturnedQuantity > 0 ? `${rl.alreadyReturnedQuantity} ${t('already_returned') || 'déjà'}` : ''}
-                                  {` / ${rl.invoicedQuantity} max`}
+                        return (
+                          <tr key={rl.lineId} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                            <td className="p-3">
+                              <div className="font-medium text-xs truncate max-w-[200px]" title={rl.productName}>{rl.productName}</div>
+                              {rl.productReference && (
+                                <div className="text-[10px] text-muted-foreground font-mono">{rl.productReference}</div>
+                              )}
+                            </td>
+                            <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalTotalHt, 'TND')}</td>
+                            <td className="text-center p-3 text-xs">{rl.vatRate}%</td>
+                            <td className="text-end p-3 font-mono text-xs">{formatCurrency(originalTotalTtc, 'TND')}</td>
+                            <td className="p-2">
+                              {rl.returnableQuantity > 0 && !rl.isLocked ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    min={0}
+                                    max={rl.returnableQuantity}
+                                    value={rl.returnQuantity || ''}
+                                    onChange={(e) => updateReturnQuantity(rl.lineId, parseFloat(e.target.value) || 0)}
+                                    className="w-16 h-7 text-xs text-center p-1"
+                                    placeholder="0"
+                                  />
+                                  <div className="text-[9px] text-muted-foreground">
+                                    {rl.alreadyReturnedQuantity > 0 ? `${rl.alreadyReturnedQuantity} ${t('already_returned') || 'déjà'}` : ''}
+                                    {` / ${rl.invoicedQuantity} max`}
+                                  </div>
                                 </div>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-center block text-xs">
-                                {rl.isLocked ? (t('fully_returned') || 'Retourné') : '-'}
-                              </span>
-                            )}
-                          </td>
-                          <td className="text-end p-3 font-mono text-xs text-destructive">
-                            {rl.returnQuantity > 0 ? `-${formatCurrency(rl.lineHt, 'TND')}` : '-'}
-                          </td>
-                          <td className="text-end p-3 font-mono text-xs text-destructive">
-                            {rl.returnQuantity > 0 ? `-${formatCurrency(rl.lineVat, 'TND')}` : '-'}
-                          </td>
-                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(newTotalHt, 'TND')}</td>
-                          <td className="text-end p-3 font-mono text-xs">{formatCurrency(newVat, 'TND')}</td>
-                          <td className="text-end p-3 font-mono text-xs font-medium">{formatCurrency(newTotalTtc, 'TND')}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                              ) : (
+                                <span className="text-muted-foreground text-center block text-xs">
+                                  {rl.isLocked ? (t('fully_returned') || 'Retourné') : '-'}
+                                </span>
+                              )}
+                            </td>
+                            <td className="text-end p-3 font-mono text-xs text-destructive">
+                              {rl.returnQuantity > 0 ? `-${formatCurrency(rl.lineHt, 'TND')}` : '-'}
+                            </td>
+                            <td className="text-end p-3 font-mono text-xs text-destructive">
+                              {rl.returnQuantity > 0 ? `-${formatCurrency(rl.lineVat, 'TND')}` : '-'}
+                            </td>
+                            <td className="text-end p-3 font-mono text-xs">{formatCurrency(newTotalHt, 'TND')}</td>
+                            <td className="text-end p-3 font-mono text-xs">{formatCurrency(newVat, 'TND')}</td>
+                            <td className="text-end p-3 font-mono text-xs font-medium">{formatCurrency(newTotalTtc, 'TND')}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <Separator />
@@ -663,11 +665,11 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
                   {t('credit_note_exceeds_invoice') || 'Le total de l\'avoir dépasse le restant de la facture après les avoirs validés.'}
                 </div>
               )}
-            </div>
-          </ScrollArea>
+            </div >
+          </ScrollArea >
 
           {/* Footer */}
-          <div className="p-4 border-t bg-muted/30 flex items-center justify-between">
+          < div className="p-4 border-t bg-muted/30 flex items-center justify-between" >
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>
@@ -677,12 +679,12 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
             >
               {isSaving ? t('saving') || 'Enregistrement...' : isEditMode ? (t('update_credit_note') || 'Mettre à jour l\'avoir') : (t('create_credit_note') || 'Créer l\'avoir')}
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </div >
+        </DialogContent >
+      </Dialog >
 
       {/* Withholding override dialog */}
-      <AlertDialog open={withholdingDialogOpen} onOpenChange={setWithholdingDialogOpen}>
+      < AlertDialog open={withholdingDialogOpen} onOpenChange={setWithholdingDialogOpen} >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('withholding_threshold_title') || 'Seuil de retenue à la source'}</AlertDialogTitle>
@@ -699,7 +701,7 @@ export const ProductReturnCreditNoteDialog: React.FC<ProductReturnCreditNoteDial
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog >
     </>
   );
 };

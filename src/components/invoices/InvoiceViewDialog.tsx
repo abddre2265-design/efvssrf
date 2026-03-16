@@ -241,7 +241,7 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="p-6 space-y-6"
+              className="p-6 space-y-6 min-w-0 max-w-full overflow-hidden"
             >
               {/* Invoice Header */}
               <div className="grid grid-cols-2 gap-6">
@@ -550,7 +550,7 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
 
                   <Separator />
 
-                  <div className="space-y-3">
+                  <div className="space-y-3 min-w-0 max-w-full">
                     <div className="flex items-center gap-2 text-primary font-medium">
                       <ClipboardList className="h-4 w-4" />
                       {t('credit_notes')} ({creditNotes.length})
@@ -580,62 +580,64 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
 
                         {/* Line-by-line details */}
                         {(cn as any).lines && (cn as any).lines.length > 0 && (
-                          <div className="w-full max-w-full rounded-lg border overflow-x-auto mt-2 custom-scrollbar">
-                            <table className="w-full min-w-[1200px] text-[10px]">
-                              <thead className="bg-muted/50">
-                                <tr className="divide-x divide-muted-foreground/10">
-                                  <th className="text-start p-2 font-medium">{t('product')}</th>
-                                  <th className="text-end p-2 font-medium whitespace-nowrap">{t('original_totals')} HT</th>
-                                  <th className="text-center p-2 font-medium whitespace-nowrap">{t('vat')} %</th>
-                                  <th className="text-end p-2 font-medium whitespace-nowrap">{t('original_totals')} TTC</th>
-                                  <th className="text-center p-2 font-medium whitespace-nowrap">{t('returned_quantity')}</th>
-                                  <th className="text-end p-2 font-medium whitespace-nowrap">{t('returned_value_ht')}</th>
-                                  <th className="text-end p-2 font-medium whitespace-nowrap">{t('returned_vat')}</th>
-                                  <th className="text-end p-2 font-medium whitespace-nowrap">{t('new_total_ht')}</th>
-                                  <th className="text-end p-2 font-medium whitespace-nowrap">{t('new_vat')}</th>
-                                  <th className="text-end p-2 font-medium whitespace-nowrap">{t('new_total_ttc')}</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {(cn as any).lines.map((line: any, idx: number) => {
-                                  const vatRate = Number(line.vat_rate) || 0;
-                                  const originalQty = Number(line.original_quantity) || 0;
-                                  const originalPrice = Number(line.original_unit_price_ht) || 0;
+                          <div className="mt-2" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)' }}>
+                            <div className="rounded-lg border overflow-x-auto custom-scrollbar bg-muted/20">
+                              <table className="w-full min-w-[1200px] text-[10px] table-auto">
+                                <thead className="bg-muted/50">
+                                  <tr className="divide-x divide-muted-foreground/10">
+                                    <th className="text-start p-2 font-medium">{t('product')}</th>
+                                    <th className="text-end p-2 font-medium whitespace-nowrap">{t('original_totals')} HT</th>
+                                    <th className="text-center p-2 font-medium whitespace-nowrap">{t('vat')} %</th>
+                                    <th className="text-end p-2 font-medium whitespace-nowrap">{t('original_totals')} TTC</th>
+                                    <th className="text-center p-2 font-medium whitespace-nowrap">{t('returned_quantity')}</th>
+                                    <th className="text-end p-2 font-medium whitespace-nowrap">{t('returned_value_ht')}</th>
+                                    <th className="text-end p-2 font-medium whitespace-nowrap">{t('returned_vat')}</th>
+                                    <th className="text-end p-2 font-medium whitespace-nowrap">{t('new_total_ht')}</th>
+                                    <th className="text-end p-2 font-medium whitespace-nowrap">{t('new_vat')}</th>
+                                    <th className="text-end p-2 font-medium whitespace-nowrap">{t('new_total_ttc')}</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {(cn as any).lines.map((line: any, idx: number) => {
+                                    const vatRate = Number(line.vat_rate) || 0;
+                                    const originalQty = Number(line.original_quantity) || 0;
+                                    const originalPrice = Number(line.original_unit_price_ht) || 0;
 
-                                  const originalHt = Number(line.original_line_total_ht) || (originalQty * originalPrice);
-                                  const originalVat = Number(line.original_line_vat) || (originalHt * (vatRate / 100));
-                                  const originalTtc = Number(line.original_line_total_ttc) || (originalHt + originalVat);
+                                    const originalHt = Number(line.original_line_total_ht) || (originalQty * originalPrice);
+                                    const originalVat = Number(line.original_line_vat) || (originalHt * (vatRate / 100));
+                                    const originalTtc = Number(line.original_line_total_ttc) || (originalHt + originalVat);
 
-                                  const retQty = Number(line.returned_quantity) || 0;
-                                  const retHt = Number(line.discount_ht) || 0;
-                                  const retVat = (Number(line.discount_ttc) || 0) - retHt;
+                                    const retQty = Number(line.returned_quantity) || 0;
+                                    const retHt = Number(line.discount_ht) || 0;
+                                    const retVat = (Number(line.discount_ttc) || 0) - retHt;
 
-                                  const newHt = Number(line.new_line_total_ht);
-                                  const newVat = Number(line.new_line_vat) || (newHt * (vatRate / 100));
-                                  const newTtc = Number(line.new_line_total_ttc) || (newHt + newVat);
+                                    const newHt = Number(line.new_line_total_ht);
+                                    const newVat = Number(line.new_line_vat) || (newHt * (vatRate / 100));
+                                    const newTtc = Number(line.new_line_total_ttc) || (newHt + newVat);
 
-                                  return (
-                                    <tr key={line.id} className={`${idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'} divide-x divide-muted-foreground/10 border-t`}>
-                                      <td className="p-2">
-                                        <div className="font-medium truncate max-w-[120px]" title={line.product_name}>{line.product_name || '-'}</div>
-                                        {line.product_reference && (
-                                          <div className="text-[9px] text-muted-foreground font-mono">{line.product_reference}</div>
-                                        )}
-                                      </td>
-                                      <td className="text-end p-2 font-mono whitespace-nowrap">{formatCurrency(originalHt, 'TND')}</td>
-                                      <td className="text-center p-2 whitespace-nowrap">{vatRate}%</td>
-                                      <td className="text-end p-2 font-mono whitespace-nowrap">{formatCurrency(originalTtc, 'TND')}</td>
-                                      <td className="text-center p-2 font-medium whitespace-nowrap">{retQty}</td>
-                                      <td className="text-end p-2 font-mono text-destructive whitespace-nowrap">-{formatCurrency(retHt, 'TND')}</td>
-                                      <td className="text-end p-2 font-mono text-destructive whitespace-nowrap">-{formatCurrency(retVat, 'TND')}</td>
-                                      <td className="text-end p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(newHt, 'TND')}</td>
-                                      <td className="text-end p-2 font-mono whitespace-nowrap">{formatCurrency(newVat, 'TND')}</td>
-                                      <td className="text-end p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(newTtc, 'TND')}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                                    return (
+                                      <tr key={line.id} className={`${idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'} divide-x divide-muted-foreground/10 border-t`}>
+                                        <td className="p-2">
+                                          <div className="font-medium truncate max-w-[120px]" title={line.product_name}>{line.product_name || '-'}</div>
+                                          {line.product_reference && (
+                                            <div className="text-[9px] text-muted-foreground font-mono">{line.product_reference}</div>
+                                          )}
+                                        </td>
+                                        <td className="text-end p-2 font-mono whitespace-nowrap">{formatCurrency(originalHt, 'TND')}</td>
+                                        <td className="text-center p-2 whitespace-nowrap">{vatRate}%</td>
+                                        <td className="text-end p-2 font-mono whitespace-nowrap">{formatCurrency(originalTtc, 'TND')}</td>
+                                        <td className="text-center p-2 font-medium whitespace-nowrap">{retQty}</td>
+                                        <td className="text-end p-2 font-mono text-destructive whitespace-nowrap">-{formatCurrency(retHt, 'TND')}</td>
+                                        <td className="text-end p-2 font-mono text-destructive whitespace-nowrap">-{formatCurrency(retVat, 'TND')}</td>
+                                        <td className="text-end p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(newHt, 'TND')}</td>
+                                        <td className="text-end p-2 font-mono whitespace-nowrap">{formatCurrency(newVat, 'TND')}</td>
+                                        <td className="text-end p-2 font-mono font-medium whitespace-nowrap">{formatCurrency(newTtc, 'TND')}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
                           </div>
                         )}
 
@@ -659,18 +661,21 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
                     ))}
                   </div>
                 </>
-              )}
+              )
+              }
 
               {/* Notes */}
-              {invoice.notes && (
-                <>
-                  <Separator />
-                  <div className="space-y-2 p-4 rounded-lg bg-muted/30 border">
-                    <div className="font-medium">{t('notes')}:</div>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{invoice.notes}</p>
-                  </div>
-                </>
-              )}
+              {
+                invoice.notes && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2 p-4 rounded-lg bg-muted/30 border">
+                      <div className="font-medium">{t('notes')}:</div>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{invoice.notes}</p>
+                    </div>
+                  </>
+                )
+              }
             </motion.div>
           ) : (
             <div className="p-6 text-center text-muted-foreground">
@@ -678,22 +683,22 @@ export const InvoiceViewDialog: React.FC<InvoiceViewDialogProps> = ({
             </div>
           )}
         </ScrollArea>
-      </DialogContent>
+      </DialogContent >
 
       {/* Print Dialog */}
-      <InvoicePrintDialog
+      < InvoicePrintDialog
         open={printDialogOpen}
         onOpenChange={setPrintDialogOpen}
         invoiceId={invoiceId}
       />
 
       {/* Duplicate Print Dialog */}
-      <InvoicePrintDialog
+      < InvoicePrintDialog
         open={duplicatePrintDialogOpen}
         onOpenChange={setDuplicatePrintDialogOpen}
         invoiceId={invoiceId}
         isDuplicate
       />
-    </Dialog>
+    </Dialog >
   );
 };
