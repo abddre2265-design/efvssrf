@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Eye, MoreHorizontal, Check, X, Clock, Search, User, Building2 } from 'lucide-react';
+import { Eye, MoreHorizontal, Check, X, Clock, Search, User, Building2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, ar } from 'date-fns/locale';
 
@@ -28,6 +28,7 @@ interface QuoteRequestTableProps {
   isLoading: boolean;
   onView: (request: QuoteRequest) => void;
   onStatusChange: (request: QuoteRequest, status: 'processing' | 'completed' | 'rejected') => void;
+  onProcess?: (request: QuoteRequest) => void;
 }
 
 export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
@@ -35,6 +36,7 @@ export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
   isLoading,
   onView,
   onStatusChange,
+  onProcess,
 }) => {
   const { t, language, isRTL } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
@@ -162,10 +164,18 @@ export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
                           {t('view_details')}
                         </DropdownMenuItem>
                         {request.status === 'pending' && (
-                          <DropdownMenuItem onClick={() => onStatusChange(request, 'processing')}>
-                            <Clock className="mr-2 h-4 w-4" />
-                            {t('mark_processing')}
-                          </DropdownMenuItem>
+                          <>
+                            {onProcess && (
+                              <DropdownMenuItem onClick={() => onProcess(request)}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                {t('process_to_quote')}
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => onStatusChange(request, 'processing')}>
+                              <Clock className="mr-2 h-4 w-4" />
+                              {t('mark_processing')}
+                            </DropdownMenuItem>
+                          </>
                         )}
                         {(request.status === 'pending' || request.status === 'processing') && (
                           <>

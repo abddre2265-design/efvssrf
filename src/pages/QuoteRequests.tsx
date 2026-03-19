@@ -14,6 +14,7 @@ import {
   QuoteRequestTable,
   QuoteRequestViewDialog 
 } from '@/components/quote-requests';
+import { ProcessQuoteRequestDialog } from '@/components/quotes/ProcessQuoteRequestDialog';
 
 const QuoteRequests: React.FC = () => {
   const { t, isRTL } = useLanguage();
@@ -24,6 +25,7 @@ const QuoteRequests: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<QuoteRequestItem[]>([]);
   const [selectedMessages, setSelectedMessages] = useState<QuoteRequestMessage[]>([]);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
@@ -130,6 +132,22 @@ const QuoteRequests: React.FC = () => {
     }
     
     setIsViewDialogOpen(true);
+  };
+
+  const handleProcess = async (request: QuoteRequest) => {
+    setSelectedRequest(request);
+    try {
+      const { data } = await supabase
+        .from('quote_request_items')
+        .select('*')
+        .eq('quote_request_id', request.id)
+        .order('item_order');
+      setSelectedItems(data as QuoteRequestItem[] || []);
+    } catch (error) {
+      console.error('Error loading request items:', error);
+    }
+    setIsProcessDialogOpen(true);
+  };
   };
 
   const handleStatusChange = async (request: QuoteRequest, status: 'processing' | 'completed' | 'rejected') => {
@@ -286,6 +304,7 @@ const QuoteRequests: React.FC = () => {
                 isLoading={isLoading}
                 onView={handleView}
                 onStatusChange={handleStatusChange}
+                onProcess={handleProcess}
               />
             </TabsContent>
           </Tabs>
@@ -300,6 +319,17 @@ const QuoteRequests: React.FC = () => {
         items={selectedItems}
         messages={selectedMessages}
       />
+
+      {organizationId && (
+        <ProcessQuoteRequestDialog
+          open={isProcessDialogOpen}
+          onOpenChange={setIsProcessDialogOpen}
+          request={selectedRequest}
+          items={selectedItems}
+          organizationId={organizationId}
+          onCreated={loadRequests}
+        />
+      )}
     </div>
   );
 };
