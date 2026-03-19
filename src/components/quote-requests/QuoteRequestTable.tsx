@@ -36,6 +36,7 @@ export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
   isLoading,
   onView,
   onStatusChange,
+  onProcess,
 }) => {
   const { t, language, isRTL } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
