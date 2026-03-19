@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Eye, MoreHorizontal, Check, X, Clock, Search, User, Building2 } from 'lucide-react';
+import { Eye, MoreHorizontal, Check, X, Clock, Search, User, Building2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS, ar } from 'date-fns/locale';
 
