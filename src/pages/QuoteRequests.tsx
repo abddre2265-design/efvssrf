@@ -319,6 +319,17 @@ const QuoteRequests: React.FC = () => {
         items={selectedItems}
         messages={selectedMessages}
       />
+
+      {organizationId && (
+        <ProcessQuoteRequestDialog
+          open={isProcessDialogOpen}
+          onOpenChange={setIsProcessDialogOpen}
+          request={selectedRequest}
+          items={selectedItems}
+          organizationId={organizationId}
+          onCreated={loadRequests}
+        />
+      )}
     </div>
   );
 };
