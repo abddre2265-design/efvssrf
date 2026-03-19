@@ -33,6 +33,36 @@ const QuoteRequests: React.FC = () => {
   useEffect(() => {
     if (organizationId) {
       loadRequests();
+
+      // Subscribe to realtime changes on quote_requests
+      const channel = supabase
+        .channel('quote-requests-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quote_requests',
+            filter: `organization_id=eq.${organizationId}`,
+          },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              setRequests(prev => [payload.new as QuoteRequest, ...prev]);
+              toast.info(t('new_quote_request_received') || 'Nouvelle demande de devis reçue !');
+            } else if (payload.eventType === 'UPDATE') {
+              setRequests(prev =>
+                prev.map(r => r.id === (payload.new as QuoteRequest).id ? payload.new as QuoteRequest : r)
+              );
+            } else if (payload.eventType === 'DELETE') {
+              setRequests(prev => prev.filter(r => r.id !== (payload.old as any).id));
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [organizationId]);
 
