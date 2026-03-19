@@ -356,7 +356,7 @@ const PublicQuoteRequest: React.FC = () => {
       }
 
       const messagesToSave = messages.map(msg => ({
-        quote_request_id: request.id,
+        quote_request_id: requestId,
         role: msg.role,
         content: msg.content,
       }));
