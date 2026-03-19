@@ -304,6 +304,7 @@ const QuoteRequests: React.FC = () => {
                 isLoading={isLoading}
                 onView={handleView}
                 onStatusChange={handleStatusChange}
+                onProcess={handleProcess}
               />
             </TabsContent>
           </Tabs>
