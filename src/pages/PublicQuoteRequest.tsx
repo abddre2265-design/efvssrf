@@ -310,10 +310,12 @@ const PublicQuoteRequest: React.FC = () => {
     try {
       const now = new Date();
       const requestNumber = `DQ-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Date.now().toString().slice(-6)}`;
+      const requestId = crypto.randomUUID();
 
-      const { data: request, error: requestError } = await supabase
+      const { error: requestError } = await supabase
         .from('quote_requests')
         .insert({
+          id: requestId,
           organization_id: linkData.organization_id,
           request_number: requestNumber,
           client_type: clientType,
@@ -333,15 +335,13 @@ const PublicQuoteRequest: React.FC = () => {
           email: email || null,
           ai_extracted_needs: confirmedRequest.summary,
           status: 'pending',
-        })
-        .select()
-        .single();
+        });
 
       if (requestError) throw requestError;
 
       if (confirmedRequest.items.length > 0) {
         const items = confirmedRequest.items.map((item, index) => ({
-          quote_request_id: request.id,
+          quote_request_id: requestId,
           item_order: index + 1,
           description: item.description,
           quantity: item.quantity || null,
@@ -356,7 +356,7 @@ const PublicQuoteRequest: React.FC = () => {
       }
 
       const messagesToSave = messages.map(msg => ({
-        quote_request_id: request.id,
+        quote_request_id: requestId,
         role: msg.role,
         content: msg.content,
       }));
