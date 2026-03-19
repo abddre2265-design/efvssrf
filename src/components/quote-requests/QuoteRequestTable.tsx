@@ -28,6 +28,7 @@ interface QuoteRequestTableProps {
   isLoading: boolean;
   onView: (request: QuoteRequest) => void;
   onStatusChange: (request: QuoteRequest, status: 'processing' | 'completed' | 'rejected') => void;
+  onProcess?: (request: QuoteRequest) => void;
 }
 
 export const QuoteRequestTable: React.FC<QuoteRequestTableProps> = ({
