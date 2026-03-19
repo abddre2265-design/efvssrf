@@ -14,6 +14,7 @@ import {
   QuoteRequestTable,
   QuoteRequestViewDialog 
 } from '@/components/quote-requests';
+import { ProcessQuoteRequestDialog } from '@/components/quotes/ProcessQuoteRequestDialog';
 
 const QuoteRequests: React.FC = () => {
   const { t, isRTL } = useLanguage();
