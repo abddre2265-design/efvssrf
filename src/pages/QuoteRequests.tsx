@@ -25,6 +25,7 @@ const QuoteRequests: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<QuoteRequestItem[]>([]);
   const [selectedMessages, setSelectedMessages] = useState<QuoteRequestMessage[]>([]);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
