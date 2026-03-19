@@ -310,10 +310,12 @@ const PublicQuoteRequest: React.FC = () => {
     try {
       const now = new Date();
       const requestNumber = `DQ-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${Date.now().toString().slice(-6)}`;
+      const requestId = crypto.randomUUID();
 
-      const { data: request, error: requestError } = await supabase
+      const { error: requestError } = await supabase
         .from('quote_requests')
         .insert({
+          id: requestId,
           organization_id: linkData.organization_id,
           request_number: requestNumber,
           client_type: clientType,
@@ -333,9 +335,7 @@ const PublicQuoteRequest: React.FC = () => {
           email: email || null,
           ai_extracted_needs: confirmedRequest.summary,
           status: 'pending',
-        })
-        .select()
-        .single();
+        });
 
       if (requestError) throw requestError;
 
