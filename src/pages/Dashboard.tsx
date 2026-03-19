@@ -126,6 +126,8 @@ const Dashboard: React.FC = () => {
         return <PurchaseOrders />;
       case 'purchase-credit-notes':
         return <PurchaseCreditNotes />;
+      case 'quotes':
+        return <Quotes />;
       default:
         return <DashboardHome />;
     }

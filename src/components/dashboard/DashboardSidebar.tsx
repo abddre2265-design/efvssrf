@@ -114,6 +114,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       icon: Receipt,
       items: [
         { id: 'invoices', icon: FileText, labelKey: 'invoices' },
+        { id: 'quotes', icon: FileText, labelKey: 'quotes' },
         { id: 'sales-invoice-requests', icon: ClipboardList, labelKey: 'sales_invoice_requests' },
         { id: 'delivery-notes', icon: PackageCheck, labelKey: 'delivery_notes' },
         { id: 'credit-notes', icon: ReceiptText, labelKey: 'credit_notes' },
