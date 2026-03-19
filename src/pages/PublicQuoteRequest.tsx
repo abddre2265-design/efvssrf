@@ -341,7 +341,7 @@ const PublicQuoteRequest: React.FC = () => {
 
       if (confirmedRequest.items.length > 0) {
         const items = confirmedRequest.items.map((item, index) => ({
-          quote_request_id: request.id,
+          quote_request_id: requestId,
           item_order: index + 1,
           description: item.description,
           quantity: item.quantity || null,
