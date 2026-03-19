@@ -134,6 +134,22 @@ const QuoteRequests: React.FC = () => {
     setIsViewDialogOpen(true);
   };
 
+  const handleProcess = async (request: QuoteRequest) => {
+    setSelectedRequest(request);
+    try {
+      const { data } = await supabase
+        .from('quote_request_items')
+        .select('*')
+        .eq('quote_request_id', request.id)
+        .order('item_order');
+      setSelectedItems(data as QuoteRequestItem[] || []);
+    } catch (error) {
+      console.error('Error loading request items:', error);
+    }
+    setIsProcessDialogOpen(true);
+  };
+  };
+
   const handleStatusChange = async (request: QuoteRequest, status: 'processing' | 'completed' | 'rejected') => {
     try {
       const { error } = await supabase
